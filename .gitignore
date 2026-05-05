@@ -1,0 +1,15 @@
+node_modules
+.dist
+apps/**/dist
+apps/**/build
+packages/**/dist
+coverage
+.env
+.env.*
+!.env.example
+.DS_Store
+.turbo
+.expo
+.expo-shared
+web-build
+storybook-static

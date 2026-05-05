@@ -1,0 +1,11 @@
+name: Mobile
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  placeholder:
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "Mobile CI scaffold"
