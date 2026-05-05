@@ -2,6 +2,10 @@
   "name": "skillgap-ai",
   "private": true,
   "version": "0.1.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "packageManager": "pnpm@9.0.0",
   "scripts": {
     "dev": "turbo dev",

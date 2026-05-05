@@ -25,6 +25,8 @@
     "zustand": "^4.5.5"
   },
   "devDependencies": {
-    "typescript": "^5.5.4"
+    "@types/node": "^24.5.2",
+    "@types/react": "^18.3.4",
+    "typescript": "^5.9.3"
   }
 }

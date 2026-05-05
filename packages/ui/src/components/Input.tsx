@@ -23,7 +23,7 @@ export function Input({ label, error, helperText, icon, id, className, ...props 
           id={inputId}
           className={cn(
             'w-full rounded-card border border-border bg-white px-4 py-3 text-sm text-text-primary outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-primary-light',
-            icon && 'pl-10',
+            icon ? 'pl-10' : false,
             error && 'border-error focus:border-error focus:ring-error/20',
             className,
           )}

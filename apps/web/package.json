@@ -11,19 +11,21 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.9.0",
+    "@skillgap/types": "workspace:*",
+    "@skillgap/ui": "workspace:*",
+    "@tanstack/react-query": "^5.51.23",
     "axios": "^1.7.4",
     "framer-motion": "^11.3.19",
     "lucide-react": "^0.439.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "react-hot-toast": "^2.4.1",
     "react-hook-form": "^7.52.2",
+    "react-hot-toast": "^2.4.1",
     "react-router-dom": "^6.26.1",
     "recharts": "^2.12.7",
     "zustand": "^4.5.5",
-    "zod": "^3.23.8",
-    "@hookform/resolvers": "^3.9.0",
-    "@tanstack/react-query": "^5.51.23"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/react": "^18.3.4",
