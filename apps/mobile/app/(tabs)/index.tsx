@@ -1,4 +1,5 @@
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, Text, View, SafeAreaView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../src/theme';
 
 const t = theme;
@@ -22,69 +23,99 @@ const gaps = [
  */
 export default function DashboardScreen(): React.JSX.Element {
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: t.colors.background }} contentContainerStyle={{ paddingHorizontal: t.spacing.lg, paddingTop: t.spacing.xxl, paddingBottom: t.spacing.xl }}>
-      {/* Greeting */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing.sm }}>
-        <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: t.colors.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={{ fontSize: 18, fontWeight: '700', color: t.colors.primaryDark }}>JD</Text>
-        </View>
-        <View>
-          <Text style={{ fontSize: 22, fontWeight: '700', color: t.colors.textPrimary }}>Good evening, John 👋</Text>
-          <Text style={{ fontSize: 14, color: t.colors.textSecondary }}>Your career at a glance</Text>
-        </View>
-      </View>
-
-      {/* Match score card */}
-      <View style={{ marginTop: t.spacing.lg, borderRadius: t.borderRadius.lg, backgroundColor: t.colors.surface, borderWidth: 1, borderColor: t.colors.border, padding: t.spacing.lg, alignItems: 'center', ...t.shadows.card }}>
-        <Text style={{ fontSize: 12, fontWeight: '600', color: t.colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1 }}>Overall Match Score</Text>
-        <View style={{ width: 100, height: 100, borderRadius: 50, borderWidth: 8, borderColor: t.colors.success, alignItems: 'center', justifyContent: 'center', marginTop: t.spacing.md }}>
-          <Text style={{ fontSize: 28, fontWeight: '700', color: t.colors.textPrimary }}>78%</Text>
-        </View>
-        <Text style={{ fontSize: 14, color: t.colors.textSecondary, marginTop: t.spacing.sm }}>Strong match for 12 jobs</Text>
-      </View>
-
-      {/* Skills progress */}
-      <View style={{ marginTop: t.spacing.lg, borderRadius: t.borderRadius.card, backgroundColor: t.colors.surface, borderWidth: 1, borderColor: t.colors.border, padding: t.spacing.md, ...t.shadows.card }}>
-        <Text style={{ fontSize: 16, fontWeight: '600', color: t.colors.textPrimary, marginBottom: t.spacing.md }}>Skills Progress</Text>
-        {skills.map((s) => (
-          <View key={s.name} style={{ marginBottom: t.spacing.sm }}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-              <Text style={{ fontSize: 14, fontWeight: '500', color: t.colors.textPrimary }}>{s.name}</Text>
-              <Text style={{ fontSize: 14, color: t.colors.textSecondary }}>{s.value}%</Text>
+    <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.background }}>
+      <ScrollView 
+        style={{ flex: 1 }} 
+        contentContainerStyle={{ paddingHorizontal: t.spacing.lg, paddingTop: t.spacing.xl, paddingBottom: t.spacing.xxxl }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Greeting */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: t.spacing.md }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing.sm }}>
+            <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: t.colors.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: t.colors.primaryDark }}>JD</Text>
             </View>
-            <View style={{ height: 6, borderRadius: 3, backgroundColor: t.colors.border }}>
-              <View style={{ height: 6, borderRadius: 3, backgroundColor: t.colors.primary, width: `${s.value}%` }} />
+            <View>
+              <Text style={{ ...t.typography.h3, color: t.colors.textPrimary }}>Good evening, John</Text>
+              <Text style={{ ...t.typography.caption, color: t.colors.textSecondary }}>Your career at a glance</Text>
             </View>
           </View>
-        ))}
-      </View>
+          <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: t.colors.surface, alignItems: 'center', justifyContent: 'center', ...t.shadows.sm }}>
+            <Ionicons name="notifications-outline" size={20} color={t.colors.textPrimary} />
+            <View style={{ position: 'absolute', top: 10, right: 10, width: 8, height: 8, borderRadius: 4, backgroundColor: t.colors.error }} />
+          </View>
+        </View>
 
-      {/* Skill gaps */}
-      <View style={{ marginTop: t.spacing.lg, borderRadius: t.borderRadius.card, backgroundColor: t.colors.surface, borderWidth: 1, borderColor: t.colors.border, padding: t.spacing.md, ...t.shadows.card }}>
-        <Text style={{ fontSize: 16, fontWeight: '600', color: t.colors.textPrimary, marginBottom: t.spacing.md }}>Skill Gaps</Text>
-        {gaps.map((g) => (
-          <View key={g.skill} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: t.spacing.sm, borderBottomWidth: 1, borderBottomColor: t.colors.border }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing.sm }}>
-              <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: g.color }} />
-              <View>
-                <Text style={{ fontSize: 14, fontWeight: '500', color: t.colors.textPrimary }}>{g.skill}</Text>
-                <Text style={{ fontSize: 12, color: t.colors.textSecondary }}>Needed for {g.jobs} jobs</Text>
+        {/* AI Insights Card - Moved to top for impact */}
+        <View style={{ marginTop: t.spacing.md, borderRadius: t.borderRadius.lg, backgroundColor: '#F3E8FF', padding: t.spacing.md, ...t.shadows.sm }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing.xs, marginBottom: t.spacing.sm }}>
+            <Ionicons name="sparkles" size={18} color={t.colors.aiPurple} />
+            <Text style={{ ...t.typography.caption, fontWeight: '700', color: t.colors.aiPurple }}>AI Insights</Text>
+          </View>
+          <Text style={{ ...t.typography.caption, color: '#5B21B6', lineHeight: 22 }}>
+            Learning <Text style={{ fontWeight: '700' }}>TypeScript generics</Text> could unlock 5 more job matches. Your React skills are top 10% in your area.
+          </Text>
+        </View>
+
+        {/* Match score card */}
+        <View style={{ marginTop: t.spacing.lg, borderRadius: t.borderRadius.card, backgroundColor: t.colors.surface, padding: t.spacing.xl, alignItems: 'center', ...t.shadows.card }}>
+          <Text style={{ ...t.typography.small, fontWeight: '700', color: t.colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1.5 }}>Overall Match Score</Text>
+          <View style={{ width: 140, height: 140, borderRadius: 70, borderWidth: 12, borderColor: t.colors.primaryLight, borderTopColor: t.colors.success, alignItems: 'center', justifyContent: 'center', marginTop: t.spacing.lg, transform: [{ rotate: '45deg' }] }}>
+            <View style={{ transform: [{ rotate: '-45deg' }], alignItems: 'center' }}>
+              <Text style={{ fontSize: 36, fontWeight: '800', color: t.colors.textPrimary }}>78%</Text>
+            </View>
+          </View>
+          <Text style={{ ...t.typography.caption, color: t.colors.textSecondary, marginTop: t.spacing.md }}>Strong match for <Text style={{ fontWeight: '700', color: t.colors.textPrimary }}>12 jobs</Text></Text>
+        </View>
+
+        {/* Skills progress */}
+        <View style={{ marginTop: t.spacing.lg, borderRadius: t.borderRadius.card, backgroundColor: t.colors.surface, padding: t.spacing.lg, ...t.shadows.card }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: t.spacing.md }}>
+            <Text style={{ ...t.typography.h3, color: t.colors.textPrimary }}>Skills Progress</Text>
+            <Ionicons name="chevron-forward" size={20} color={t.colors.textSecondary} />
+          </View>
+          
+          <View style={{ gap: t.spacing.md }}>
+            {skills.map((s) => (
+              <View key={s.name}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 6 }}>
+                  <Text style={{ ...t.typography.caption, fontWeight: '600', color: t.colors.textPrimary }}>{s.name}</Text>
+                  <Text style={{ ...t.typography.caption, fontWeight: '600', color: t.colors.primary }}>{s.value}%</Text>
+                </View>
+                <View style={{ height: 8, borderRadius: 4, backgroundColor: t.colors.border, overflow: 'hidden' }}>
+                  <View style={{ height: '100%', backgroundColor: t.colors.primary, width: `${s.value}%`, borderRadius: 4 }} />
+                </View>
               </View>
-            </View>
+            ))}
           </View>
-        ))}
-      </View>
-
-      {/* AI Insights */}
-      <View style={{ marginTop: t.spacing.lg, borderRadius: t.borderRadius.lg, backgroundColor: '#F5F0FF', borderWidth: 1, borderColor: '#E8DDFF', padding: t.spacing.md, ...t.shadows.card }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing.xs }}>
-          <Text style={{ fontSize: 16 }}>🧠</Text>
-          <Text style={{ fontSize: 14, fontWeight: '600', color: t.colors.aiPurple }}>AI Insights</Text>
         </View>
-        <Text style={{ fontSize: 13, color: t.colors.textSecondary, marginTop: t.spacing.sm, lineHeight: 20 }}>
-          Learning TypeScript generics could unlock 5 more job matches. Your React skills are above average.
-        </Text>
-      </View>
-    </ScrollView>
+
+        {/* Skill gaps */}
+        <View style={{ marginTop: t.spacing.lg, borderRadius: t.borderRadius.card, backgroundColor: t.colors.surface, padding: t.spacing.lg, ...t.shadows.card }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: t.spacing.sm }}>
+            <Text style={{ ...t.typography.h3, color: t.colors.textPrimary }}>Skill Gaps to Fill</Text>
+            <Ionicons name="warning" size={20} color={t.colors.warning} />
+          </View>
+          
+          <View>
+            {gaps.map((g, idx) => (
+              <View key={g.skill} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: t.spacing.md, borderBottomWidth: idx < gaps.length - 1 ? 1 : 0, borderBottomColor: t.colors.border }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing.md }}>
+                  <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: g.color }} />
+                  <View>
+                    <Text style={{ ...t.typography.caption, fontWeight: '600', color: t.colors.textPrimary }}>{g.skill}</Text>
+                    <Text style={{ ...t.typography.small, color: t.colors.textSecondary, marginTop: 2 }}>Required for {g.jobs} target jobs</Text>
+                  </View>
+                </View>
+                <View style={{ backgroundColor: t.colors.surfaceSecondary, paddingHorizontal: 12, paddingVertical: 6, borderRadius: t.borderRadius.pill }}>
+                  <Text style={{ ...t.typography.small, fontWeight: '600', color: t.colors.primary }}>Learn</Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+        
+      </ScrollView>
+    </SafeAreaView>
   );
 }
