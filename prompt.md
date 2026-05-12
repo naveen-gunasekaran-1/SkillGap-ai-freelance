@@ -1365,8 +1365,7 @@ PHASE 8 CHECKPOINT:
 [ ] Swagger UI accessible at /api/docs
 [ ] Every endpoint documented with request/response schemas
 [ ] All components have Storybook stories
-[ ] README has screenshots + working quick start
-[ ] ARCHITECTURE.md has ERD generated from real schema
+ [ ] ARCHITECTURE.md has ERD generated from real schema
 [ ] docs/ folder is complete
 ```
 
