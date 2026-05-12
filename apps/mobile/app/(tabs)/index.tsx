@@ -1,6 +1,7 @@
 import { ScrollView, Text, View, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../src/theme';
+import { useMobileAuthStore } from '../../src/stores/authStore';
 
 const t = theme;
 
@@ -22,6 +23,9 @@ const gaps = [
  * skill gaps, and AI insights.
  */
 export default function DashboardScreen(): React.JSX.Element {
+  const userName = useMobileAuthStore((s) => s.userName);
+  const display = userName ?? 'there';
+  const initials = display === 'there' ? 'SG' : display.slice(0, 2).toUpperCase();
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.background }}>
       <ScrollView 
@@ -33,10 +37,10 @@ export default function DashboardScreen(): React.JSX.Element {
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: t.spacing.md }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing.sm }}>
             <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: t.colors.primaryLight, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ fontSize: 18, fontWeight: '700', color: t.colors.primaryDark }}>JD</Text>
+              <Text style={{ fontSize: 18, fontWeight: '700', color: t.colors.primaryDark }}>{initials}</Text>
             </View>
             <View>
-              <Text style={{ ...t.typography.h3, color: t.colors.textPrimary }}>Good evening, John</Text>
+              <Text style={{ ...t.typography.h3, color: t.colors.textPrimary }}>Good evening, {display}</Text>
               <Text style={{ ...t.typography.caption, color: t.colors.textSecondary }}>Your career at a glance</Text>
             </View>
           </View>

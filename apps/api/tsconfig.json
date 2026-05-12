@@ -7,5 +7,5 @@
     "moduleResolution": "NodeNext",
     "esModuleInterop": true
   },
-  "include": ["src", "prisma"]
+  "include": ["src"]
 }

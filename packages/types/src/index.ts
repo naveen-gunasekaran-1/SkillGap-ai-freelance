@@ -4,6 +4,8 @@ export interface User {
   name: string;
   role: 'CANDIDATE' | 'COMPANY' | 'ADMIN';
   avatar?: string;
+  skills?: string[];
+  companyId?: string | null;
   createdAt: Date;
 }
 
@@ -71,6 +73,7 @@ export interface Job {
   company: Company;
   description: string;
   requirements: string[];
+  responsibilities?: string[];
   skillsRequired: Skill[];
   location: string;
   type: 'FULL_TIME' | 'PART_TIME' | 'INTERNSHIP' | 'CONTRACT';
@@ -79,6 +82,8 @@ export interface Job {
   salaryMax?: number;
   postedAt: Date;
   expiresAt?: Date;
+  /** Present when the API computes a personalized match for the signed-in candidate. */
+  matchScore?: number;
 }
 
 export interface Application {
@@ -91,4 +96,5 @@ export interface Application {
   rejectionReason?: string;
   appliedAt: Date;
   updatedAt: Date;
+  job?: Job;
 }

@@ -10,6 +10,7 @@ import { ApplicationDetailPage } from './pages/ApplicationDetailPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { CompanyPortal } from './pages/CompanyPortal';
 import { AdminPanel } from './pages/AdminPanel';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 export default function App(): React.JSX.Element {
   return (
@@ -17,12 +18,40 @@ export default function App(): React.JSX.Element {
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      <Route path="/dashboard" element={<DashboardPage />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/jobs" element={<JobsPage />} />
       <Route path="/jobs/:id" element={<JobDetailPage />} />
-      <Route path="/applications" element={<ApplicationsPage />} />
-      <Route path="/applications/:id" element={<ApplicationDetailPage />} />
-      <Route path="/profile" element={<ProfilePage />} />
+      <Route
+        path="/applications"
+        element={
+          <ProtectedRoute>
+            <ApplicationsPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/applications/:id"
+        element={
+          <ProtectedRoute>
+            <ApplicationDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/profile"
+        element={
+          <ProtectedRoute>
+            <ProfilePage />
+          </ProtectedRoute>
+        }
+      />
       <Route path="/company/*" element={<CompanyPortal />} />
       <Route path="/admin/*" element={<AdminPanel />} />
       <Route path="*" element={<Navigate to="/" replace />} />

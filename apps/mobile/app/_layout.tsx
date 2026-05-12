@@ -10,7 +10,6 @@ export default function RootLayout(): React.JSX.Element {
     <Stack
       screenOptions={{
         headerShown: false,
-        animationEnabled: true,
         contentStyle: { backgroundColor: '#FFFFFF' },
       }}
     />

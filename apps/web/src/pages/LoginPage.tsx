@@ -1,7 +1,11 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
 import { Button, Input } from '@skillgap/ui';
 import { Navbar } from '../components/Navbar';
+import { api } from '../lib/api';
+import { parseUser } from '../lib/normalize';
+import { useAuthStore } from '../stores/authStore';
 
 /**
  * Login page with split-panel layout, OAuth buttons, show/hide password,
@@ -11,11 +15,32 @@ export function LoginPage(): React.JSX.Element {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
-  const [remember, setRemember] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+  const setSession = useAuthStore((s) => s.setSession);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login:', { email, password, remember });
+    setSubmitting(true);
+    try {
+      const res = await api.post<{ user: unknown; accessToken: string; refreshToken: string }>('/auth/login', {
+        email: email.trim().toLowerCase(),
+        password,
+      });
+      setSession(parseUser(res.data.user), res.data.accessToken, res.data.refreshToken);
+      toast.success('Signed in');
+      const from = (location.state as { from?: string } | null)?.from;
+      navigate(from && from !== '/login' ? from : '/dashboard', { replace: true });
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === 'object' && 'response' in err
+          ? String((err as { response?: { data?: { message?: string } } }).response?.data?.message ?? 'Sign in failed')
+          : 'Sign in failed';
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -95,13 +120,15 @@ export function LoginPage(): React.JSX.Element {
 
                 <div className="flex items-center justify-between">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} className="h-4 w-4 rounded border-border text-primary focus:ring-primary" />
+                    <input type="checkbox" className="h-4 w-4 rounded border-border text-primary focus:ring-primary" />
                     <span className="text-sm text-text-secondary">Remember me</span>
                   </label>
                   <Link to="/forgot-password" className="text-sm font-medium text-primary hover:text-primary-dark transition-colors">Forgot password?</Link>
                 </div>
 
-                <Button type="submit" className="w-full" size="lg">Sign in</Button>
+                <Button type="submit" className="w-full" size="lg" disabled={submitting}>
+                  {submitting ? 'Signing in…' : 'Sign in'}
+                </Button>
               </form>
 
               <p className="mt-6 text-center text-sm text-text-secondary">

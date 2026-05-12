@@ -3,156 +3,102 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  CANDIDATE
-  COMPANY
-  ADMIN
-}
-
-enum ApplicationStatus {
-  APPLIED
-  UNDER_REVIEW
-  SHORTLISTED
-  INTERVIEW_SCHEDULED
-  INTERVIEW_DONE
-  OFFER_EXTENDED
-  HIRED
-  REJECTED
-}
-
 model User {
-  id        String    @id @default(cuid())
-  email     String    @unique
-  name      String
-  role      Role
-  avatar    String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  profile   CandidateProfile?
-  company   Company?
-  applications Application[] @relation("CandidateApplications")
+  id             String   @id @default(cuid())
+  email          String   @unique
+  passwordHash   String
+  name           String
+  role           String
+  avatar         String?
+  skillsJson     String   @default("[]")
+  createdAt      DateTime @default(now())
+  companyId      String?
+  company        Company? @relation(fields: [companyId], references: [id])
+  applications   Application[] @relation("CandidateApplications")
+  refreshTokens  RefreshToken[]
 }
 
-model CandidateProfile {
-  id         String   @id @default(cuid())
-  userId     String   @unique
-  bio        String?
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+model RefreshToken {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Company {
-  id        String   @id @default(cuid())
-  userId    String?  @unique
-  name      String
-  industry  String
-  size      String
-  logo      String?
-  website   String?
-  isVerified Boolean @default(false)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User?    @relation(fields: [userId], references: [id])
-  jobs      Job[]
-}
-
-model Job {
-  id          String   @id @default(cuid())
-  companyId   String
-  title       String
-  description String
-  location    String
-  type        String
-  isVerified  Boolean  @default(false)
-  postedAt    DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  company     Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  applications Application[]
-  @@index([companyId])
-  @@index([postedAt])
+  id                String  @id @default(cuid())
+  name              String
+  logo              String?
+  isVerified        Boolean @default(false)
+  verificationBadge String?
+  industry          String
+  size              String
+  website           String?
+  description       String  @default("")
+  users             User[]
+  jobs              Job[]
 }
 
 model Skill {
-  id        String  @id @default(cuid())
-  name      String  @unique
-  category  String
-  aliases   String[]
-  marketDemandScore Int @default(0)
+  id                String     @id @default(cuid())
+  name              String     @unique
+  category          String     @default("General")
+  aliasesJson       String     @default("[]")
+  marketDemandScore Int        @default(50)
+  jobs              JobSkill[]
+}
+
+model Job {
+  id                 String   @id @default(cuid())
+  companyId          String
+  company            Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  title              String
+  description        String
+  requirementsJson   String   @default("[]")
+  responsibilitiesJson String @default("[]")
+  location           String
+  type               String
+  isVerified         Boolean  @default(false)
+  salaryMin          Int?
+  salaryMax          Int?
+  postedAt           DateTime @default(now())
+  expiresAt          DateTime?
+  applications       Application[]
+  skills             JobSkill[]
 }
 
 model JobSkill {
-  id      String @id @default(cuid())
   jobId   String
   skillId String
-  job     Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  job     Job   @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  skill   Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
 
-  @@unique([jobId, skillId])
+  @@id([jobId, skillId])
 }
 
 model Application {
-  id              String            @id @default(cuid())
+  id              String   @id @default(cuid())
   candidateId     String
+  candidate       User     @relation("CandidateApplications", fields: [candidateId], references: [id], onDelete: Cascade)
   jobId           String
-  status          ApplicationStatus @default(APPLIED)
-  matchScore      Int               @default(0)
+  job             Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  status          String   @default("APPLIED")
+  matchScore      Int
+  gapReportJson   String?
   rejectionReason String?
-  appliedAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-  candidate       User              @relation("CandidateApplications", fields: [candidateId], references: [id], onDelete: Cascade)
-  job             Job               @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  appliedAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  coverNote       String?
 
+  @@unique([candidateId, jobId])
   @@index([candidateId])
   @@index([jobId])
-  @@index([status])
-  @@index([appliedAt])
-}
-
-model GapReport {
-  id                    String   @id @default(cuid())
-  applicationId         String   @unique
-  overallMatchPercent   Int
-  generatedAt           DateTime @default(now())
-}
-
-model SkillGap {
-  id         String @id @default(cuid())
-  reportId   String
-  skillName  String
-  required   String
-  candidate  String
-  severity   String
-  explanation String
-}
-
-model LearningRecommendation {
-  id             String @id @default(cuid())
-  reportId       String
-  skillName      String
-  resourceTitle  String
-  platform       String
-  url            String
-  estimatedHours Int
-  isFree         Boolean @default(true)
-  priority       Int
-}
-
-model Notification {
-  id        String   @id @default(cuid())
-  userId    String
-  title     String
-  body      String
-  readAt    DateTime?
-  createdAt DateTime @default(now())
-}
-
-model AuditLog {
-  id        String   @id @default(cuid())
-  entity    String
-  action    String
-  metadata  Json?
-  createdAt DateTime @default(now())
 }

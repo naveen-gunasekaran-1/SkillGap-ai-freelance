@@ -1,16 +1,35 @@
 import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
 import type { User } from '@skillgap/types';
+import { clearAuthTokens, setAuthTokens } from '../lib/api';
 
 interface AuthState {
   user: User | null;
-  token: string | null;
-  login: (user: User, token: string) => void;
+  setSession: (user: User, accessToken: string, refreshToken: string) => void;
+  setUser: (user: User) => void;
   logout: () => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
-  user: null,
-  token: null,
-  login: (user, token) => set({ user, token }),
-  logout: () => set({ user: null, token: null }),
-}));
+/**
+ * Global auth state. Access/refresh tokens live in `localStorage` (see `lib/api.ts`).
+ */
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set) => ({
+      user: null,
+      setSession: (user, accessToken, refreshToken) => {
+        setAuthTokens(accessToken, refreshToken);
+        set({ user });
+      },
+      setUser: (user) => set({ user }),
+      logout: () => {
+        clearAuthTokens();
+        set({ user: null });
+      },
+    }),
+    {
+      name: 'skillgap-auth',
+      partialize: (state) => ({ user: state.user }),
+    },
+  ),
+);

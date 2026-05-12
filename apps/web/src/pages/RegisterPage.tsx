@@ -1,7 +1,11 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { Button, Input, Badge } from '@skillgap/ui';
+import { Link, useNavigate } from 'react-router-dom';
+import toast from 'react-hot-toast';
+import { Button, Input } from '@skillgap/ui';
 import { Navbar } from '../components/Navbar';
+import { api } from '../lib/api';
+import { parseUser } from '../lib/normalize';
+import { useAuthStore } from '../stores/authStore';
 
 type Role = 'CANDIDATE' | 'COMPANY' | null;
 const skillOptions = ['React', 'TypeScript', 'Node.js', 'Python', 'Java', 'Go', 'CSS', 'SQL', 'AWS', 'Docker', 'Kubernetes', 'GraphQL', 'Next.js', 'Vue.js', 'MongoDB', 'PostgreSQL', 'Redis', 'Git', 'Figma', 'Tailwind CSS'];
@@ -23,7 +27,70 @@ export function RegisterPage(): React.JSX.Element {
 
   const toggleSkill = (s: string) => setSkills((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : prev.length < 20 ? [...prev, s] : prev);
 
-  const handleSubmit = (e: React.FormEvent) => { e.preventDefault(); console.log('Register:', { role, ...form, skills }); };
+  const [submitting, setSubmitting] = useState(false);
+  const navigate = useNavigate();
+  const setSession = useAuthStore((s) => s.setSession);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!role) {
+      toast.error('Choose a role to continue');
+      return;
+    }
+    if (form.password !== form.confirmPassword) {
+      toast.error('Passwords do not match');
+      return;
+    }
+    if (form.password.length < 8) {
+      toast.error('Password must be at least 8 characters');
+      return;
+    }
+    if (role === 'CANDIDATE' && skills.length === 0) {
+      toast.error('Pick at least one skill');
+      return;
+    }
+    if (role === 'COMPANY' && (!form.companyName.trim() || !form.industry.trim())) {
+      toast.error('Company name and industry are required');
+      return;
+    }
+
+    setSubmitting(true);
+    try {
+      const body =
+        role === 'CANDIDATE'
+          ? {
+              role: 'CANDIDATE' as const,
+              name: form.name.trim(),
+              email: form.email.trim().toLowerCase(),
+              password: form.password,
+              skills,
+            }
+          : {
+              role: 'COMPANY' as const,
+              name: form.name.trim(),
+              email: form.email.trim().toLowerCase(),
+              password: form.password,
+              company: {
+                name: form.companyName.trim(),
+                industry: form.industry.trim(),
+                ...(form.website.trim() ? { website: form.website.trim() } : {}),
+              },
+            };
+
+      const res = await api.post<{ user: unknown; accessToken: string; refreshToken: string }>('/auth/register', body);
+      setSession(parseUser(res.data.user), res.data.accessToken, res.data.refreshToken);
+      toast.success('Account created');
+      navigate('/dashboard', { replace: true });
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === 'object' && 'response' in err
+          ? String((err as { response?: { data?: { message?: string } } }).response?.data?.message ?? 'Registration failed')
+          : 'Registration failed';
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -132,8 +199,12 @@ export function RegisterPage(): React.JSX.Element {
                   </>
                 )}
                 <form onSubmit={handleSubmit} className="mt-8 flex gap-3">
-                  <Button type="button" variant="secondary" onClick={() => setStep(2)} className="flex-1">Back</Button>
-                  <Button type="submit" variant="ai-gradient" className="flex-1">Create account</Button>
+                  <Button type="button" variant="secondary" onClick={() => setStep(2)} className="flex-1" disabled={submitting}>
+                    Back
+                  </Button>
+                  <Button type="submit" variant="ai-gradient" className="flex-1" disabled={submitting}>
+                    {submitting ? 'Creating…' : 'Create account'}
+                  </Button>
                 </form>
               </div>
             )}

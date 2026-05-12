@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@skillgap/ui';
+import { hasAccessToken, revokeRefreshToken } from '../lib/api';
+import { useAuthStore } from '../stores/authStore';
 
 const navLinks = [
   { to: '/jobs', label: 'Jobs' },
@@ -17,6 +19,17 @@ export function Navbar(): React.JSX.Element {
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
+  const navigate = useNavigate();
+  const user = useAuthStore((s) => s.user);
+  const logout = useAuthStore((s) => s.logout);
+  const authed = hasAccessToken();
+
+  const handleSignOut = () => {
+    void revokeRefreshToken().finally(() => {
+      logout();
+      navigate('/');
+    });
+  };
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 8);
@@ -90,12 +103,25 @@ export function Navbar(): React.JSX.Element {
 
           {/* Desktop CTA buttons */}
           <div className="hidden gap-2.5 md:flex">
-            <Link to="/login">
-              <Button variant="ghost" size="sm">Sign in</Button>
-            </Link>
-            <Link to="/register">
-              <Button variant="ai-gradient" size="sm">Get started</Button>
-            </Link>
+            {authed ? (
+              <>
+                <span className="mr-1 max-w-[160px] truncate text-sm text-text-secondary" title={user?.email}>
+                  {user?.name ?? 'Account'}
+                </span>
+                <Button variant="ghost" size="sm" type="button" onClick={handleSignOut}>
+                  Sign out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="ghost" size="sm">Sign in</Button>
+                </Link>
+                <Link to="/register">
+                  <Button variant="ai-gradient" size="sm">Get started</Button>
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile hamburger button */}
@@ -161,12 +187,20 @@ export function Navbar(): React.JSX.Element {
           </div>
 
           <div className="mt-auto flex flex-col gap-3 border-t border-border pt-6">
-            <Link to="/login">
-              <Button variant="secondary" className="w-full">Sign in</Button>
-            </Link>
-            <Link to="/register">
-              <Button variant="ai-gradient" className="w-full">Get started</Button>
-            </Link>
+            {authed ? (
+              <Button variant="secondary" className="w-full" type="button" onClick={handleSignOut}>
+                Sign out
+              </Button>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="secondary" className="w-full">Sign in</Button>
+                </Link>
+                <Link to="/register">
+                  <Button variant="ai-gradient" className="w-full">Get started</Button>
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -1,6 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import toast from 'react-hot-toast';
 import { Button, Input, Textarea, Badge, Card, Avatar, MatchScore, ProgressBar } from '@skillgap/ui';
 import { Navbar } from '../components/Navbar';
+import { api } from '../lib/api';
+import { parseUser } from '../lib/normalize';
+import { useAuthStore } from '../stores/authStore';
 
 const profileTabs = ['Overview', 'Skills', 'Experience', 'Settings'] as const;
 type ProfileTab = typeof profileTabs[number];
@@ -10,14 +14,68 @@ const allSkills = ['React', 'TypeScript', 'Node.js', 'CSS', 'Next.js', 'Python',
  * Candidate profile page with avatar, tabs, editable skills, experience timeline, and settings.
  */
 export function ProfilePage(): React.JSX.Element {
+  const user = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
   const [activeTab, setActiveTab] = useState<ProfileTab>('Overview');
   const [isEditing, setIsEditing] = useState(false);
-  const [profile, setProfile] = useState({ name: 'John Doe', email: 'john@example.com', title: 'Frontend Engineer', bio: 'Passionate about building beautiful web applications with React and TypeScript. Looking for opportunities to grow in full-stack development.', location: 'San Francisco, CA' });
-  const [skills, setSkills] = useState(['React', 'TypeScript', 'Node.js', 'CSS']);
+  const [saving, setSaving] = useState(false);
+  const [profile, setProfile] = useState({
+    name: '',
+    email: '',
+    title: 'Candidate',
+    bio: 'Tell recruiters what you are building next.',
+    location: '',
+  });
+  const [skills, setSkills] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!user) return;
+    setProfile((p) => ({
+      ...p,
+      name: user.name,
+      email: user.email,
+    }));
+    if (user.skills && user.skills.length > 0) {
+      setSkills(user.skills);
+    }
+  }, [user]);
 
   const set = (key: string, val: string) => setProfile((p) => ({ ...p, [key]: val }));
-  const toggleSkill = (s: string) => setSkills((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
-  const completionPercent = Math.min(100, Math.round(((profile.name ? 1 : 0) + (profile.email ? 1 : 0) + (profile.title ? 1 : 0) + (profile.bio ? 1 : 0) + (skills.length > 0 ? 1 : 0)) / 5 * 100));
+  const toggleSkill = (s: string) =>
+    setSkills((prev) => (prev.includes(s) ? prev.filter((x) => x !== s) : prev.length < 24 ? [...prev, s] : prev));
+
+  const completionPercent = Math.min(
+    100,
+    Math.round(
+      ((profile.name ? 1 : 0) + (profile.email ? 1 : 0) + (profile.title ? 1 : 0) + (profile.bio ? 1 : 0) + (skills.length > 0 ? 1 : 0)) *
+        (100 / 5),
+    ),
+  );
+
+  const handleSaveToggle = async () => {
+    if (!isEditing) {
+      setIsEditing(true);
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await api.patch<{ user: unknown }>('/users/me', {
+        name: profile.name.trim(),
+        skills,
+      });
+      setUser(parseUser(res.data.user));
+      toast.success('Profile saved');
+      setIsEditing(false);
+    } catch (err: unknown) {
+      const msg =
+        err && typeof err === 'object' && 'response' in err
+          ? String((err as { response?: { data?: { message?: string } } }).response?.data?.message ?? 'Save failed')
+          : 'Save failed';
+      toast.error(msg);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -40,8 +98,13 @@ export function ProfilePage(): React.JSX.Element {
                   <p className="text-sm text-text-secondary">{profile.title} • {profile.location}</p>
                 </div>
               </div>
-              <Button onClick={() => setIsEditing(!isEditing)} variant={isEditing ? 'secondary' : 'primary'} size="sm">
-                {isEditing ? 'Save Profile' : 'Edit Profile'}
+              <Button
+                onClick={() => void handleSaveToggle()}
+                variant={isEditing ? 'secondary' : 'primary'}
+                size="sm"
+                disabled={saving}
+              >
+                {saving ? 'Saving…' : isEditing ? 'Save Profile' : 'Edit Profile'}
               </Button>
             </div>
             {/* Profile completion */}
@@ -146,7 +209,7 @@ export function ProfilePage(): React.JSX.Element {
             <Card className="p-6">
               <h2 className="text-lg font-semibold text-text-primary mb-6">Account Settings</h2>
               <div className="space-y-4 max-w-md">
-                <Input label="Email" value={profile.email} onChange={(e) => set('email', e.target.value)} />
+                <Input label="Email" value={profile.email} readOnly disabled className="opacity-80" />
                 <Input label="Password" type="password" value="••••••••" readOnly />
                 <Button variant="secondary" size="sm">Change password</Button>
                 <div className="border-t border-border pt-6 mt-6">
