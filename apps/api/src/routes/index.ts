@@ -5,6 +5,7 @@ import companiesRoutes from './companies';
 import aiRoutes from './ai';
 import jobsRoutes from './jobs';
 import usersRoutes from './users';
+import uploadsRoutes from './uploads';
 
 const router = Router();
 
@@ -18,5 +19,6 @@ router.use('/companies', companiesRoutes);
 router.use('/ai', aiRoutes);
 router.use('/jobs', jobsRoutes);
 router.use('/users', usersRoutes);
+router.use('/uploads', uploadsRoutes);
 
 export default router;

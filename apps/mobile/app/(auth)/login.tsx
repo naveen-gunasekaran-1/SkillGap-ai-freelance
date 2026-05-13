@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useRouter } from 'expo-router';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View, SafeAreaView } from 'react-native';
+import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../src/theme';
 import { mobileApi, setMobileAuthTokens } from '../../src/lib/http';
@@ -17,7 +18,7 @@ export default function LoginScreen(): React.JSX.Element {
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const setUserName = useMobileAuthStore((s) => s.setUserName);
+  const setSession = useMobileAuthStore((s) => s.setSession);
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
@@ -34,10 +35,13 @@ export default function LoginScreen(): React.JSX.Element {
         },
       );
       await setMobileAuthTokens(res.data.accessToken, res.data.refreshToken);
-      setUserName(res.data.user.name);
+      setSession(res.data.user.name);
       router.replace('/(tabs)');
-    } catch {
-      Alert.alert('Sign in failed', 'Check your credentials and API URL (EXPO_PUBLIC_API_URL).');
+    } catch (error) {
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.message ?? error.message
+        : 'Check your credentials and API URL (EXPO_PUBLIC_API_URL).';
+      Alert.alert('Sign in failed', message);
     } finally {
       setLoading(false);
     }

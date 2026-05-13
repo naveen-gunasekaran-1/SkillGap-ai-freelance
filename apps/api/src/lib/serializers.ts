@@ -1,5 +1,5 @@
 import type { Application, Company, Job, Skill, User } from '@prisma/client';
-import { parseStringArray } from './jsonFields';
+import { parseJsonArray, parseStringArray } from './jsonFields';
 
 type JobWithRelations = Job & {
   company: Company;
@@ -18,8 +18,23 @@ export function toUserDto(user: User): {
   email: string;
   name: string;
   role: string;
+  title: string;
+  location: string;
+  summary: string;
+  phone?: string | null;
   avatar?: string;
   skills: string[];
+  skillLevels: Array<{ name: string; level: string }>;
+  education: Array<{ school: string; degree: string; field?: string; startYear: number; endYear?: number; gpa?: string }>;
+  experience: Array<{ company: string; role: string; startDate: string; endDate?: string; summary?: string; bullets?: string[] }>;
+  internships: Array<{ company: string; role: string; startDate: string; endDate?: string; summary?: string }>;
+  projects: Array<{ name: string; stack: string[]; link?: string; summary?: string }>;
+  links: Array<{ label: string; url: string }>;
+  resumeUrl?: string | null;
+  resumeStatus: string;
+  resumeVerifiedAt?: string | null;
+  emailVerified: boolean;
+  skillsVerified: boolean;
   createdAt: string;
   companyId: string | null;
 } {
@@ -28,7 +43,22 @@ export function toUserDto(user: User): {
     email: user.email,
     name: user.name,
     role: user.role,
+    title: user.title,
+    location: user.location,
+    summary: user.summary,
+    phone: user.phone ?? null,
     skills: parseStringArray(user.skillsJson),
+    skillLevels: parseJsonArray(user.skillLevelsJson),
+    education: parseJsonArray(user.educationJson),
+    experience: parseJsonArray(user.experienceJson),
+    internships: parseJsonArray(user.internshipsJson),
+    projects: parseJsonArray(user.projectsJson),
+    links: parseJsonArray(user.linksJson),
+    resumeUrl: user.resumeUrl ?? null,
+    resumeStatus: user.resumeStatus,
+    resumeVerifiedAt: user.resumeVerifiedAt ? user.resumeVerifiedAt.toISOString() : null,
+    emailVerified: user.emailVerified,
+    skillsVerified: user.skillsVerified,
     createdAt: user.createdAt.toISOString(),
     companyId: user.companyId,
     ...(user.avatar ? { avatar: user.avatar } : {}),

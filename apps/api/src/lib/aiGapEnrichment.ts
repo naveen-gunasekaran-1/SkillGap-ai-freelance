@@ -13,6 +13,9 @@ export async function enrichGapReportWithOpenAI(base: GapReport, context: { jobT
   const key = env.OPENAI_API_KEY;
   if (!key) return base;
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 6500);
+
   try {
     const messages: OpenAiMessage[] = [
       {
@@ -42,6 +45,7 @@ export async function enrichGapReportWithOpenAI(base: GapReport, context: { jobT
         messages,
         response_format: { type: 'json_object' },
       }),
+      signal: controller.signal,
     });
 
     if (!res.ok) return base;
@@ -85,5 +89,7 @@ export async function enrichGapReportWithOpenAI(base: GapReport, context: { jobT
     };
   } catch {
     return base;
+  } finally {
+    clearTimeout(timeoutId);
   }
 }

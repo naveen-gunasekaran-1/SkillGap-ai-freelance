@@ -82,24 +82,26 @@ export function Navbar(): React.JSX.Element {
           </Link>
 
           {/* Desktop nav links */}
-          <div className="hidden items-center gap-1 md:flex">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`relative rounded-lg px-3.5 py-2 text-sm font-medium transition-all duration-150 ${
-                  isActive(link.to)
-                    ? 'text-primary bg-primary-light/60'
-                    : 'text-text-secondary hover:text-text-primary hover:bg-background'
-                }`}
-              >
-                {link.label}
-                {isActive(link.to) && (
-                  <span className="absolute bottom-0 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-primary" />
-                )}
-              </Link>
-            ))}
-          </div>
+          {authed && (
+            <div className="hidden items-center gap-1 md:flex">
+              {navLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`relative rounded-lg px-3.5 py-2 text-sm font-medium transition-all duration-150 ${
+                    isActive(link.to)
+                      ? 'text-primary bg-primary-light/60'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-background'
+                  }`}
+                >
+                  {link.label}
+                  {isActive(link.to) && (
+                    <span className="absolute bottom-0 left-1/2 h-0.5 w-5 -translate-x-1/2 rounded-full bg-primary" />
+                  )}
+                </Link>
+              ))}
+            </div>
+          )}
 
           {/* Desktop CTA buttons */}
           <div className="hidden gap-2.5 md:flex">
@@ -169,22 +171,24 @@ export function Navbar(): React.JSX.Element {
         }`}
       >
         <div className="flex h-full flex-col px-6 pt-20 pb-8">
-          <div className="flex flex-col gap-1">
-            {navLinks.map((link, i) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`rounded-xl px-4 py-3.5 text-base font-medium transition-all duration-150 ${
-                  isActive(link.to)
-                    ? 'bg-primary-light/60 text-primary'
-                    : 'text-text-secondary hover:bg-background hover:text-text-primary'
-                }`}
-                style={{ animationDelay: `${i * 50 + 100}ms` }}
-              >
-                {link.label}
-              </Link>
-            ))}
-          </div>
+          {authed && (
+            <div className="flex flex-col gap-1">
+              {navLinks.map((link, i) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`rounded-xl px-4 py-3.5 text-base font-medium transition-all duration-150 ${
+                    isActive(link.to)
+                      ? 'bg-primary-light/60 text-primary'
+                      : 'text-text-secondary hover:bg-background hover:text-text-primary'
+                  }`}
+                  style={{ animationDelay: `${i * 50 + 100}ms` }}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          )}
 
           <div className="mt-auto flex flex-col gap-3 border-t border-border pt-6">
             {authed ? (

@@ -1,24 +1,101 @@
-import { useState } from 'react';
-import { FlatList, Pressable, ScrollView, Text, View, SafeAreaView } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { FlatList, Pressable, ScrollView, Text, View, SafeAreaView, RefreshControl } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../src/theme';
+import { mobileApi } from '../../src/lib/http';
 
 const t = theme;
 
-const filters = ['All', 'Reviewing', 'Interview', 'Rejected'] as const;
+const filters = ['All', 'Reviewing', 'Interview', 'Offer', 'Rejected'] as const;
+type StatusFilter = (typeof filters)[number];
 
-const mockApps = [
-  { id: '1', title: 'Senior Frontend Engineer', company: 'TechCorp', status: 'Under Review', key: 'Reviewing', color: t.colors.warning, date: 'May 1' },
-  { id: '2', title: 'Full Stack Developer', company: 'StartupXYZ', status: 'Interview', key: 'Interview', color: t.colors.success, date: 'Apr 28' },
-  { id: '3', title: 'Backend Engineer', company: 'BigTech', status: 'Rejected', key: 'Rejected', color: t.colors.error, date: 'Apr 20' },
-];
+interface ApplicationRow {
+  id: string;
+  title: string;
+  company: string;
+  status: string;
+  filterKey: StatusFilter;
+  color: string;
+  date: string;
+}
+
+function statusToFilter(status: string): StatusFilter {
+  if (status === 'APPLIED' || status === 'UNDER_REVIEW' || status === 'SHORTLISTED') return 'Reviewing';
+  if (status === 'INTERVIEW_SCHEDULED' || status === 'INTERVIEW_DONE') return 'Interview';
+  if (status === 'OFFER_EXTENDED' || status === 'HIRED') return 'Offer';
+  if (status === 'REJECTED') return 'Rejected';
+  return 'All';
+}
+
+function statusPresentation(status: string): { label: string; color: string } {
+  const map: Record<string, { label: string; color: string }> = {
+    APPLIED: { label: 'Applied', color: t.colors.primary },
+    UNDER_REVIEW: { label: 'Under Review', color: t.colors.warning },
+    SHORTLISTED: { label: 'Shortlisted', color: t.colors.primary },
+    INTERVIEW_SCHEDULED: { label: 'Interview', color: t.colors.success },
+    INTERVIEW_DONE: { label: 'Interview Done', color: t.colors.success },
+    OFFER_EXTENDED: { label: 'Offer', color: t.colors.success },
+    HIRED: { label: 'Hired', color: t.colors.success },
+    REJECTED: { label: 'Rejected', color: t.colors.error },
+  };
+  return map[status] ?? { label: status, color: t.colors.textSecondary };
+}
 
 /**
  * Mobile applications screen with horizontal filter chips and application cards.
  */
 export default function ApplicationsScreen(): React.JSX.Element {
-  const [filter, setFilter] = useState<typeof filters[number]>('All');
-  const filtered = mockApps.filter((a) => filter === 'All' || a.key === filter);
+  const [filter, setFilter] = useState<StatusFilter>('All');
+  const [rows, setRows] = useState<ApplicationRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const load = useCallback(async () => {
+    const res = await mobileApi.get<{ applications: Array<{ id: string; status: string; appliedAt: string; job?: { title: string; company: { name: string } } }> }>(
+      '/applications',
+    );
+    const formatted = res.data.applications.map((app) => {
+      const { label, color } = statusPresentation(app.status);
+      const appliedAt = new Date(app.appliedAt);
+      const date = appliedAt.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+      const title = app.job?.title ?? 'Role';
+      const company = app.job?.company.name ?? 'Company';
+      return {
+        id: app.id,
+        title,
+        company,
+        status: label,
+        filterKey: statusToFilter(app.status),
+        color,
+        date,
+      };
+    });
+    setRows(formatted);
+  }, []);
+
+  useEffect(() => {
+    void (async () => {
+      setLoading(true);
+      try {
+        await load();
+      } catch {
+        setRows([]);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [load]);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await load();
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  const filtered = rows.filter((a) => filter === 'All' || a.filterKey === filter);
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.background }}>
@@ -53,6 +130,7 @@ export default function ApplicationsScreen(): React.JSX.Element {
       <FlatList
         data={filtered}
         keyExtractor={(item) => item.id}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => void onRefresh()} />}
         contentContainerStyle={{ paddingHorizontal: t.spacing.lg, paddingVertical: t.spacing.lg }}
         ItemSeparatorComponent={() => <View style={{ height: t.spacing.md }} />}
         showsVerticalScrollIndicator={false}
@@ -85,8 +163,8 @@ export default function ApplicationsScreen(): React.JSX.Element {
         ListEmptyComponent={() => (
           <View style={{ alignItems: 'center', paddingVertical: t.spacing.xxxl, marginTop: t.spacing.xxxl }}>
             <Ionicons name="document-text-outline" size={64} color={t.colors.border} />
-            <Text style={{ ...t.typography.h3, color: t.colors.textPrimary, marginTop: t.spacing.md }}>No applications</Text>
-            <Text style={{ ...t.typography.body, color: t.colors.textSecondary, marginTop: 8 }}>You haven't applied to any jobs yet</Text>
+              <Text style={{ ...t.typography.h3, color: t.colors.textPrimary, marginTop: t.spacing.md }}>{loading ? 'Loading applications' : 'No applications'}</Text>
+              <Text style={{ ...t.typography.body, color: t.colors.textSecondary, marginTop: 8 }}>{loading ? 'Fetching your data…' : 'You have not applied to any jobs yet'}</Text>
           </View>
         )}
       />

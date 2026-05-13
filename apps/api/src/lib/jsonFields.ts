@@ -12,8 +12,27 @@ export function parseStringArray(raw: string): string[] {
 }
 
 /**
+ * Parse a JSON-encoded array stored in text fields.
+ */
+export function parseJsonArray<T>(raw: string): T[] {
+  try {
+    const v = JSON.parse(raw) as unknown;
+    return Array.isArray(v) ? (v as T[]) : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
  * Serialize a string array for SQLite storage.
  */
 export function stringifyStringArray(arr: string[]): string {
   return JSON.stringify(arr);
+}
+
+/**
+ * Serialize structured JSON for storage.
+ */
+export function stringifyJson(value: unknown): string {
+  return JSON.stringify(value);
 }

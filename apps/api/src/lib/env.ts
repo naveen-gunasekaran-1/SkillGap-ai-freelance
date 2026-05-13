@@ -16,6 +16,12 @@ const envSchema = z.object({
     ),
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_MODEL: z.string().optional().default('gpt-4o-mini'),
+  S3_ENDPOINT: z.string().optional(),
+  S3_REGION: z.string().optional(),
+  S3_BUCKET: z.string().optional(),
+  S3_ACCESS_KEY: z.string().optional(),
+  S3_SECRET_KEY: z.string().optional(),
+  S3_PUBLIC_URL: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

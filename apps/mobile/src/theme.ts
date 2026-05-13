@@ -4,20 +4,20 @@
  */
 export const theme = {
   colors: {
-    primary: '#4F46E5', // Indigo 600 - More modern and vibrant
-    primaryDark: '#3730A3', // Indigo 800
-    primaryLight: '#E0E7FF', // Indigo 100
-    aiPurple: '#8B5CF6', // Violet 500
-    aiCyan: '#0EA5E9', // Sky 500
-    background: '#F8FAFC', // Slate 50 - Cooler, cleaner background
+    primary: '#2563EB',
+    primaryDark: '#1E40AF',
+    primaryLight: '#DBEAFE',
+    aiPurple: '#7C3AED',
+    aiCyan: '#06B6D4',
+    background: '#F9FAFB',
     surface: '#FFFFFF',
-    surfaceSecondary: '#F1F5F9', // Slate 100
-    border: '#E2E8F0', // Slate 200
-    textPrimary: '#0F172A', // Slate 900
-    textSecondary: '#64748B', // Slate 500
-    success: '#10B981', // Emerald 500
-    warning: '#F59E0B', // Amber 500
-    error: '#EF4444', // Red 500
+    surfaceSecondary: '#F1F5F9',
+    border: '#E5E7EB',
+    textPrimary: '#111827',
+    textSecondary: '#6B7280',
+    success: '#10B981',
+    warning: '#F59E0B',
+    error: '#EF4444',
     glass: 'rgba(255, 255, 255, 0.85)', // For glassmorphism effects
   },
   spacing: {

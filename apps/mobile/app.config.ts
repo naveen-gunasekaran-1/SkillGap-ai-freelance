@@ -21,6 +21,7 @@ export default {
     ],
     android: {
       package: 'com.anonymous.skillgapai',
+      usesCleartextTraffic: true,
       // adaptiveIcon: {
       //   foregroundImage: './assets/icon.png', // Add this when you create app icon assets
       //   backgroundColor: '#FFFFFF',
@@ -47,7 +48,7 @@ export default {
     //   favicon: './assets/favicon.png', // Add this when you create favicon asset
     // },
     extra: {
-      apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'http://127.0.0.1:3001',
+      apiUrl: process.env.EXPO_PUBLIC_API_URL,
     },
   },
 };

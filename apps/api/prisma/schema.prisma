@@ -13,8 +13,23 @@ model User {
   passwordHash   String
   name           String
   role           String
+  title          String   @default("Candidate")
+  location       String   @default("")
+  summary        String   @default("")
+  phone          String?
   avatar         String?
   skillsJson     String   @default("[]")
+  skillLevelsJson String  @default("[]")
+  educationJson  String   @default("[]")
+  experienceJson String   @default("[]")
+  internshipsJson String  @default("[]")
+  projectsJson   String   @default("[]")
+  linksJson      String   @default("[]")
+  resumeUrl      String?
+  resumeStatus   String   @default("PENDING")
+  resumeVerifiedAt DateTime?
+  emailVerified  Boolean  @default(false)
+  skillsVerified Boolean  @default(false)
   createdAt      DateTime @default(now())
   companyId      String?
   company        Company? @relation(fields: [companyId], references: [id])

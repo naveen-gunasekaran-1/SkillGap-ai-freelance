@@ -1,10 +1,70 @@
+export type SkillLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
+
+export interface SkillAssessment {
+  name: string;
+  level: SkillLevel;
+}
+
+export interface EducationEntry {
+  school: string;
+  degree: string;
+  field?: string;
+  startYear: number;
+  endYear?: number;
+  gpa?: string;
+}
+
+export interface ExperienceEntry {
+  company: string;
+  role: string;
+  startDate: string;
+  endDate?: string;
+  summary?: string;
+  bullets?: string[];
+}
+
+export interface InternshipEntry {
+  company: string;
+  role: string;
+  startDate: string;
+  endDate?: string;
+  summary?: string;
+}
+
+export interface ProjectEntry {
+  name: string;
+  stack: string[];
+  link?: string;
+  summary?: string;
+}
+
+export interface ProfileLink {
+  label: string;
+  url: string;
+}
+
 export interface User {
   id: string;
   email: string;
   name: string;
   role: 'CANDIDATE' | 'COMPANY' | 'ADMIN';
+  title: string;
+  location: string;
+  summary: string;
+  phone?: string | null;
   avatar?: string;
   skills?: string[];
+  skillLevels?: SkillAssessment[];
+  education?: EducationEntry[];
+  experience?: ExperienceEntry[];
+  internships?: InternshipEntry[];
+  projects?: ProjectEntry[];
+  links?: ProfileLink[];
+  resumeUrl?: string | null;
+  resumeStatus?: string;
+  resumeVerifiedAt?: Date | null;
+  emailVerified?: boolean;
+  skillsVerified?: boolean;
   companyId?: string | null;
   createdAt: Date;
 }
