@@ -20,7 +20,7 @@ app.use(
         callback(null, true);
         return;
       }
-      callback(null, allowed.includes(origin));
+      callback(null, allowed.includes('*') || allowed.includes(origin));
     },
     credentials: true,
   }),

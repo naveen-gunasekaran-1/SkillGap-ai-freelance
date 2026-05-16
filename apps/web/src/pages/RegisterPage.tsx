@@ -69,6 +69,12 @@ export function RegisterPage(): React.JSX.Element {
     [skills, skillLevels],
   );
 
+  const getCompanyWebsite = (): string | undefined => {
+    const website = form.website.trim();
+    if (!website) return undefined;
+    return /^https?:\/\//i.test(website) ? website : `https://${website}`;
+  };
+
   const uploadResume = async (file: File) => {
     setUploading(true);
     try {
@@ -95,6 +101,10 @@ export function RegisterPage(): React.JSX.Element {
     e.preventDefault();
     if (!role) {
       toast.error('Choose a role to continue');
+      return;
+    }
+    if (!form.name.trim() || !form.email.trim()) {
+      toast.error('Name and email are required');
       return;
     }
     if (form.password !== form.confirmPassword) {
@@ -205,14 +215,15 @@ export function RegisterPage(): React.JSX.Element {
               company: {
                 name: form.companyName.trim(),
                 industry: form.industry.trim(),
-                ...(form.website.trim() ? { website: form.website.trim() } : {}),
+                ...(getCompanyWebsite() ? { website: getCompanyWebsite() } : {}),
               },
             };
 
       const res = await api.post<{ user: unknown; accessToken: string; refreshToken: string }>('/auth/register', body);
-      setSession(parseUser(res.data.user), res.data.accessToken, res.data.refreshToken);
+      const user = parseUser(res.data.user);
+      setSession(user, res.data.accessToken, res.data.refreshToken);
       toast.success('Account created. Verify your email to unlock full features.');
-      navigate('/dashboard', { replace: true });
+      navigate(user.role === 'COMPANY' ? '/company' : '/dashboard', { replace: true });
     } catch (err: unknown) {
       const msg =
         err && typeof err === 'object' && 'response' in err
@@ -275,7 +286,25 @@ export function RegisterPage(): React.JSX.Element {
               <div className="animate-fade-in-up">
                 <h1 className="text-2xl font-bold text-text-primary">Your details</h1>
                 <p className="mt-2 text-text-secondary">Tell us a bit about yourself</p>
-                <form className="mt-6 space-y-4" onSubmit={(e) => { e.preventDefault(); setStep(3); }}>
+                <form
+                  className="mt-6 space-y-4"
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    if (!form.name.trim() || !form.email.trim()) {
+                      toast.error('Name and email are required');
+                      return;
+                    }
+                    if (form.password !== form.confirmPassword) {
+                      toast.error('Passwords do not match');
+                      return;
+                    }
+                    if (form.password.length < 8) {
+                      toast.error('Password must be at least 8 characters');
+                      return;
+                    }
+                    setStep(3);
+                  }}
+                >
                   <Input label="Full name" placeholder="John Doe" value={form.name} onChange={(e) => set('name', e.target.value)} />
                   <Input label="Email address" type="email" placeholder="you@example.com" value={form.email} onChange={(e) => set('email', e.target.value)} />
                   <div className="relative">
@@ -301,7 +330,7 @@ export function RegisterPage(): React.JSX.Element {
 
             {/* ═══ STEP 3: Profile essentials or Company ═══ */}
             {step === 3 && (
-              <div className="animate-fade-in-up">
+              <form className="animate-fade-in-up" onSubmit={role === 'COMPANY' ? handleSubmit : (e) => { e.preventDefault(); setStep(4); }}>
                 {role === 'CANDIDATE' ? (
                   <>
                     <h1 className="text-2xl font-bold text-text-primary">Profile essentials</h1>
@@ -372,11 +401,11 @@ export function RegisterPage(): React.JSX.Element {
                   <Button type="button" variant="secondary" onClick={() => setStep(2)} className="flex-1">
                     Back
                   </Button>
-                  <Button type="button" variant="ai-gradient" className="flex-1" onClick={() => setStep(role === 'CANDIDATE' ? 4 : 3)}>
-                    Continue
+                  <Button type="submit" variant="ai-gradient" className="flex-1" disabled={submitting}>
+                    {role === 'COMPANY' ? (submitting ? 'Creating…' : 'Create account') : 'Continue'}
                   </Button>
                 </div>
-              </div>
+              </form>
             )}
 
             {/* ═══ STEP 4: Background & Skills ═══ */}
