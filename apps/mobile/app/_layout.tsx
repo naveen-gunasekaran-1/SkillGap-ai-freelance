@@ -1,6 +1,6 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { hasMobileAccessToken, mobileApi } from '../src/lib/http';
+import { clearMobileAuthTokens, hasMobileAccessToken, mobileApi } from '../src/lib/http';
 import { useMobileAuthStore } from '../src/stores/authStore';
 
 /**
@@ -15,6 +15,7 @@ export default function RootLayout(): React.JSX.Element {
   const authed = useMobileAuthStore((s) => s.isAuthenticated);
   const setAuthenticated = useMobileAuthStore((s) => s.setAuthenticated);
   const setSession = useMobileAuthStore((s) => s.setSession);
+  const clearSession = useMobileAuthStore((s) => s.clear);
 
   useEffect(() => {
     void (async () => {
@@ -25,12 +26,13 @@ export default function RootLayout(): React.JSX.Element {
           const res = await mobileApi.get<{ user: { name: string; role: 'CANDIDATE' | 'COMPANY' | 'ADMIN' } }>('/auth/me');
           setSession(res.data.user.name, res.data.user.role);
         } catch {
-          // Token refresh handling lives in the HTTP client; keep route guard simple here.
+          await clearMobileAuthTokens();
+          clearSession();
         }
       }
       setReady(true);
     })();
-  }, [setAuthenticated, setSession]);
+  }, [clearSession, setAuthenticated, setSession]);
 
   useEffect(() => {
     if (!ready) return;

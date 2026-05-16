@@ -32,6 +32,7 @@ export default function LoginScreen(): React.JSX.Element {
         {
           email: email.trim().toLowerCase(),
           password,
+          rememberMe: true,
         },
       );
       await setMobileAuthTokens(res.data.accessToken, res.data.refreshToken);

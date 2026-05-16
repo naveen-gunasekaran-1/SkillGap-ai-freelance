@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import {
@@ -9,13 +10,14 @@ import {
   FileText,
   ShieldCheck,
   ShieldX,
+  Database,
   XCircle,
 } from 'lucide-react';
 import { Badge, Button, Card, Textarea } from '@skillgap/ui';
 import { Navbar } from '../components/Navbar';
 import { api } from '../lib/api';
 
-type VerificationStatus = 'DRAFT' | 'SUBMITTED' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
+type VerificationStatus = 'IN_PROGRESS' | 'SUBMITTED' | 'UNDER_REVIEW' | 'VERIFIED' | 'REJECTED' | 'SUSPENDED';
 type AdminTab = 'verifications' | 'audit' | 'fraud';
 
 interface AdminCompany {
@@ -88,6 +90,16 @@ interface AuditLog {
   } | null;
 }
 
+interface StorageStatus {
+  configured: boolean;
+  bucketConfigured: boolean;
+  accessKeyConfigured: boolean;
+  secretKeyConfigured: boolean;
+  endpointConfigured: boolean;
+  publicUrlConfigured: boolean;
+  provider: string;
+}
+
 const tabs: Array<{ id: AdminTab; label: string }> = [
   { id: 'verifications', label: 'Verification Queue' },
   { id: 'audit', label: 'Audit Logs' },
@@ -95,9 +107,9 @@ const tabs: Array<{ id: AdminTab; label: string }> = [
 ];
 
 function statusBadge(status: string): React.JSX.Element {
-  if (status === 'APPROVED') return <Badge variant="success">Approved</Badge>;
+  if (status === 'VERIFIED') return <Badge variant="success">Approved</Badge>;
   if (status === 'REJECTED' || status === 'SUSPENDED') return <Badge variant="error">{status}</Badge>;
-  if (status === 'SUBMITTED' || status === 'IN_REVIEW') return <Badge variant="warning">{status.replace('_', ' ')}</Badge>;
+  if (status === 'SUBMITTED' || status === 'UNDER_REVIEW') return <Badge variant="warning">{status.replace('_', ' ')}</Badge>;
   return <Badge variant="neutral">{status}</Badge>;
 }
 
@@ -116,7 +128,9 @@ function formatBytes(bytes: number): string {
 
 export function AdminPanel(): React.JSX.Element {
   const queryClient = useQueryClient();
-  const [tab, setTab] = useState<AdminTab>('verifications');
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentTab = searchParams.get('tab');
+  const tab: AdminTab = currentTab === 'audit' || currentTab === 'fraud' ? currentTab : 'verifications';
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [reviewNotes, setReviewNotes] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
@@ -156,13 +170,21 @@ export function AdminPanel(): React.JSX.Element {
     },
   });
 
+  const storageQuery = useQuery({
+    queryKey: ['admin', 'storage-status'],
+    queryFn: async (): Promise<StorageStatus> => {
+      const res = await api.get<{ storage: StorageStatus }>('/admin/storage/status');
+      return res.data.storage;
+    },
+  });
+
   const verifications = verificationsQuery.data ?? [];
   const selectedVerification =
     selectedVerificationQuery.data ?? verifications.find((item) => item.id === selectedId) ?? verifications[0] ?? null;
 
   const stats = useMemo(() => {
-    const pending = verifications.filter((item) => item.status === 'SUBMITTED' || item.status === 'IN_REVIEW').length;
-    const approved = verifications.filter((item) => item.status === 'APPROVED').length;
+    const pending = verifications.filter((item) => item.status === 'SUBMITTED' || item.status === 'UNDER_REVIEW').length;
+    const approved = verifications.filter((item) => item.status === 'VERIFIED').length;
     const rejected = verifications.filter((item) => item.status === 'REJECTED').length;
     const docs = verifications.reduce((sum, item) => sum + item.documents.length, 0);
     return { pending, approved, rejected, docs };
@@ -201,10 +223,26 @@ export function AdminPanel(): React.JSX.Element {
     },
   });
 
+  const openDocument = async (documentId: string): Promise<void> => {
+    try {
+      const res = await api.get<{ url: string }>(`/admin/verification-documents/${documentId}/read-url`);
+      window.open(res.data.url, '_blank', 'noopener,noreferrer');
+    } catch (err: unknown) {
+      const message =
+        typeof err === 'object' &&
+        err !== null &&
+        'response' in err &&
+        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+          ? (err as { response: { data: { message: string } } }).response.data.message
+          : 'Could not open document';
+      toast.error(message);
+    }
+  };
+
   const canDecide =
     selectedVerification?.status === 'SUBMITTED' ||
-    selectedVerification?.status === 'IN_REVIEW' ||
-    selectedVerification?.status === 'DRAFT';
+    selectedVerification?.status === 'UNDER_REVIEW' ||
+    selectedVerification?.status === 'IN_PROGRESS';
 
   return (
     <div className="min-h-screen bg-background">
@@ -223,7 +261,7 @@ export function AdminPanel(): React.JSX.Element {
             {tabs.map((item) => (
               <button
                 key={item.id}
-                onClick={() => setTab(item.id)}
+                onClick={() => setSearchParams(item.id === 'verifications' ? {} : { tab: item.id })}
                 className={`rounded-card px-4 py-2 text-sm font-medium transition-colors ${
                   tab === item.id ? 'bg-primary text-white shadow-card' : 'border border-border bg-white text-text-secondary hover:text-text-primary'
                 }`}
@@ -240,6 +278,25 @@ export function AdminPanel(): React.JSX.Element {
           <MetricCard icon={<XCircle className="h-5 w-5" />} label="Rejected" value={stats.rejected} tone="error" />
           <MetricCard icon={<FileText className="h-5 w-5" />} label="Documents" value={stats.docs} tone="ai" />
         </div>
+
+        <Card className="mt-6 p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-card bg-primary-light text-primary">
+                <Database className="h-5 w-5" />
+              </div>
+              <div>
+                <h2 className="font-semibold text-text-primary">Storage configuration</h2>
+                <p className="mt-1 text-sm text-text-secondary">
+                  Cloudflare R2 or S3-compatible storage is required for verification document uploads.
+                </p>
+              </div>
+            </div>
+            <Badge variant={storageQuery.data?.configured ? 'success' : 'warning'}>
+              {storageQuery.isLoading ? 'Checking' : storageQuery.data?.configured ? 'Configured' : 'Needs setup'}
+            </Badge>
+          </div>
+        </Card>
 
         {tab === 'verifications' && (
           <div className="mt-8 grid gap-6 lg:grid-cols-[420px_1fr]">
@@ -289,6 +346,7 @@ export function AdminPanel(): React.JSX.Element {
               onRejectionReasonChange={setRejectionReason}
               onApprove={() => decisionMutation.mutate('APPROVED')}
               onReject={() => decisionMutation.mutate('REJECTED')}
+              onOpenDocument={(documentId) => void openDocument(documentId)}
             />
           </div>
         )}
@@ -393,6 +451,7 @@ function VerificationDetail({
   onRejectionReasonChange,
   onApprove,
   onReject,
+  onOpenDocument,
 }: {
   verification: CompanyVerification | null;
   notes: string;
@@ -403,6 +462,7 @@ function VerificationDetail({
   onRejectionReasonChange: (value: string) => void;
   onApprove: () => void;
   onReject: () => void;
+  onOpenDocument: (documentId: string) => void;
 }): React.JSX.Element {
   if (!verification) {
     return (
@@ -463,6 +523,9 @@ function VerificationDetail({
                     Scan {doc.malwareScanStatus}
                   </Badge>
                   <Badge variant="neutral">{doc.status}</Badge>
+                  <Button size="sm" variant="secondary" onClick={() => onOpenDocument(doc.id)}>
+                    Open securely
+                  </Button>
                 </div>
               </div>
               {doc.checksumSha256 && (

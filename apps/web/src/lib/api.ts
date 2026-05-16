@@ -2,6 +2,8 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 
 const ACCESS_KEY = 'skillgap.accessToken';
 const REFRESH_KEY = 'skillgap.refreshToken';
+const PERSISTENCE_KEY = 'skillgap.authPersistence';
+type AuthPersistence = 'local' | 'session';
 
 export const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api',
@@ -9,27 +11,40 @@ export const api = axios.create({
 });
 
 function getAccessToken(): string | null {
-  return window.localStorage.getItem(ACCESS_KEY);
+  return window.sessionStorage.getItem(ACCESS_KEY) ?? window.localStorage.getItem(ACCESS_KEY);
 }
 
 function getRefreshToken(): string | null {
-  return window.localStorage.getItem(REFRESH_KEY);
+  return window.sessionStorage.getItem(REFRESH_KEY) ?? window.localStorage.getItem(REFRESH_KEY);
 }
 
 export function hasAccessToken(): boolean {
   return Boolean(getAccessToken());
 }
 
-export function setAuthTokens(accessToken: string, refreshToken: string): void {
-  window.localStorage.setItem(ACCESS_KEY, accessToken);
-  window.localStorage.setItem(REFRESH_KEY, refreshToken);
-  window.localStorage.setItem('skillgap.token', accessToken);
+export function getAuthPersistence(): AuthPersistence | null {
+  return (window.localStorage.getItem(PERSISTENCE_KEY) as AuthPersistence | null) ?? null;
+}
+
+export function setAuthTokens(accessToken: string, refreshToken: string, persistence: AuthPersistence = 'session'): void {
+  clearAuthTokens();
+  const storage = persistence === 'local' ? window.localStorage : window.sessionStorage;
+  storage.setItem(ACCESS_KEY, accessToken);
+  storage.setItem(REFRESH_KEY, refreshToken);
+  storage.setItem('skillgap.token', accessToken);
+  if (persistence === 'local') {
+    window.localStorage.setItem(PERSISTENCE_KEY, 'local');
+  }
 }
 
 export function clearAuthTokens(): void {
   window.localStorage.removeItem(ACCESS_KEY);
   window.localStorage.removeItem(REFRESH_KEY);
   window.localStorage.removeItem('skillgap.token');
+  window.localStorage.removeItem(PERSISTENCE_KEY);
+  window.sessionStorage.removeItem(ACCESS_KEY);
+  window.sessionStorage.removeItem(REFRESH_KEY);
+  window.sessionStorage.removeItem('skillgap.token');
 }
 
 /**
@@ -59,7 +74,7 @@ async function refreshAccessToken(): Promise<string | null> {
         { withCredentials: true },
       )
       .then((res) => {
-        setAuthTokens(res.data.accessToken, res.data.refreshToken);
+        setAuthTokens(res.data.accessToken, res.data.refreshToken, getAuthPersistence() ?? 'session');
         return res.data.accessToken;
       })
       .catch(() => null)

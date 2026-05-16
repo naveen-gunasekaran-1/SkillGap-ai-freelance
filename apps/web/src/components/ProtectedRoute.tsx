@@ -14,13 +14,30 @@ export function ProtectedRoute({
 }): React.JSX.Element {
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
+  const status = useAuthStore((s) => s.status);
 
-  if (!hasAccessToken()) {
+  if (status === 'bootstrapping') {
+    return (
+      <div className="min-h-screen bg-background p-6">
+        <div className="mx-auto max-w-5xl space-y-4">
+          <div className="h-10 w-56 animate-pulse rounded-card bg-border" />
+          <div className="h-40 animate-pulse rounded-card bg-border" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasAccessToken() || status === 'anonymous') {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
-  if (roles && user && !roles.includes(user.role)) {
-    return <Navigate to={user.role === 'COMPANY' ? '/company' : '/dashboard'} replace />;
+  if (!user) {
+    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
+  }
+
+  if (roles && !roles.includes(user.role)) {
+    const target = user.role === 'ADMIN' ? '/admin' : user.role === 'COMPANY' ? '/company' : '/dashboard';
+    return <Navigate to={target} replace />;
   }
 
   return <>{children}</>;

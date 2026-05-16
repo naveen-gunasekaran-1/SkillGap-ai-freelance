@@ -6,6 +6,7 @@ import { HttpError } from '../lib/httpError';
 import { toApplicationDto } from '../lib/serializers';
 import { computeMatchScore, buildGapReport } from '../lib/matching';
 import { enrichGapReportWithOpenAI } from '../lib/aiGapEnrichment';
+import { persistGapReportExplanation, persistRejectionExplanation } from '../lib/aiExplanations';
 import { requireAuth, requireRoles, requireVerifiedCompany } from '../middleware/auth';
 import { APPLICATION_STATUS, AUDIT_ACTION, ROLE } from '../lib/constants';
 import { parseStringArray } from '../lib/jsonFields';
@@ -31,6 +32,9 @@ const updateStatusSchema = z
   .object({
     status: statusEnum,
     rejectionReason: z.string().max(4000).optional(),
+    rejectionCategories: z.array(z.string().min(2).max(80)).max(10).optional(),
+    missingSkills: z.array(z.string().min(1).max(80)).max(20).optional(),
+    evidenceNotes: z.string().max(2000).optional(),
   })
   .superRefine((data, ctx) => {
     if (data.status === APPLICATION_STATUS.REJECTED) {
@@ -42,10 +46,23 @@ const updateStatusSchema = z
           path: ['rejectionReason'],
         });
       }
+      if (!data.rejectionCategories?.length) {
+        ctx.addIssue({
+          code: 'custom',
+          message: 'Select at least one rejection category',
+          path: ['rejectionCategories'],
+        });
+      }
     }
   });
 
 const router = Router();
+
+const applicationDtoInclude = {
+  candidate: true,
+  aiExplanations: { orderBy: { createdAt: 'desc' as const } },
+  job: { include: { company: true, skills: { include: { skill: true } } } },
+};
 
 router.post(
   '/',
@@ -96,11 +113,12 @@ router.post(
       requirements: parseStringArray(job.requirementsJson),
     });
     gapReport = await enrichGapReportWithOpenAI(gapReport, { jobTitle: job.title });
+    await persistGapReportExplanation(gapReport);
 
     const updated = await prisma.application.update({
       where: { id: application.id },
       data: { gapReportJson: JSON.stringify(gapReport) },
-      include: { job: { include: { company: true, skills: { include: { skill: true } } } } },
+      include: applicationDtoInclude,
     });
 
     res.status(201).json({ application: toApplicationDto(updated) });
@@ -115,7 +133,7 @@ router.get(
       const apps = await prisma.application.findMany({
         orderBy: { appliedAt: 'desc' },
         take: 200,
-        include: { candidate: true, job: { include: { company: true, skills: { include: { skill: true } } } } },
+        include: applicationDtoInclude,
       });
       res.json({ applications: apps.map((a) => toApplicationDto(a)) });
       return;
@@ -125,7 +143,7 @@ router.get(
       const apps = await prisma.application.findMany({
         where: { candidateId: req.auth!.id },
         orderBy: { appliedAt: 'desc' },
-        include: { candidate: true, job: { include: { company: true, skills: { include: { skill: true } } } } },
+        include: applicationDtoInclude,
       });
       res.json({ applications: apps.map((a) => toApplicationDto(a)) });
       return;
@@ -144,7 +162,7 @@ router.get(
       const apps = await prisma.application.findMany({
         where: { job: { companyId: req.auth!.companyId } },
         orderBy: { appliedAt: 'desc' },
-        include: { candidate: true, job: { include: { company: true, skills: { include: { skill: true } } } } },
+        include: applicationDtoInclude,
       });
       res.json({ applications: apps.map((a) => toApplicationDto(a)) });
       return;
@@ -161,7 +179,7 @@ router.get(
     const id = z.string().min(1).parse(req.params.id);
     const app = await prisma.application.findUnique({
       where: { id },
-      include: { candidate: true, job: { include: { company: true, skills: { include: { skill: true } } } } },
+      include: applicationDtoInclude,
     });
     if (!app) {
       throw new HttpError(404, 'Application not found');
@@ -220,8 +238,19 @@ router.patch(
         rejectionReason:
           body.status === APPLICATION_STATUS.REJECTED ? body.rejectionReason!.trim() : null,
       },
-      include: { candidate: true, job: { include: { company: true, skills: { include: { skill: true } } } } },
+      include: applicationDtoInclude,
     });
+    if (body.status === APPLICATION_STATUS.REJECTED) {
+      await persistRejectionExplanation({
+        applicationId: updated.id,
+        rejectionReason: body.rejectionReason!.trim(),
+        matchScore: updated.matchScore,
+        actorId: req.auth!.id,
+        categories: body.rejectionCategories ?? [],
+        missingSkills: body.missingSkills ?? [],
+        ...(body.evidenceNotes?.trim() ? { evidenceNotes: body.evidenceNotes.trim() } : {}),
+      });
+    }
     await writeAuditLog({
       req,
       action:
@@ -232,12 +261,27 @@ router.patch(
       entityId: updated.id,
       metadata: {
         status: body.status,
+        ...(body.status === APPLICATION_STATUS.REJECTED
+          ? {
+              rejectionCategories: body.rejectionCategories ?? [],
+              missingSkills: body.missingSkills ?? [],
+              hasEvidenceNotes: Boolean(body.evidenceNotes?.trim()),
+            }
+          : {}),
         jobId: updated.jobId,
         candidateId: updated.candidateId,
       },
     });
 
-    res.json({ application: toApplicationDto(updated) });
+    const responseApplication =
+      body.status === APPLICATION_STATUS.REJECTED
+        ? await prisma.application.findUniqueOrThrow({
+            where: { id: updated.id },
+            include: applicationDtoInclude,
+          })
+        : updated;
+
+    res.json({ application: toApplicationDto(responseApplication) });
   }),
 );
 

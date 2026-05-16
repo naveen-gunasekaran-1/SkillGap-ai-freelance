@@ -111,7 +111,7 @@ export function requireVerifiedCompany(): RequestHandler {
           where: { id: req.auth.companyId },
           select: { isVerified: true, verificationStatus: true },
         });
-        if (!company?.isVerified || company.verificationStatus !== COMPANY_VERIFICATION_STATUS.APPROVED) {
+        if (!company?.isVerified || company.verificationStatus !== COMPANY_VERIFICATION_STATUS.VERIFIED) {
           next(new HttpError(403, 'Company verification is required before using this feature'));
           return;
         }

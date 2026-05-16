@@ -18,7 +18,7 @@ export function Topbar({ sidebarCollapsed = false, onMobileMenuToggle }: TopbarP
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const authed = hasAccessToken();
-  const activeRole = user?.role === 'COMPANY' || user?.role === 'ADMIN' ? 'company' : 'candidate';
+  const activeRole = user?.role === 'ADMIN' ? 'admin' : user?.role === 'COMPANY' ? 'company' : 'candidate';
 
   const handleSignOut = () => {
     void revokeRefreshToken().finally(() => {
@@ -45,7 +45,7 @@ export function Topbar({ sidebarCollapsed = false, onMobileMenuToggle }: TopbarP
   }, []);
 
   const displayName = user?.name ?? 'User';
-  const displayRole = activeRole === 'company' ? 'Company' : 'Candidate';
+  const displayRole = activeRole === 'admin' ? 'Admin' : activeRole === 'company' ? 'Company' : 'Candidate';
 
   return (
     <header

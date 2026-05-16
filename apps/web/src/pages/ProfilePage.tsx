@@ -81,6 +81,14 @@ export function ProfilePage(): React.JSX.Element {
     },
   });
 
+  const resendVerificationMutation = useMutation({
+    mutationFn: async () => {
+      await api.post('/auth/email-verification/send');
+    },
+    onSuccess: () => toast.success('Verification email sent'),
+    onError: () => toast.error('Could not send verification email'),
+  });
+
   const onSubmitProfile = (data: ProfileFormData) => {
     updateProfileMutation.mutate(data);
   };
@@ -399,6 +407,18 @@ export function ProfilePage(): React.JSX.Element {
                   label="Email"
                   verified={Boolean(user?.emailVerified)}
                 />
+                {!user?.emailVerified && (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="w-full"
+                    disabled={resendVerificationMutation.isPending}
+                    onClick={() => resendVerificationMutation.mutate()}
+                  >
+                    {resendVerificationMutation.isPending ? 'Sending...' : 'Resend verification email'}
+                  </Button>
+                )}
                 <StatusRow
                   label="Skills"
                   verified={Boolean(user?.skillsVerified)}

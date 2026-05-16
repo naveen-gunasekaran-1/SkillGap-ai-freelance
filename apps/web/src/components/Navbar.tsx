@@ -4,14 +4,36 @@ import { Button } from '@skillgap/ui';
 import { hasAccessToken, revokeRefreshToken } from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
 
-const navLinks = [
+const candidateLinks = [
   { to: '/jobs', label: 'Jobs' },
-  { to: '/dashboard', label: 'Dashboard' },
   { to: '/applications', label: 'Applications' },
+  { to: '/dashboard', label: 'Dashboard' },
   { to: '/profile', label: 'Profile' },
 ];
 
-const publicLinks: { to: string; label: string }[] = [];
+const companyLinks = [
+  { to: '/company', label: 'Dashboard' },
+  { to: '/company/jobs', label: 'Manage Jobs' },
+  { to: '/company/candidates', label: 'Applicants' },
+  { to: '/company/pipeline', label: 'Pipeline' },
+  { to: '/company/verification', label: 'Verification' },
+  { to: '/company/profile', label: 'Company Profile' },
+];
+
+const adminLinks = [
+  { to: '/admin', label: 'Admin Dashboard' },
+  { to: '/admin?tab=verifications', label: 'Verification Queue' },
+  { to: '/admin?tab=audit', label: 'Audit Logs' },
+  { to: '/admin?tab=fraud', label: 'Fraud Flags' },
+];
+
+const publicLinks: { to: string; label: string }[] = [
+  { to: '/', label: 'Home' },
+  { to: '/#features', label: 'Features' },
+  { to: '/for-companies', label: 'For Companies' },
+  { to: '/#pricing', label: 'Pricing' },
+  { to: '/#security', label: 'Security' },
+];
 
 /**
  * Main navigation bar with mobile hamburger menu, active route highlighting,
@@ -25,6 +47,12 @@ export function Navbar(): React.JSX.Element {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const authed = hasAccessToken();
+  const navLinks =
+    user?.role === 'ADMIN'
+      ? adminLinks
+      : user?.role === 'COMPANY'
+        ? companyLinks
+        : candidateLinks;
 
   const handleSignOut = () => {
     void revokeRefreshToken().finally(() => {
@@ -61,7 +89,11 @@ export function Navbar(): React.JSX.Element {
     };
   }, [menuOpen]);
 
-  const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/');
+  const isActive = (path: string) => {
+    const [pathname] = path.split('?');
+    if (pathname === '/') return location.pathname === '/';
+    return location.pathname === pathname || location.pathname.startsWith(`${pathname}/`);
+  };
 
   return (
     <>

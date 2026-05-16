@@ -2,8 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { Avatar, Badge, Card } from '@skillgap/ui';
 import type { Application, ApplicationStatus } from '@skillgap/types';
 import { AppShell } from '../../components/AppShell';
+import { VerificationRequiredCard } from '../../components/VerificationRequiredCard';
 import { api } from '../../lib/api';
 import { parseApplication } from '../../lib/normalize';
+import { useCompanyTrust } from '../../hooks/useCompanyTrust';
 
 const stageConfig: Array<{ name: string; statuses: ApplicationStatus[] }> = [
   { name: 'New', statuses: ['APPLIED', 'UNDER_REVIEW'] },
@@ -13,8 +15,11 @@ const stageConfig: Array<{ name: string; statuses: ApplicationStatus[] }> = [
 ];
 
 export function HiringPipelinePage(): React.JSX.Element {
+  const companyQuery = useCompanyTrust();
+  const isVerified = Boolean(companyQuery.data?.isVerified && companyQuery.data.verificationStatus === 'VERIFIED');
   const applicationsQuery = useQuery({
     queryKey: ['company', 'applications'],
+    enabled: isVerified,
     queryFn: async (): Promise<Application[]> => {
       const res = await api.get<{ applications: unknown[] }>('/applications');
       return res.data.applications.map(parseApplication);
@@ -34,7 +39,13 @@ export function HiringPipelinePage(): React.JSX.Element {
           <p className="mt-1 text-text-secondary">Track candidates through each hiring stage.</p>
         </div>
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-4">
+        {!isVerified && (
+          <div className="mt-6">
+            <VerificationRequiredCard description="Hiring pipeline analytics are available after company verification is approved." />
+          </div>
+        )}
+
+        {isVerified && <div className="mt-6 grid gap-4 lg:grid-cols-4">
           {stages.map((stage) => (
             <section key={stage.name} className="rounded-card border border-border bg-background/70 p-3">
               <div className="mb-3 flex items-center justify-between px-1">
@@ -65,7 +76,7 @@ export function HiringPipelinePage(): React.JSX.Element {
               </div>
             </section>
           ))}
-        </div>
+        </div>}
       </div>
     </AppShell>
   );

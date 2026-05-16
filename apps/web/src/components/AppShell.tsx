@@ -26,7 +26,7 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const authed = hasAccessToken();
-  const activeRole = user?.role === 'COMPANY' || user?.role === 'ADMIN' ? 'company' : 'candidate';
+  const activeRole = user?.role === 'ADMIN' ? 'admin' : user?.role === 'COMPANY' ? 'company' : 'candidate';
 
   const handleSignOut = () => {
     void revokeRefreshToken().finally(() => {
@@ -60,7 +60,7 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
   }, [mobileMenuOpen]);
 
   const displayName = user?.name ?? 'User';
-  const displayRole = activeRole === 'company' ? 'Company' : 'Candidate';
+  const displayRole = activeRole === 'admin' ? 'Admin' : activeRole === 'company' ? 'Company' : 'Candidate';
 
   return (
     <div className="min-h-screen bg-background">
@@ -245,7 +245,7 @@ function MobileNavLinks({
   activeRole,
   onClose,
 }: {
-  activeRole: 'candidate' | 'company';
+  activeRole: 'candidate' | 'company' | 'admin';
   onClose: () => void;
 }) {
   const location = useLocation();
@@ -267,11 +267,22 @@ function MobileNavLinks({
     { to: '/company/verification', label: 'Verification', icon: <ShieldCheck className="h-5 w-5" /> },
   ];
 
-  const links = activeRole === 'company' ? companyLinks : candidateLinks;
+  const adminLinks = [
+    { to: '/admin', label: 'Admin Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { to: '/admin?tab=verifications', label: 'Verification Queue', icon: <ShieldCheck className="h-5 w-5" /> },
+    { to: '/admin?tab=audit', label: 'Audit Logs', icon: <ClipboardList className="h-5 w-5" /> },
+    { to: '/admin?tab=fraud', label: 'Fraud Flags', icon: <Users className="h-5 w-5" /> },
+  ];
+
+  const links = activeRole === 'admin' ? adminLinks : activeRole === 'company' ? companyLinks : candidateLinks;
 
   const isActive = (path: string) => {
+    const [pathname, search] = path.split('?');
+    if (search) return location.pathname === pathname && location.search === `?${search}`;
     if (path === '/company' && location.pathname === '/company') return true;
     if (path === '/company') return false;
+    if (path === '/admin' && location.pathname === '/admin') return true;
+    if (path === '/admin') return false;
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 

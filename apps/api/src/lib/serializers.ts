@@ -1,5 +1,6 @@
-import type { Application, Company, Job, Skill, User } from '@prisma/client';
+import type { AiExplanation as PrismaAiExplanation, Application, Company, Job, Skill, User } from '@prisma/client';
 import { parseJsonArray, parseStringArray } from './jsonFields';
+import { toAiExplanationDto } from './aiExplanations';
 
 type JobWithRelations = Job & {
   company: Company;
@@ -9,6 +10,7 @@ type JobWithRelations = Job & {
 type ApplicationWithJob = Application & {
   job: JobWithRelations;
   candidate?: User;
+  aiExplanations?: PrismaAiExplanation[];
 };
 
 /**
@@ -151,6 +153,7 @@ export function toApplicationDto(app: ApplicationWithJob): Record<string, unknow
     updatedAt: app.updatedAt.toISOString(),
     ...(app.coverNote ? { coverNote: app.coverNote } : {}),
     ...(app.candidate ? { candidate: toUserDto(app.candidate) } : {}),
+    ...(app.aiExplanations ? { aiExplanations: app.aiExplanations.map(toAiExplanationDto) } : {}),
     job: toJobDto(app.job),
   };
 }

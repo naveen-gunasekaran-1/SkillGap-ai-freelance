@@ -7,6 +7,7 @@ import { HttpError } from '../lib/httpError';
 import { requireAuth, requireRoles } from '../middleware/auth';
 import { AUDIT_ACTION, COMPANY_VERIFICATION_STATUS, ROLE } from '../lib/constants';
 import { writeAuditLog } from '../lib/audit';
+import { createPrivateObjectReadUrl, getStorageConfigurationStatus } from '../lib/storage';
 
 const router = Router();
 
@@ -33,10 +34,10 @@ router.get(
   asyncHandler(async (req, res) => {
     const status = z
       .enum([
-        COMPANY_VERIFICATION_STATUS.DRAFT,
+        COMPANY_VERIFICATION_STATUS.IN_PROGRESS,
         COMPANY_VERIFICATION_STATUS.SUBMITTED,
-        COMPANY_VERIFICATION_STATUS.IN_REVIEW,
-        COMPANY_VERIFICATION_STATUS.APPROVED,
+        COMPANY_VERIFICATION_STATUS.UNDER_REVIEW,
+        COMPANY_VERIFICATION_STATUS.VERIFIED,
         COMPANY_VERIFICATION_STATUS.REJECTED,
         COMPANY_VERIFICATION_STATUS.SUSPENDED,
       ])
@@ -54,6 +55,13 @@ router.get(
       },
     });
     res.json({ verifications });
+  }),
+);
+
+router.get(
+  '/storage/status',
+  asyncHandler(async (_req, res) => {
+    res.json({ storage: getStorageConfigurationStatus() });
   }),
 );
 
@@ -88,7 +96,7 @@ router.patch(
     }
 
     const approved = body.decision === 'APPROVED';
-    const status = approved ? COMPANY_VERIFICATION_STATUS.APPROVED : COMPANY_VERIFICATION_STATUS.REJECTED;
+    const status = approved ? COMPANY_VERIFICATION_STATUS.VERIFIED : COMPANY_VERIFICATION_STATUS.REJECTED;
     const now = new Date();
 
     const [verification] = await prisma.$transaction([
@@ -151,6 +159,37 @@ router.get(
       include: { actor: { select: { id: true, name: true, email: true, role: true } } },
     });
     res.json({ logs });
+  }),
+);
+
+router.get(
+  '/verification-documents/:id/read-url',
+  asyncHandler(async (req, res) => {
+    const id = z.string().min(1).parse(req.params.id);
+    const document = await prisma.verificationDocument.findUnique({
+      where: { id },
+      include: { company: true, verification: true },
+    });
+    if (!document) {
+      throw new HttpError(404, 'Verification document not found');
+    }
+    const url = await createPrivateObjectReadUrl({
+      storageKey: document.storageKey,
+      downloadName: document.originalName,
+      expiresInSeconds: 60 * 5,
+    });
+    await writeAuditLog({
+      req,
+      action: AUDIT_ACTION.VERIFICATION_DOCUMENT_VIEWED,
+      entityType: 'VerificationDocument',
+      entityId: document.id,
+      metadata: {
+        companyId: document.companyId,
+        verificationId: document.verificationId,
+        type: document.type,
+      },
+    });
+    res.json({ url, expiresInSeconds: 60 * 5 });
   }),
 );
 

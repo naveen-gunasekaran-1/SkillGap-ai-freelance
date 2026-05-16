@@ -74,7 +74,7 @@ export interface Company {
   name: string;
   logo?: string;
   isVerified: boolean;
-  verificationStatus?: 'NOT_STARTED' | 'DRAFT' | 'SUBMITTED' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
+  verificationStatus?: 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED' | 'UNDER_REVIEW' | 'VERIFIED' | 'REJECTED' | 'SUSPENDED';
   verificationBadge?: 'GSTIN' | 'MCA' | 'MANUAL';
   industry: string;
   size: string;
@@ -99,6 +99,18 @@ export type ApplicationStatus =
   | 'OFFER_EXTENDED'
   | 'HIRED'
   | 'REJECTED';
+
+export type RejectionCategory =
+  | 'Technical Skills'
+  | 'Communication'
+  | 'Experience Gap'
+  | 'Domain Knowledge'
+  | 'Leadership'
+  | 'Culture Fit'
+  | 'System Design'
+  | 'DevOps'
+  | 'Security'
+  | 'Architecture';
 
 export interface SkillGap {
   skillName: string;
@@ -127,6 +139,22 @@ export interface GapReport {
   strengths: string[];
   recommendations: LearningRecommendation[];
   generatedAt: Date;
+}
+
+export interface AiExplanation {
+  id: string;
+  applicationId: string;
+  type: 'GAP_REPORT' | 'REJECTION_REASON' | 'LEARNING_ROADMAP' | 'WEAK_EVIDENCE';
+  model: string;
+  promptVersion: string;
+  confidence: number;
+  summary: string;
+  missingSkills: SkillGap[];
+  weakEvidence: SkillGap[];
+  strengths: string[];
+  recommendations: LearningRecommendation[];
+  generatedBy: string;
+  createdAt: Date;
 }
 
 export interface Job {
@@ -160,4 +188,5 @@ export interface Application {
   updatedAt: Date;
   job?: Job;
   candidate?: User;
+  aiExplanations?: AiExplanation[];
 }

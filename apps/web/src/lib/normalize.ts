@@ -1,4 +1,4 @@
-import type { Application, Company, GapReport, Job, Skill, User } from '@skillgap/types';
+import type { AiExplanation, Application, Company, GapReport, Job, Skill, User } from '@skillgap/types';
 
 function parseCompany(raw: unknown): Company {
   const c = raw as Record<string, unknown>;
@@ -20,10 +20,10 @@ function parseCompany(raw: unknown): Company {
   }
   if (
     c.verificationStatus === 'NOT_STARTED' ||
-    c.verificationStatus === 'DRAFT' ||
+    c.verificationStatus === 'IN_PROGRESS' ||
     c.verificationStatus === 'SUBMITTED' ||
-    c.verificationStatus === 'IN_REVIEW' ||
-    c.verificationStatus === 'APPROVED' ||
+    c.verificationStatus === 'UNDER_REVIEW' ||
+    c.verificationStatus === 'VERIFIED' ||
     c.verificationStatus === 'REJECTED' ||
     c.verificationStatus === 'SUSPENDED'
   ) {
@@ -91,9 +91,31 @@ export function parseGapReport(raw: unknown): GapReport {
   };
 }
 
+export function parseAiExplanation(raw: unknown): AiExplanation {
+  const e = raw as Record<string, unknown>;
+  return {
+    id: String(e.id),
+    applicationId: String(e.applicationId),
+    type: e.type as AiExplanation['type'],
+    model: String(e.model ?? 'unknown'),
+    promptVersion: String(e.promptVersion ?? 'unknown'),
+    confidence: Number(e.confidence ?? 0),
+    summary: String(e.summary ?? ''),
+    missingSkills: Array.isArray(e.missingSkills) ? (e.missingSkills as AiExplanation['missingSkills']) : [],
+    weakEvidence: Array.isArray(e.weakEvidence) ? (e.weakEvidence as AiExplanation['weakEvidence']) : [],
+    strengths: Array.isArray(e.strengths) ? e.strengths.filter((x): x is string => typeof x === 'string') : [],
+    recommendations: Array.isArray(e.recommendations)
+      ? (e.recommendations as AiExplanation['recommendations'])
+      : [],
+    generatedBy: String(e.generatedBy ?? 'system'),
+    createdAt: new Date(String(e.createdAt)),
+  };
+}
+
 export function parseApplication(raw: unknown): Application {
   const a = raw as Record<string, unknown>;
   const gapReport = a.gapReport ? parseGapReport(a.gapReport) : undefined;
+  const aiExplanations = Array.isArray(a.aiExplanations) ? a.aiExplanations.map(parseAiExplanation) : [];
   return {
     id: String(a.id),
     candidateId: String(a.candidateId),
@@ -106,6 +128,7 @@ export function parseApplication(raw: unknown): Application {
     updatedAt: new Date(String(a.updatedAt)),
     ...(a.job ? { job: parseJob(a.job) } : {}),
     ...(a.candidate ? { candidate: parseUser(a.candidate) } : {}),
+    ...(aiExplanations.length > 0 ? { aiExplanations } : {}),
   };
 }
 

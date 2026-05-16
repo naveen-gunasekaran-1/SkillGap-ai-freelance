@@ -35,6 +35,7 @@ model User {
   company               Company?               @relation(fields: [companyId], references: [id])
   applications          Application[]          @relation("CandidateApplications")
   refreshTokens         RefreshToken[]
+  accountTokens         AccountToken[]
   auditLogs             AuditLog[]             @relation("AuditActor")
   recruiterActivityLogs RecruiterActivityLog[]
   adminReviewsCreated   AdminReview[]          @relation("AdminReviewCreator")
@@ -52,6 +53,22 @@ model RefreshToken {
   createdAt DateTime @default(now())
 
   @@index([userId])
+}
+
+model AccountToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([type])
+  @@index([expiresAt])
+  @@map("account_tokens")
 }
 
 model Company {
@@ -139,7 +156,7 @@ model CompanyVerification {
   id              String                 @id @default(cuid())
   companyId       String
   company         Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  status          String                 @default("DRAFT")
+  status          String                 @default("IN_PROGRESS")
   region          String
   countryCode     String
   submittedById   String?

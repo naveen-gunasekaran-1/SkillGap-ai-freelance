@@ -57,6 +57,7 @@ export function CompanyProfilePage(): React.JSX.Element {
   });
 
   const company = companyQuery.data;
+  const isVerified = Boolean(company?.isVerified && company.verificationStatus === 'VERIFIED');
 
   const { register, handleSubmit, reset, formState: { isDirty } } = useForm<CompanyFormData>({
     defaultValues: {
@@ -191,7 +192,7 @@ export function CompanyProfilePage(): React.JSX.Element {
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="text-xl font-semibold text-text-primary">{company.name}</h3>
-                          {company.isVerified && (
+                          {isVerified && (
                             <Badge variant="success">
                               <CheckCircle className="h-3 w-3 mr-1" />
                               Verified
@@ -269,18 +270,18 @@ export function CompanyProfilePage(): React.JSX.Element {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-text-secondary">Company</span>
-                  <Badge variant="success">
+                  <Badge variant={isVerified ? 'success' : company.verificationStatus === 'REJECTED' ? 'error' : 'warning'}>
                     <CheckCircle className="h-3 w-3 mr-1" />
-                    Verified
+                    {isVerified ? 'Verified' : company.verificationStatus?.replaceAll('_', ' ') ?? 'NOT STARTED'}
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-text-secondary">Verification Type</span>
-                  <Badge variant="neutral">{company.verificationBadge}</Badge>
+                  <Badge variant="neutral">{company.verificationBadge ?? 'Pending'}</Badge>
                 </div>
               </div>
               <p className="mt-4 text-xs text-text-secondary">
-                Verified companies get priority placement and a trust badge on all job listings.
+                Verification must be admin-approved before job posting, applicant review, and hiring analytics unlock.
               </p>
             </Card>
 

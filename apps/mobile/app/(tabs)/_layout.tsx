@@ -11,7 +11,8 @@ const t = theme;
  */
 export default function TabsLayout(): React.JSX.Element {
   const role = useMobileAuthStore((s) => s.role);
-  const isCompany = role === 'COMPANY' || role === 'ADMIN';
+  const isCompany = role === 'COMPANY';
+  const isAdmin = role === 'ADMIN';
   return (
     <Tabs
       screenOptions={{
@@ -38,7 +39,7 @@ export default function TabsLayout(): React.JSX.Element {
       <Tabs.Screen
         name="index"
         options={{
-          tabBarLabel: 'Dashboard',
+          tabBarLabel: isAdmin ? 'Admin' : 'Dashboard',
           tabBarIcon: ({ focused, color }) => (
             <Ionicons name={focused ? 'grid' : 'grid-outline'} size={24} color={color} />
           ),
@@ -47,7 +48,7 @@ export default function TabsLayout(): React.JSX.Element {
       <Tabs.Screen
         name="jobs"
         options={{
-          tabBarLabel: 'Jobs',
+          tabBarLabel: isAdmin ? 'Queue' : isCompany ? 'Manage Jobs' : 'Jobs',
           tabBarIcon: ({ focused, color }) => (
             <Ionicons name={focused ? 'briefcase' : 'briefcase-outline'} size={24} color={color} />
           ),
@@ -56,7 +57,7 @@ export default function TabsLayout(): React.JSX.Element {
       <Tabs.Screen
         name="applications"
         options={{
-          tabBarLabel: isCompany ? 'Applicants' : 'Applied',
+          tabBarLabel: isAdmin ? 'Audit' : isCompany ? 'Applicants' : 'Applied',
           tabBarIcon: ({ focused, color }) => (
             <Ionicons name={focused ? 'document-text' : 'document-text-outline'} size={24} color={color} />
           ),
@@ -65,7 +66,7 @@ export default function TabsLayout(): React.JSX.Element {
       <Tabs.Screen
         name="profile"
         options={{
-          tabBarLabel: 'Profile',
+          tabBarLabel: isAdmin ? 'Admin Profile' : isCompany ? 'Company' : 'Profile',
           tabBarIcon: ({ focused, color }) => (
             <Ionicons name={focused ? 'person' : 'person-outline'} size={24} color={color} />
           ),

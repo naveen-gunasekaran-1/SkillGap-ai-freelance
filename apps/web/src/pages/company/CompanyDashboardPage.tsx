@@ -14,14 +14,20 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { AppShell } from '../../components/AppShell';
+import { VerificationRequiredCard } from '../../components/VerificationRequiredCard';
 import { api } from '../../lib/api';
 import { parseApplication, parseJob } from '../../lib/normalize';
+import { useCompanyTrust } from '../../hooks/useCompanyTrust';
 import type { Application, Job } from '@skillgap/types';
 
 /**
  * Company dashboard with hiring metrics, recent applicants, and quick actions.
  */
 export function CompanyDashboardPage(): React.JSX.Element {
+  const companyQuery = useCompanyTrust();
+  const company = companyQuery.data;
+  const isVerified = Boolean(company?.isVerified && company.verificationStatus === 'VERIFIED');
+
   const jobsQuery = useQuery({
     queryKey: ['company', 'jobs'],
     queryFn: async (): Promise<Array<Job & { applicantCount: number }>> => {
@@ -35,6 +41,7 @@ export function CompanyDashboardPage(): React.JSX.Element {
 
   const applicantsQuery = useQuery({
     queryKey: ['company', 'applications'],
+    enabled: isVerified,
     queryFn: async (): Promise<Application[]> => {
       const res = await api.get<{ applications: unknown[] }>('/applications');
       return res.data.applications.map(parseApplication);
@@ -100,12 +107,18 @@ export function CompanyDashboardPage(): React.JSX.Element {
             <p className="mt-1 text-text-secondary">Manage job postings and find top talent</p>
           </div>
           <div className="flex gap-3">
-            <Badge variant="success" className="flex items-center gap-1.5 px-3 py-1.5">
+            <Badge variant={isVerified ? 'success' : 'warning'} className="flex items-center gap-1.5 px-3 py-1.5">
               <CheckCircle2 className="h-3.5 w-3.5" />
-              Verified Company
+              {isVerified ? 'Verified Company' : company?.verificationStatus?.replaceAll('_', ' ') ?? 'Unverified'}
             </Badge>
           </div>
         </div>
+
+        {!isVerified && (
+          <div className="mt-6">
+            <VerificationRequiredCard description="Applicant data and hiring analytics unlock after admin approval. You can still view existing jobs while verification is pending." />
+          </div>
+        )}
 
         {/* Stats Grid */}
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-fade-in-up delay-100">

@@ -9,6 +9,8 @@ import {
   PlusCircle,
   BarChart3,
   ShieldCheck,
+  ShieldAlert,
+  ScrollText,
 } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 
@@ -35,6 +37,13 @@ const companyNav: NavItem[] = [
   { to: '/company/verification', label: 'Verification', icon: <ShieldCheck className="h-5 w-5" /> },
 ];
 
+const adminNav: NavItem[] = [
+  { to: '/admin', label: 'Admin Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+  { to: '/admin?tab=verifications', label: 'Verification Queue', icon: <ShieldCheck className="h-5 w-5" /> },
+  { to: '/admin?tab=audit', label: 'Audit Logs', icon: <ScrollText className="h-5 w-5" /> },
+  { to: '/admin?tab=fraud', label: 'Fraud Flags', icon: <ShieldAlert className="h-5 w-5" /> },
+];
+
 interface SidebarProps {
   collapsed?: boolean;
   onToggleCollapse?: () => void;
@@ -43,13 +52,17 @@ interface SidebarProps {
 export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps): React.JSX.Element {
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
-  const activeRole = user?.role === 'COMPANY' || user?.role === 'ADMIN' ? 'company' : 'candidate';
+  const activeRole = user?.role === 'ADMIN' ? 'admin' : user?.role === 'COMPANY' ? 'company' : 'candidate';
 
-  const navItems = activeRole === 'company' ? companyNav : candidateNav;
+  const navItems = activeRole === 'admin' ? adminNav : activeRole === 'company' ? companyNav : candidateNav;
 
   const isActive = (path: string) => {
+    const [pathname, search] = path.split('?');
+    if (search) return location.pathname === pathname && location.search === `?${search}`;
     if (path === '/company' && location.pathname === '/company') return true;
     if (path === '/company') return false;
+    if (path === '/admin' && location.pathname === '/admin') return true;
+    if (path === '/admin') return false;
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
@@ -76,7 +89,7 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps): 
       {!collapsed && user && (
         <div className="border-b border-border p-4">
           <div className="rounded-xl bg-background px-3 py-2 text-sm font-medium text-text-secondary">
-            {activeRole === 'company' ? 'Company workspace' : 'Candidate workspace'}
+            {activeRole === 'admin' ? 'Admin workspace' : activeRole === 'company' ? 'Company workspace' : 'Candidate workspace'}
           </div>
         </div>
       )}

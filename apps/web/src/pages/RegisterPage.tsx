@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Button, Input, Textarea, Card, Badge } from '@skillgap/ui';
+import { BriefcaseBusiness, Check, GraduationCap } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { api } from '../lib/api';
 import { parseUser } from '../lib/normalize';
@@ -12,6 +13,20 @@ type SkillLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
 
 const skillOptions = ['React', 'TypeScript', 'Node.js', 'Python', 'Java', 'Go', 'CSS', 'SQL', 'AWS', 'Docker', 'Kubernetes', 'GraphQL', 'Next.js', 'Vue.js', 'MongoDB', 'PostgreSQL', 'Redis', 'Git', 'Figma', 'Tailwind CSS'];
 const levelOptions: SkillLevel[] = ['BEGINNER', 'INTERMEDIATE', 'ADVANCED', 'EXPERT'];
+const roleOptions = [
+  {
+    r: 'CANDIDATE' as const,
+    icon: GraduationCap,
+    title: 'Candidate',
+    desc: 'Build a verified profile, compare against jobs, and get explainable skill guidance.',
+  },
+  {
+    r: 'COMPANY' as const,
+    icon: BriefcaseBusiness,
+    title: 'Company',
+    desc: 'Verify your organization, publish jobs, and review applicants with explainable AI.',
+  },
+];
 
 const emptyEducation = { school: '', degree: '', field: '', startYear: '', endYear: '', gpa: '' };
 const emptyInternship = { company: '', role: '', startDate: '', endDate: '', summary: '' };
@@ -221,7 +236,7 @@ export function RegisterPage(): React.JSX.Element {
 
       const res = await api.post<{ user: unknown; accessToken: string; refreshToken: string }>('/auth/register', body);
       const user = parseUser(res.data.user);
-      setSession(user, res.data.accessToken, res.data.refreshToken);
+      setSession(user, res.data.accessToken, res.data.refreshToken, true);
       toast.success('Account created. Verify your email to unlock full features.');
       navigate(user.role === 'COMPANY' ? '/company' : '/dashboard', { replace: true });
     } catch (err: unknown) {
@@ -238,14 +253,14 @@ export function RegisterPage(): React.JSX.Element {
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
-      <main className="mx-auto flex min-h-[calc(100vh-64px)] max-w-lg items-center px-6 py-12">
+      <main className="mx-auto flex min-h-[calc(100vh-64px)] w-full max-w-5xl items-center px-4 py-8 sm:px-6 lg:py-12">
         <div className="w-full animate-fade-in-up">
           {/* Progress indicator */}
           <div className="mb-8 flex items-center justify-center gap-2">
             {[1, 2, 3, 4].map((s) => (
               <div key={s} className="flex items-center gap-2">
                 <div className={`flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold transition-all duration-200 ${step >= s ? 'bg-primary text-white shadow-card' : 'bg-border text-text-secondary'}`}>
-                  {step > s ? '✓' : s}
+                  {step > s ? <Check className="h-4 w-4" /> : s}
                 </div>
                 {s < 4 && <div className={`h-0.5 w-8 rounded-full transition-all duration-300 ${step > s ? 'bg-primary' : 'bg-border'}`} />}
               </div>
@@ -255,28 +270,30 @@ export function RegisterPage(): React.JSX.Element {
             Step {step} of 4 — {step === 1 ? 'Choose your role' : step === 2 ? 'Your details' : step === 3 ? (role === 'CANDIDATE' ? 'Profile essentials' : 'Company info') : 'Background & skills'}
           </p>
 
-          <div className="rounded-2xl border border-border bg-white p-8 shadow-card">
+          <div className="mx-auto max-w-4xl rounded-2xl border border-border bg-white p-5 shadow-card sm:p-8 lg:p-10">
             {/* ═══ STEP 1: Role selection ═══ */}
             {step === 1 && (
               <div className="animate-fade-in-up">
                 <h1 className="text-2xl font-bold text-text-primary">Create account</h1>
                 <p className="mt-2 text-text-secondary">How will you use SkillGap AI?</p>
                 <div className="mt-8 grid gap-4 sm:grid-cols-2">
-                  {([
-                    { r: 'CANDIDATE' as Role, icon: '🎓', title: 'Candidate', desc: 'Find jobs, get gap analysis, and learn' },
-                    { r: 'COMPANY' as Role, icon: '🏢', title: 'Company', desc: 'Post jobs, review candidates, hire talent' },
-                  ]).map((opt) => (
+                  {roleOptions.map((opt) => {
+                    const Icon = opt.icon;
+                    return (
                     <button
                       key={opt.r}
                       type="button"
                       onClick={() => { setRole(opt.r); setStep(2); }}
                       className={`group rounded-2xl border-2 p-6 text-left transition-all duration-200 hover:-translate-y-1 hover:shadow-card-hover ${role === opt.r ? 'border-primary bg-primary-light/30 shadow-card' : 'border-border hover:border-primary/30'}`}
                     >
-                      <span className="text-3xl">{opt.icon}</span>
+                      <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-light text-primary transition-transform duration-200 group-hover:scale-105">
+                        <Icon className="h-6 w-6" />
+                      </span>
                       <h3 className="mt-3 text-lg font-semibold text-text-primary">{opt.title}</h3>
                       <p className="mt-1 text-sm text-text-secondary">{opt.desc}</p>
                     </button>
-                  ))}
+                  );
+                  })}
                 </div>
               </div>
             )}
@@ -429,7 +446,7 @@ export function RegisterPage(): React.JSX.Element {
                         onClick={() => toggleSkill(s)}
                         className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-all duration-150 ${skills.includes(s) ? 'bg-primary text-white shadow-card' : 'bg-border/50 text-text-secondary hover:bg-primary-light hover:text-primary'}`}
                       >
-                        {skills.includes(s) && '✓ '}{s}
+                        {skills.includes(s) && <Check className="mr-1 inline h-3.5 w-3.5" />}{s}
                       </button>
                     ))}
                   </div>

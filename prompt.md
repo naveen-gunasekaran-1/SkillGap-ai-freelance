@@ -32,25 +32,8 @@ gaps, explains WHY they didn't match, and recommends a precise learning path
 to close those gaps. Companies are required by the platform to send rejection
 reasons — it is enforced at the API level, not just a UI nudge.
 
-TECH STACK (do not deviate from this):
-- Frontend Web:      React 18 + TypeScript + Vite
-- Mobile:            React Native (Expo) — iOS + Android from one codebase
-- State Management:  Zustand (lightweight, no Redux boilerplate)
-- Styling Web:       Tailwind CSS v3 + shadcn/ui component library
-- Styling Mobile:    NativeWind (Tailwind for React Native)
-- Backend:           Node.js + Express (TypeScript) — monorepo structure
-- Database:          PostgreSQL (primary) + Redis (caching/sessions)
-- ORM:               Prisma
-- AI/NLP:            OpenAI API (GPT-4o) for JD parsing + gap analysis
-- Auth:              JWT + refresh tokens + OAuth2 (Google, LinkedIn, GitHub)
-- Email:             Nodemailer + SendGrid
-- File Storage:      AWS S3 (resume uploads)
-- Deployment Web:    Vercel (frontend) + Railway or Render (backend)
-- Deployment Mobile: Expo EAS Build → App Store + Play Store
-- Monorepo Tool:     Turborepo
-- Testing:           Vitest (unit) + Playwright (E2E web) + Detox (mobile E2E)
-- CI/CD:             GitHub Actions
-- Docs:              Swagger/OpenAPI (API) + Storybook (components)
+
+ 
 
 DESIGN SYSTEM (strictly follow these values — never override them):
 Colors:

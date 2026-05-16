@@ -9,8 +9,15 @@ import { asyncHandler } from '../lib/asyncHandler';
 import { toUserDto } from '../lib/serializers';
 import { requireAuth } from '../middleware/auth';
 import { authRateLimiter } from '../middleware/rateLimit';
-import { COMPANY_VERIFICATION_STATUS, ROLE, type Role } from '../lib/constants';
+import { ACCOUNT_TOKEN_TYPE, AUDIT_ACTION, COMPANY_VERIFICATION_STATUS, ROLE, type Role } from '../lib/constants';
 import { stringifyJson, stringifyStringArray } from '../lib/jsonFields';
+import { writeAuditLog } from '../lib/audit';
+import {
+  consumeAccountToken,
+  createAccountToken,
+  sendEmailVerificationEmail,
+  sendPasswordResetEmail,
+} from '../lib/accountTokens';
 
 const skillLevelSchema = z.object({
   name: z.string().min(1).max(64),
@@ -88,21 +95,35 @@ const registerSchema = z.object({
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1).max(128),
+  rememberMe: z.boolean().optional().default(false),
 });
 
 const refreshSchema = z.object({
   refreshToken: z.string().min(10),
 });
 
+const forgotPasswordSchema = z.object({
+  email: z.string().email().max(254),
+});
+
+const resetPasswordSchema = z.object({
+  token: z.string().min(32),
+  password: z.string().min(8).max(128),
+});
+
+const tokenSchema = z.object({
+  token: z.string().min(32),
+});
+
 const router = Router();
 
 router.use(authRateLimiter);
 
-async function issueTokens(userId: string, role: Role): Promise<{ accessToken: string; refreshToken: string }> {
+async function issueTokens(userId: string, role: Role, rememberMe = true): Promise<{ accessToken: string; refreshToken: string }> {
   const accessToken = signAccessToken({ sub: userId, role });
   const refreshToken = signRefreshToken();
   const tokenHash = hashToken(refreshToken);
-  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30);
+  const expiresAt = new Date(Date.now() + (rememberMe ? 1000 * 60 * 60 * 24 * 30 : 1000 * 60 * 60 * 12));
   await prisma.refreshToken.create({
     data: { tokenHash, userId, expiresAt },
   });
@@ -150,6 +171,19 @@ router.post(
         },
       });
       const tokens = await issueTokens(user.id, user.role as Role);
+      const verificationToken = await createAccountToken({
+        userId: user.id,
+        type: ACCOUNT_TOKEN_TYPE.EMAIL_VERIFICATION,
+      });
+      await sendEmailVerificationEmail({ email: user.email, name: user.name, token: verificationToken });
+      await writeAuditLog({
+        req,
+        actorId: user.id,
+        actorRole: user.role,
+        action: AUDIT_ACTION.AUTH_EMAIL_VERIFICATION_SENT,
+        entityType: 'User',
+        entityId: user.id,
+      });
       res.status(201).json({ user: toUserDto(user), ...tokens });
       return;
     }
@@ -189,7 +223,20 @@ router.post(
       },
     });
 
-    const tokens = await issueTokens(user.id, user.role as Role);
+    const tokens = await issueTokens(user.id, user.role as Role, true);
+    const verificationToken = await createAccountToken({
+      userId: user.id,
+      type: ACCOUNT_TOKEN_TYPE.EMAIL_VERIFICATION,
+    });
+    await sendEmailVerificationEmail({ email: user.email, name: user.name, token: verificationToken });
+    await writeAuditLog({
+      req,
+      actorId: user.id,
+      actorRole: user.role,
+      action: AUDIT_ACTION.AUTH_EMAIL_VERIFICATION_SENT,
+      entityType: 'User',
+      entityId: user.id,
+    });
     res.status(201).json({ user: toUserDto(user), ...tokens });
   }),
 );
@@ -200,14 +247,147 @@ router.post(
     const body = loginSchema.parse(req.body);
     const user = await prisma.user.findUnique({ where: { email: body.email.toLowerCase() } });
     if (!user) {
+      await writeAuditLog({
+        req,
+        action: AUDIT_ACTION.AUTH_LOGIN_FAILED,
+        entityType: 'User',
+        metadata: { email: body.email.toLowerCase(), reason: 'USER_NOT_FOUND' },
+      });
       throw new HttpError(401, 'Invalid email or password');
     }
     const ok = await verifyPassword(body.password, user.passwordHash);
     if (!ok) {
+      await writeAuditLog({
+        req,
+        action: AUDIT_ACTION.AUTH_LOGIN_FAILED,
+        entityType: 'User',
+        entityId: user.id,
+        metadata: { email: user.email, reason: 'BAD_PASSWORD' },
+      });
       throw new HttpError(401, 'Invalid email or password');
     }
-    const tokens = await issueTokens(user.id, user.role as Role);
+    const tokens = await issueTokens(user.id, user.role as Role, body.rememberMe);
+    await writeAuditLog({
+      req,
+      actorId: user.id,
+      actorRole: user.role,
+      action: AUDIT_ACTION.AUTH_LOGIN_SUCCESS,
+      entityType: 'User',
+      entityId: user.id,
+      metadata: { rememberMe: body.rememberMe },
+    });
     res.json({ user: toUserDto(user), ...tokens });
+  }),
+);
+
+router.post(
+  '/forgot-password',
+  asyncHandler(async (req, res) => {
+    const body = forgotPasswordSchema.parse(req.body);
+    const user = await prisma.user.findUnique({ where: { email: body.email.toLowerCase() } });
+    if (user) {
+      const token = await createAccountToken({ userId: user.id, type: ACCOUNT_TOKEN_TYPE.PASSWORD_RESET });
+      await sendPasswordResetEmail({ email: user.email, name: user.name, token });
+      await writeAuditLog({
+        req,
+        actorId: user.id,
+        actorRole: user.role,
+        action: AUDIT_ACTION.AUTH_PASSWORD_RESET_REQUESTED,
+        entityType: 'User',
+        entityId: user.id,
+      });
+    } else {
+      await writeAuditLog({
+        req,
+        action: AUDIT_ACTION.AUTH_PASSWORD_RESET_REQUESTED,
+        entityType: 'User',
+        metadata: { email: body.email.toLowerCase(), found: false },
+      });
+    }
+    res.json({ ok: true });
+  }),
+);
+
+router.post(
+  '/reset-password',
+  asyncHandler(async (req, res) => {
+    const body = resetPasswordSchema.parse(req.body);
+    let consumed: { userId: string; tokenId: string };
+    try {
+      consumed = await consumeAccountToken({ token: body.token, type: ACCOUNT_TOKEN_TYPE.PASSWORD_RESET });
+    } catch {
+      throw new HttpError(400, 'Invalid or expired password reset link');
+    }
+
+    const passwordHash = await hashPassword(body.password);
+    const user = await prisma.user.update({
+      where: { id: consumed.userId },
+      data: { passwordHash },
+    });
+    await prisma.refreshToken.deleteMany({ where: { userId: user.id } });
+    await writeAuditLog({
+      req,
+      actorId: user.id,
+      actorRole: user.role,
+      action: AUDIT_ACTION.AUTH_PASSWORD_RESET_COMPLETED,
+      entityType: 'User',
+      entityId: user.id,
+      metadata: { tokenId: consumed.tokenId },
+    });
+    res.json({ ok: true });
+  }),
+);
+
+router.post(
+  '/email-verification/send',
+  requireAuth(),
+  asyncHandler(async (req, res) => {
+    const user = await prisma.user.findUnique({ where: { id: req.auth!.id } });
+    if (!user) {
+      throw new HttpError(401, 'User not found');
+    }
+    if (user.emailVerified) {
+      res.json({ ok: true, alreadyVerified: true });
+      return;
+    }
+    const token = await createAccountToken({ userId: user.id, type: ACCOUNT_TOKEN_TYPE.EMAIL_VERIFICATION });
+    await sendEmailVerificationEmail({ email: user.email, name: user.name, token });
+    await writeAuditLog({
+      req,
+      actorId: user.id,
+      actorRole: user.role,
+      action: AUDIT_ACTION.AUTH_EMAIL_VERIFICATION_SENT,
+      entityType: 'User',
+      entityId: user.id,
+    });
+    res.json({ ok: true });
+  }),
+);
+
+router.post(
+  '/email-verification/confirm',
+  asyncHandler(async (req, res) => {
+    const body = tokenSchema.parse(req.body);
+    let consumed: { userId: string; tokenId: string };
+    try {
+      consumed = await consumeAccountToken({ token: body.token, type: ACCOUNT_TOKEN_TYPE.EMAIL_VERIFICATION });
+    } catch {
+      throw new HttpError(400, 'Invalid or expired email verification link');
+    }
+    const user = await prisma.user.update({
+      where: { id: consumed.userId },
+      data: { emailVerified: true },
+    });
+    await writeAuditLog({
+      req,
+      actorId: user.id,
+      actorRole: user.role,
+      action: AUDIT_ACTION.AUTH_EMAIL_VERIFIED,
+      entityType: 'User',
+      entityId: user.id,
+      metadata: { tokenId: consumed.tokenId },
+    });
+    res.json({ ok: true, user: toUserDto(user) });
   }),
 );
 
@@ -228,6 +408,14 @@ router.post(
 
     await prisma.refreshToken.delete({ where: { id: existing.id } });
     const tokens = await issueTokens(user.id, user.role as Role);
+    await writeAuditLog({
+      req,
+      actorId: user.id,
+      actorRole: user.role,
+      action: AUDIT_ACTION.AUTH_TOKEN_REFRESHED,
+      entityType: 'RefreshToken',
+      entityId: existing.id,
+    });
     res.json({ user: toUserDto(user), ...tokens });
   }),
 );
@@ -240,6 +428,11 @@ router.post(
       verifyRefreshToken(body.refreshToken);
       const tokenHash = hashToken(body.refreshToken);
       await prisma.refreshToken.deleteMany({ where: { tokenHash } });
+      await writeAuditLog({
+        req,
+        action: AUDIT_ACTION.AUTH_LOGOUT,
+        entityType: 'RefreshToken',
+      });
     }
     res.status(204).send();
   }),

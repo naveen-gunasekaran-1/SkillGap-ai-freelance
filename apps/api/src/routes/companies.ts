@@ -152,7 +152,7 @@ router.post(
     const verification = await prisma.companyVerification.create({
       data: {
         companyId,
-        status: COMPANY_VERIFICATION_STATUS.DRAFT,
+        status: COMPANY_VERIFICATION_STATUS.IN_PROGRESS,
         region: body.region,
         countryCode: body.countryCode,
         submittedById: req.auth!.id,
@@ -162,7 +162,7 @@ router.post(
     });
     await prisma.company.update({
       where: { id: companyId },
-      data: { verificationStatus: COMPANY_VERIFICATION_STATUS.DRAFT, isVerified: false, verificationBadge: null },
+      data: { verificationStatus: COMPANY_VERIFICATION_STATUS.IN_PROGRESS, isVerified: false, verificationBadge: null },
     });
     await writeAuditLog({
       req,

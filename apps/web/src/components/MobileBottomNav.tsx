@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, ClipboardList, User, Building2, Users } from 'lucide-react';
+import { LayoutDashboard, Briefcase, ClipboardList, User, Building2, Users, ShieldCheck } from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 
 interface NavItem {
@@ -22,16 +22,27 @@ const companyNav: NavItem[] = [
   { to: '/company/verification', label: 'Verify', icon: <Building2 className="h-5 w-5" /> },
 ];
 
+const adminNav: NavItem[] = [
+  { to: '/admin', label: 'Admin', icon: <LayoutDashboard className="h-5 w-5" /> },
+  { to: '/admin?tab=verifications', label: 'Verify', icon: <ShieldCheck className="h-5 w-5" /> },
+  { to: '/admin?tab=audit', label: 'Audit', icon: <ClipboardList className="h-5 w-5" /> },
+  { to: '/admin?tab=fraud', label: 'Fraud', icon: <Users className="h-5 w-5" /> },
+];
+
 export function MobileBottomNav(): React.JSX.Element {
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
-  const activeRole = user?.role === 'COMPANY' || user?.role === 'ADMIN' ? 'company' : 'candidate';
+  const activeRole = user?.role === 'ADMIN' ? 'admin' : user?.role === 'COMPANY' ? 'company' : 'candidate';
 
-  const navItems = activeRole === 'company' ? companyNav : candidateNav;
+  const navItems = activeRole === 'admin' ? adminNav : activeRole === 'company' ? companyNav : candidateNav;
 
   const isActive = (path: string) => {
+    const [pathname, search] = path.split('?');
+    if (search) return location.pathname === pathname && location.search === `?${search}`;
     if (path === '/company' && location.pathname === '/company') return true;
     if (path === '/company') return false;
+    if (path === '/admin' && location.pathname === '/admin') return true;
+    if (path === '/admin') return false;
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 

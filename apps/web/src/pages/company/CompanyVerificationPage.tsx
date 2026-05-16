@@ -6,7 +6,7 @@ import { Badge, Button, Card } from '@skillgap/ui';
 import { AppShell } from '../../components/AppShell';
 import { api } from '../../lib/api';
 
-type VerificationStatus = 'NOT_STARTED' | 'DRAFT' | 'SUBMITTED' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
+type VerificationStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED' | 'UNDER_REVIEW' | 'VERIFIED' | 'REJECTED' | 'SUSPENDED';
 
 interface VerificationDocument {
   id: string;
@@ -93,7 +93,16 @@ export function CompanyVerificationPage(): React.JSX.Element {
       toast.success('Document uploaded');
       queryClient.invalidateQueries({ queryKey: ['company', 'verification'] });
     },
-    onError: () => toast.error('Document upload failed'),
+    onError: (err: unknown) => {
+      const message =
+        typeof err === 'object' &&
+        err !== null &&
+        'response' in err &&
+        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+          ? (err as { response: { data: { message: string } } }).response.data.message
+          : 'Document upload failed';
+      toast.error(message);
+    },
   });
 
   const submitMutation = useMutation({
@@ -130,7 +139,7 @@ export function CompanyVerificationPage(): React.JSX.Element {
               private verification records for admin review.
             </p>
           </div>
-          <Badge variant={status === 'APPROVED' ? 'success' : status === 'REJECTED' ? 'error' : 'warning'}>
+          <Badge variant={status === 'VERIFIED' ? 'success' : status === 'REJECTED' ? 'error' : 'warning'}>
             {status.replaceAll('_', ' ')}
           </Badge>
         </div>
@@ -191,7 +200,7 @@ export function CompanyVerificationPage(): React.JSX.Element {
                 <h2 className="font-semibold text-text-primary">Required documents</h2>
                 <p className="mt-1 text-sm text-text-secondary">Upload every required item before submitting.</p>
               </div>
-              {status === 'APPROVED' && <CheckCircle className="h-6 w-6 text-success" />}
+              {status === 'VERIFIED' && <CheckCircle className="h-6 w-6 text-success" />}
             </div>
 
             <div className="mt-5 space-y-3">
@@ -213,14 +222,14 @@ export function CompanyVerificationPage(): React.JSX.Element {
                         <input
                           type="file"
                           accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-                          disabled={!verification || status === 'SUBMITTED' || status === 'APPROVED'}
+                          disabled={!verification || status === 'SUBMITTED' || status === 'VERIFIED'}
                           onChange={(event) => setFiles((current) => ({ ...current, [type]: event.target.files?.[0] ?? null }))}
                           className="text-sm text-text-secondary file:mr-3 file:rounded-card file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:font-medium file:text-text-primary"
                         />
                         <Button
                           size="sm"
                           variant={uploaded ? 'secondary' : 'primary'}
-                          disabled={!verification || !files[type] || status === 'SUBMITTED' || status === 'APPROVED'}
+                          disabled={!verification || !files[type] || status === 'SUBMITTED' || status === 'VERIFIED'}
                           loading={uploadMutation.isPending}
                           onClick={() => {
                             const file = files[type];
@@ -246,7 +255,7 @@ export function CompanyVerificationPage(): React.JSX.Element {
             <div className="mt-6 flex justify-end">
               <Button
                 variant="ai-gradient"
-                disabled={!verification || status === 'SUBMITTED' || status === 'APPROVED'}
+                disabled={!verification || status === 'SUBMITTED' || status === 'VERIFIED'}
                 loading={submitMutation.isPending}
                 onClick={() => submitMutation.mutate()}
               >

@@ -1,35 +1,34 @@
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
 import type { User } from '@skillgap/types';
 import { clearAuthTokens, setAuthTokens } from '../lib/api';
 
+type AuthStatus = 'bootstrapping' | 'authenticated' | 'anonymous';
+
 interface AuthState {
   user: User | null;
-  setSession: (user: User, accessToken: string, refreshToken: string) => void;
+  status: AuthStatus;
+  setSession: (user: User, accessToken: string, refreshToken: string, remember: boolean) => void;
   setUser: (user: User) => void;
+  setStatus: (status: AuthStatus) => void;
   logout: () => void;
 }
 
 /**
- * Global auth state. Access/refresh tokens live in `localStorage` (see `lib/api.ts`).
+ * Runtime auth state. Tokens control persistence:
+ * - Remember me: localStorage refresh session
+ * - No remember me: sessionStorage only, cleared when browser session ends
  */
-export const useAuthStore = create<AuthState>()(
-  persist(
-    (set) => ({
-      user: null,
-      setSession: (user, accessToken, refreshToken) => {
-        setAuthTokens(accessToken, refreshToken);
-        set({ user });
-      },
-      setUser: (user) => set({ user }),
-      logout: () => {
-        clearAuthTokens();
-        set({ user: null });
-      },
-    }),
-    {
-      name: 'skillgap-auth',
-      partialize: (state) => ({ user: state.user }),
-    },
-  ),
-);
+export const useAuthStore = create<AuthState>((set) => ({
+  user: null,
+  status: 'bootstrapping',
+  setSession: (user, accessToken, refreshToken, remember) => {
+    setAuthTokens(accessToken, refreshToken, remember ? 'local' : 'session');
+    set({ user, status: 'authenticated' });
+  },
+  setUser: (user) => set({ user, status: 'authenticated' }),
+  setStatus: (status) => set({ status }),
+  logout: () => {
+    clearAuthTokens();
+    set({ user: null, status: 'anonymous' });
+  },
+}));

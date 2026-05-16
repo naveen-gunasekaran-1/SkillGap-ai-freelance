@@ -8,10 +8,14 @@ import { useAuthStore } from '../stores/authStore';
  */
 export function AuthBootstrap(): null {
   const setUser = useAuthStore((s) => s.setUser);
+  const setStatus = useAuthStore((s) => s.setStatus);
   const logout = useAuthStore((s) => s.logout);
 
   useEffect(() => {
-    if (!hasAccessToken()) return;
+    if (!hasAccessToken()) {
+      setStatus('anonymous');
+      return;
+    }
 
     void api
       .get<{ user: unknown }>('/auth/me')
@@ -19,7 +23,7 @@ export function AuthBootstrap(): null {
       .catch(() => {
         logout();
       });
-  }, [logout, setUser]);
+  }, [logout, setStatus, setUser]);
 
   return null;
 }

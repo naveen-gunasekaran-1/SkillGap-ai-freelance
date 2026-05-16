@@ -78,20 +78,23 @@ Goal: turn gap-preview into a persistent explainability system.
 
 Backend work:
 
-- Add `explainabilityService`.
-- Dual-write generated reports into `ai_explanations`.
+- [x] Add gap report persistence helper.
+- [x] Dual-write generated reports into `ai_explanations`.
+- [x] Persist structured rejection explanations into `ai_explanations`.
 - Add explanation types:
   - `GAP_REPORT`
   - `REJECTION_REASON`
   - `LEARNING_ROADMAP`
   - `WEAK_EVIDENCE`
-- Add confidence and prompt version metadata.
-- Add deterministic fallback when OpenAI is unavailable.
+- [x] Add confidence and prompt version metadata for gap reports.
+- [x] Add deterministic fallback metadata when OpenAI is unavailable.
 
 Web work:
 
-- Candidate application explainability panel.
-- Recruiter-side evidence gap panel.
+- [x] Candidate application explainability panel reads persisted gap reports.
+- [x] Candidate application detail page shows persisted rejection explanation.
+- [x] Recruiter-side evidence gap panel.
+- [x] Structured rejection form with categories, missing skills, and evidence notes.
 - Rejection explanation preview before final rejection.
 
 Mobile work:
@@ -152,6 +155,34 @@ PATCH /api/admin/fraud-flags/:id
 GET   /api/admin/audit-logs
 GET   /api/admin/recruiter-activity
 ```
+
+## Phase 5A: Account Security And Recovery
+
+Status: core web/API flow implemented.
+
+Backend work:
+
+- [x] Add hashed account recovery token storage.
+- [x] Add password reset request endpoint.
+- [x] Add password reset completion endpoint.
+- [x] Revoke refresh sessions after password reset.
+- [x] Add email verification send endpoint.
+- [x] Add email verification confirm endpoint.
+- [x] Add audit logs for password reset and email verification actions.
+- [x] Add Resend-backed email helper with development console fallback.
+
+Web work:
+
+- [x] Wire forgot password screen to the API.
+- [x] Add reset password screen.
+- [x] Add email verification confirmation screen.
+- [x] Add resend verification button on candidate profile.
+
+Deployment requirements:
+
+- Configure `APP_URL` on Render to the web app origin.
+- Configure `RESEND_API_KEY` and `EMAIL_FROM` before using real email delivery.
+- Without `RESEND_API_KEY`, development logs reset/verification links in the API console.
 
 ## Phase 6: Legal And Compliance
 

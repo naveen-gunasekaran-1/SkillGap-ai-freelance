@@ -1,5 +1,27 @@
 # Deployment
 
+## Production Storage
+
+Use Cloudflare R2 for verification documents and resume uploads.
+
+Setup guide:
+
+```txt
+docs/CLOUDFLARE_R2_STORAGE_SETUP.md
+```
+
+Required Render API environment variables:
+
+```env
+S3_BUCKET=skillgap-ai
+S3_ACCESS_KEY=<Cloudflare R2 Access Key ID>
+S3_SECRET_KEY=<Cloudflare R2 Secret Access Key>
+S3_REGION=auto
+S3_ENDPOINT=https://<cloudflare_account_id>.r2.cloudflarestorage.com
+```
+
+After adding these, redeploy the Render API service.
+
 ## Running Mobile On A Physical Device
 
 Your phone cannot reach the API through `127.0.0.1` or Android emulator host `10.0.2.2`.

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { Button, Input } from '@skillgap/ui';
+import { BarChart3, Target } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 import { api } from '../lib/api';
 import { parseUser } from '../lib/normalize';
@@ -15,6 +16,7 @@ export function LoginPage(): React.JSX.Element {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
+  const [remember, setRemember] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -27,12 +29,13 @@ export function LoginPage(): React.JSX.Element {
       const res = await api.post<{ user: unknown; accessToken: string; refreshToken: string }>('/auth/login', {
         email: email.trim().toLowerCase(),
         password,
+        rememberMe: remember,
       });
       const user = parseUser(res.data.user);
-      setSession(user, res.data.accessToken, res.data.refreshToken);
+      setSession(user, res.data.accessToken, res.data.refreshToken, remember);
       toast.success('Signed in');
       const from = (location.state as { from?: string } | null)?.from;
-      const home = user.role === 'COMPANY' ? '/company' : '/dashboard';
+      const home = user.role === 'ADMIN' ? '/admin' : user.role === 'COMPANY' ? '/company' : '/dashboard';
       navigate(from && from !== '/login' ? from : home, { replace: true });
     } catch (err: unknown) {
       const msg =
@@ -69,14 +72,18 @@ export function LoginPage(): React.JSX.Element {
               </p>
               <div className="mt-10 space-y-4">
                 <div className="flex items-center gap-3 rounded-card bg-white/80 p-4 shadow-card">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-success/10 text-lg">📊</span>
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-success/10 text-success">
+                    <BarChart3 className="h-5 w-5" />
+                  </span>
                   <div>
                     <p className="text-sm font-semibold text-text-primary">Real-time tracking</p>
                     <p className="text-xs text-text-secondary">See every application status update instantly</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 rounded-card bg-white/80 p-4 shadow-card">
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-light text-lg">🎯</span>
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-light text-primary">
+                    <Target className="h-5 w-5" />
+                  </span>
                   <div>
                     <p className="text-sm font-semibold text-text-primary">Smart recommendations</p>
                     <p className="text-xs text-text-secondary">AI-curated courses based on your specific gaps</p>
@@ -122,7 +129,12 @@ export function LoginPage(): React.JSX.Element {
 
                 <div className="flex items-center justify-between">
                   <label className="flex items-center gap-2 cursor-pointer">
-                    <input type="checkbox" className="h-4 w-4 rounded border-border text-primary focus:ring-primary" />
+                    <input
+                      type="checkbox"
+                      checked={remember}
+                      onChange={(e) => setRemember(e.target.checked)}
+                      className="h-4 w-4 rounded border-border text-primary focus:ring-primary"
+                    />
                     <span className="text-sm text-text-secondary">Remember me</span>
                   </label>
                   <Link to="/forgot-password" className="text-sm font-medium text-primary hover:text-primary-dark transition-colors">Forgot password?</Link>

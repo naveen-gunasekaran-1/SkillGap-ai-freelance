@@ -1,13 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Card, Badge, Avatar } from '@skillgap/ui';
+import { BarChart3, BriefcaseBusiness, ClipboardList, Menu, Settings, Target, Zap } from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 
 const sidebarLinks = [
-  { icon: '📊', label: 'Dashboard', active: true },
-  { icon: '💼', label: 'Jobs', active: false },
-  { icon: '📋', label: 'Applications', active: false },
-  { icon: '⚙️', label: 'Settings', active: false },
+  { icon: BarChart3, label: 'Dashboard', active: true },
+  { icon: BriefcaseBusiness, label: 'Jobs', active: false },
+  { icon: ClipboardList, label: 'Applications', active: false },
+  { icon: Settings, label: 'Settings', active: false },
 ];
 
 const recentApplicants = [
@@ -38,11 +39,14 @@ export function CompanyPortal(): React.JSX.Element {
                 </div>
               </div>
               <nav className="space-y-1">
-                {sidebarLinks.map((link) => (
-                  <button key={link.label} className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${link.active ? 'bg-primary-light/60 text-primary' : 'text-text-secondary hover:bg-background hover:text-text-primary'}`}>
-                    <span>{link.icon}</span>{link.label}
-                  </button>
-                ))}
+                {sidebarLinks.map((link) => {
+                  const Icon = link.icon;
+                  return (
+                    <button key={link.label} className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${link.active ? 'bg-primary-light/60 text-primary' : 'text-text-secondary hover:bg-background hover:text-text-primary'}`}>
+                      <Icon className="h-4 w-4" />{link.label}
+                    </button>
+                  );
+                })}
               </nav>
             </Card>
           </aside>
@@ -50,16 +54,19 @@ export function CompanyPortal(): React.JSX.Element {
           {/* Mobile nav toggle */}
           <div className="lg:hidden">
             <button onClick={() => setMobileNav(!mobileNav)} className="flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors">
-              <span>☰</span> Menu
+              <Menu className="h-4 w-4" /> Menu
             </button>
             {mobileNav && (
               <Card className="mt-2 p-4 animate-slide-down">
                 <nav className="flex flex-wrap gap-2">
-                  {sidebarLinks.map((link) => (
-                    <button key={link.label} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${link.active ? 'bg-primary-light/60 text-primary' : 'text-text-secondary'}`}>
-                      <span>{link.icon}</span>{link.label}
-                    </button>
-                  ))}
+                  {sidebarLinks.map((link) => {
+                    const Icon = link.icon;
+                    return (
+                      <button key={link.label} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${link.active ? 'bg-primary-light/60 text-primary' : 'text-text-secondary'}`}>
+                        <Icon className="h-4 w-4" />{link.label}
+                      </button>
+                    );
+                  })}
                 </nav>
               </Card>
             )}
@@ -81,20 +88,23 @@ export function CompanyPortal(): React.JSX.Element {
             {/* Stats */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-fade-in-up delay-100">
               {[
-                { label: 'Active Jobs', value: '5', icon: '💼', trend: '+2 this month', color: 'text-primary' },
-                { label: 'Applications', value: '42', icon: '📋', trend: '+12 this week', color: 'text-ai-purple' },
-                { label: 'Interviews', value: '8', icon: '🎯', trend: '3 scheduled', color: 'text-success' },
-                { label: 'Response Rate', value: '94%', icon: '⚡', trend: 'Above average', color: 'text-warning' },
-              ].map((stat) => (
+                { label: 'Active Jobs', value: '5', icon: BriefcaseBusiness, trend: '+2 this month', color: 'text-primary' },
+                { label: 'Applications', value: '42', icon: ClipboardList, trend: '+12 this week', color: 'text-ai-purple' },
+                { label: 'Interviews', value: '8', icon: Target, trend: '3 scheduled', color: 'text-success' },
+                { label: 'Response Rate', value: '94%', icon: Zap, trend: 'Above average', color: 'text-warning' },
+              ].map((stat) => {
+                const Icon = stat.icon;
+                return (
                 <Card key={stat.label} hover className="p-5">
                   <div className="flex items-center justify-between">
-                    <span className="text-2xl">{stat.icon}</span>
+                    <Icon className={`h-5 w-5 ${stat.color}`} />
                     <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
                   </div>
                   <p className="mt-2 text-sm font-medium text-text-primary">{stat.label}</p>
                   <p className="mt-0.5 text-xs text-text-secondary">{stat.trend}</p>
                 </Card>
-              ))}
+              );
+              })}
             </div>
 
             {/* Recent applicants */}

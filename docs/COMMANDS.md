@@ -115,6 +115,70 @@ sqlite3 apps/api/prisma/dev.db '.tables'
 sqlite3 apps/api/prisma/dev.db '.schema User'
 ```
 
+Promote an existing user to admin:
+
+```sh
+pnpm --filter @skillgap/api admin:promote user@example.com
+```
+
+## Cloudflare R2 Storage
+
+Recommended free-tier storage provider:
+
+```txt
+Cloudflare R2
+```
+
+Render API env vars:
+
+```env
+S3_BUCKET=skillgap-ai
+S3_ACCESS_KEY=<Cloudflare R2 Access Key ID>
+S3_SECRET_KEY=<Cloudflare R2 Secret Access Key>
+S3_REGION=auto
+S3_ENDPOINT=https://<cloudflare_account_id>.r2.cloudflarestorage.com
+```
+
+Full setup guide:
+
+```txt
+docs/CLOUDFLARE_R2_STORAGE_SETUP.md
+```
+
+## Account Recovery And Email Verification
+
+Development email behavior:
+
+```sh
+pnpm --filter @skillgap/api dev
+```
+
+If `RESEND_API_KEY` is not configured, password reset and email verification links are printed in the API terminal with an `[email:dev]` prefix.
+
+Request a password reset:
+
+```sh
+curl -X POST http://localhost:3001/api/auth/forgot-password \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"user@example.com"}'
+```
+
+Reset password with a token:
+
+```sh
+curl -X POST http://localhost:3001/api/auth/reset-password \
+  -H 'Content-Type: application/json' \
+  -d '{"token":"TOKEN_FROM_EMAIL","password":"newStrongPassword123"}'
+```
+
+Production email environment variables:
+
+```env
+APP_URL=https://your-web-app.example.com
+RESEND_API_KEY=
+EMAIL_FROM="SkillGap AI <no-reply@yourdomain.com>"
+```
+
 ## Web App
 
 Start web dev server:
