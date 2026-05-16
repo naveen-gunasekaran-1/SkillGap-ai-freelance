@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { MatchScore, Badge, Button, Input, Skeleton, Avatar, Card } from '@skillgap/ui';
 import type { Job } from '@skillgap/types';
-import { Navbar } from '../components/Navbar';
+import { Search, SlidersHorizontal, MapPin, Building2, Clock, CheckCircle2, X, Bookmark } from 'lucide-react';
+import { AppShell } from '../components/AppShell';
 import { api } from '../lib/api';
 import { parseJob } from '../lib/normalize';
 import { formatJobSalary, formatPosted, jobTypeLabel } from '../lib/format';
@@ -119,26 +120,18 @@ export function JobsPage(): React.JSX.Element {
   );
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <main className="mx-auto max-w-7xl px-6 py-8 md:py-12">
+    <AppShell>
+      <div className="p-4 lg:p-8 max-w-7xl mx-auto">
+        {/* Header */}
         <div className="animate-fade-in-up">
           <h1 className="text-2xl font-bold text-text-primary md:text-3xl">Job Opportunities</h1>
           <p className="mt-2 text-text-secondary">Personalized job matches based on your skills</p>
         </div>
 
+        {/* Search Bar */}
         <div className="mt-6 flex gap-3 animate-fade-in-up delay-100">
           <div className="relative flex-1">
-            <svg
-              className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.3-4.3" />
-            </svg>
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-text-secondary" />
             <Input
               type="text"
               placeholder="Search jobs, companies, or skills..."
@@ -148,12 +141,20 @@ export function JobsPage(): React.JSX.Element {
             />
           </div>
           <Button variant="secondary" className="lg:hidden" onClick={() => setShowFilters(!showFilters)}>
+            <SlidersHorizontal className="h-4 w-4 mr-2" />
             Filters
           </Button>
         </div>
 
+        {/* Mobile Filters */}
         {showFilters && (
           <div className="mt-4 rounded-card border border-border bg-white p-6 shadow-card lg:hidden animate-slide-down">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold text-text-primary">Filters</h3>
+              <button onClick={() => setShowFilters(false)} className="text-text-secondary hover:text-text-primary">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
             <FilterPanel />
           </div>
         )}
@@ -162,11 +163,14 @@ export function JobsPage(): React.JSX.Element {
           <p className="mt-4 text-sm text-error">Could not load jobs. Is the API running?</p>
         )}
 
+        {/* Results count */}
         <p className="mt-4 text-sm text-text-secondary animate-fade-in-up delay-200">
-          {isLoading ? 'Loading jobs…' : `${jobs.length} ${jobs.length === 1 ? 'job' : 'jobs'} found`}
+          {isLoading ? 'Loading jobs...' : `${jobs.length} ${jobs.length === 1 ? 'job' : 'jobs'} found`}
         </p>
 
+        {/* Main Grid */}
         <div className="mt-6 grid gap-8 lg:grid-cols-[240px_1fr_240px]">
+          {/* Filters Sidebar */}
           <aside className="hidden lg:block">
             <Card className="sticky top-24 p-6">
               <h2 className="text-base font-semibold text-text-primary mb-5">Filters</h2>
@@ -174,6 +178,7 @@ export function JobsPage(): React.JSX.Element {
             </Card>
           </aside>
 
+          {/* Job List */}
           <div className="space-y-4">
             {isLoading &&
               Array.from({ length: 4 }).map((_, i) => (
@@ -208,20 +213,25 @@ export function JobsPage(): React.JSX.Element {
                             <h2 className="text-base font-semibold text-text-primary">{job.title}</h2>
                             {job.isVerified && (
                               <span className="inline-flex items-center gap-1 rounded-full bg-primary-light px-2 py-0.5 text-xs font-medium text-primary">
-                                <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M16.403 12.652a3 3 0 0 0 0-5.304 3 3 0 0 0-3.75-3.751 3 3 0 0 0-5.305 0 3 3 0 0 0-3.751 3.75 3 3 0 0 0 0 5.305 3 3 0 0 0 3.75 3.751 3 3 0 0 0 5.305 0 3 3 0 0 0 3.751-3.75Zm-2.546-4.46a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
+                                <CheckCircle2 className="h-3 w-3" />
                                 Verified
                               </span>
                             )}
                           </div>
-                          <p className="mt-1 text-sm text-text-secondary">
-                            {job.company.name} • {job.location} • {formatPosted(job.postedAt)}
-                          </p>
+                          <div className="mt-1 flex items-center gap-3 text-sm text-text-secondary">
+                            <span className="flex items-center gap-1">
+                              <Building2 className="h-3.5 w-3.5" />
+                              {job.company.name}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <MapPin className="h-3.5 w-3.5" />
+                              {job.location}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3.5 w-3.5" />
+                              {formatPosted(job.postedAt)}
+                            </span>
+                          </div>
                           <div className="mt-3 flex flex-wrap gap-1.5">
                             <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${typeColors[job.type]}`}>
                               {jobTypeLabel(job.type)}
@@ -235,8 +245,20 @@ export function JobsPage(): React.JSX.Element {
                           </div>
                           <p className="mt-2.5 text-sm font-semibold text-primary">{formatJobSalary(job)}</p>
                         </div>
-                        <div className="hidden sm:block flex-shrink-0">
-                          <MatchScore value={match} size={56} />
+                        <div className="flex flex-col items-end gap-2">
+                          <div className="hidden sm:block">
+                            <MatchScore value={match} size={56} />
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                            }}
+                            className="text-text-secondary hover:text-primary transition-colors p-1"
+                            aria-label="Save job"
+                          >
+                            <Bookmark className="h-5 w-5" />
+                          </button>
                         </div>
                       </div>
                     </Card>
@@ -246,13 +268,14 @@ export function JobsPage(): React.JSX.Element {
 
             {!isLoading && jobs.length === 0 && (
               <div className="py-20 text-center">
-                <span className="text-4xl">🔍</span>
-                <p className="mt-4 text-lg font-medium text-text-primary">No jobs found</p>
+                <Search className="h-12 w-12 text-text-secondary mx-auto mb-4" />
+                <p className="text-lg font-medium text-text-primary">No jobs found</p>
                 <p className="mt-2 text-sm text-text-secondary">Try adjusting your filters or search query</p>
               </div>
             )}
           </div>
 
+          {/* Featured Companies Sidebar */}
           <aside className="hidden lg:block">
             <Card className="sticky top-24 p-6">
               <h2 className="text-base font-semibold text-text-primary mb-4">Featured Companies</h2>
@@ -266,11 +289,14 @@ export function JobsPage(): React.JSX.Element {
                     </div>
                   </div>
                 ))}
+                {(!companiesQuery.data || companiesQuery.data.length === 0) && (
+                  <p className="text-sm text-text-secondary">Loading companies...</p>
+                )}
               </div>
             </Card>
           </aside>
         </div>
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }

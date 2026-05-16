@@ -1,9 +1,10 @@
 import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Badge, Card, MatchScore, Avatar } from '@skillgap/ui';
+import { Badge, Card, MatchScore, Avatar, Button } from '@skillgap/ui';
 import type { Application, ApplicationStatus } from '@skillgap/types';
-import { Navbar } from '../components/Navbar';
+import { Filter, ArrowUpDown, ClipboardList, ArrowRight } from 'lucide-react';
+import { AppShell } from '../components/AppShell';
 import { api } from '../lib/api';
 import { parseApplication } from '../lib/normalize';
 import { applicationStatusPresentation } from '../lib/format';
@@ -57,9 +58,9 @@ export function ApplicationsPage(): React.JSX.Element {
     d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <main className="mx-auto max-w-4xl px-6 py-8 md:py-12">
+    <AppShell>
+      <div className="p-4 lg:p-8 max-w-5xl mx-auto">
+        {/* Header */}
         <div className="animate-fade-in-up">
           <h1 className="text-2xl font-bold text-text-primary md:text-3xl">Your Applications</h1>
           <p className="mt-2 text-text-secondary">Track your job applications, interviews, and outcomes</p>
@@ -69,6 +70,7 @@ export function ApplicationsPage(): React.JSX.Element {
           <p className="mt-4 text-sm text-error">Could not load applications.</p>
         )}
 
+        {/* Filters Row */}
         <div className="mt-6 flex animate-fade-in-up delay-100 flex-col items-center justify-between gap-4 sm:flex-row">
           <div className="flex w-full gap-1 overflow-x-auto rounded-xl border border-border bg-white p-1 shadow-card sm:w-auto">
             {statusFilters.map((s) => (
@@ -84,18 +86,26 @@ export function ApplicationsPage(): React.JSX.Element {
               </button>
             ))}
           </div>
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as 'date' | 'score')}
-            className="hidden rounded-card border border-border bg-white px-3 py-2 text-sm text-text-primary outline-none focus:border-primary sm:block"
-            aria-label="Sort applications"
-          >
-            <option value="date">Sort by date</option>
-            <option value="score">Sort by match</option>
-          </select>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setSort(sort === 'date' ? 'score' : 'date')}
+              className="hidden sm:flex"
+            >
+              <ArrowUpDown className="h-4 w-4 mr-1" />
+              {sort === 'date' ? 'By date' : 'By match'}
+            </Button>
+          </div>
         </div>
 
-        <div className="mt-6 space-y-3">
+        {/* Results count */}
+        <p className="mt-4 text-sm text-text-secondary animate-fade-in-up delay-150">
+          {appsQuery.isLoading ? 'Loading...' : `${filtered.length} ${filtered.length === 1 ? 'application' : 'applications'}`}
+        </p>
+
+        {/* Applications List */}
+        <div className="mt-4 space-y-3">
           {appsQuery.isLoading &&
             Array.from({ length: 3 }).map((_, i) => (
               <Card key={i} className="p-5">
@@ -122,12 +132,13 @@ export function ApplicationsPage(): React.JSX.Element {
                       <div className="min-w-0 flex-1">
                         <h2 className="truncate font-semibold text-text-primary">{title}</h2>
                         <p className="mt-1 text-sm text-text-secondary">
-                          {company} • Applied {formatDate(app.appliedAt)}
+                          {company} - Applied {formatDate(app.appliedAt)}
                         </p>
                       </div>
                       <div className="hidden items-center gap-3 sm:flex">
                         <Badge variant={variant}>{label}</Badge>
                         <MatchScore value={app.matchScore} size={44} />
+                        <ArrowRight className="h-5 w-5 text-text-secondary" />
                       </div>
                       <div className="sm:hidden">
                         <Badge variant={variant}>{label}</Badge>
@@ -140,16 +151,18 @@ export function ApplicationsPage(): React.JSX.Element {
 
           {!appsQuery.isLoading && filtered.length === 0 && (
             <div className="py-20 text-center">
-              <span className="text-4xl">📋</span>
-              <p className="mt-4 text-lg font-medium text-text-primary">No applications found</p>
+              <ClipboardList className="h-12 w-12 text-text-secondary mx-auto mb-4" />
+              <p className="text-lg font-medium text-text-primary">No applications found</p>
               <p className="mt-2 text-sm text-text-secondary">Try changing the filter or apply to more jobs</p>
-              <Link to="/jobs" className="mt-6 inline-block text-primary font-semibold">
-                Browse jobs
+              <Link to="/jobs">
+                <Button variant="ai-gradient" className="mt-6">
+                  Browse jobs
+                </Button>
               </Link>
             </div>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }

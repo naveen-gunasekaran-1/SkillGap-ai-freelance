@@ -2,16 +2,17 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { MatchScore, ProgressBar, Card, Badge, Button, Avatar } from '@skillgap/ui';
 import type { Application } from '@skillgap/types';
-import { Navbar } from '../components/Navbar';
+import { TrendingUp, Target, BookOpen, Briefcase, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
+import { AppShell } from '../components/AppShell';
 import { api } from '../lib/api';
 import { parseApplication } from '../lib/normalize';
 import { applicationStatusPresentation } from '../lib/format';
 import { useAuthStore } from '../stores/authStore';
 
 const quickActions = [
-  { icon: '🔍', title: 'Browse Jobs', desc: 'Find new opportunities', to: '/jobs', color: 'bg-primary-light' },
-  { icon: '📄', title: 'Your Profile', desc: 'Update skills & details', to: '/profile', color: 'bg-success/10' },
-  { icon: '📊', title: 'View Reports', desc: 'Gap analysis results', to: '/applications', color: 'bg-ai-purple/10' },
+  { icon: <Briefcase className="h-5 w-5 text-primary" />, title: 'Browse Jobs', desc: 'Find new opportunities', to: '/jobs', color: 'bg-primary-light' },
+  { icon: <Target className="h-5 w-5 text-success" />, title: 'Your Profile', desc: 'Update skills & details', to: '/profile', color: 'bg-success/10' },
+  { icon: <TrendingUp className="h-5 w-5 text-ai-purple" />, title: 'View Reports', desc: 'Gap analysis results', to: '/applications', color: 'bg-ai-purple/10' },
 ];
 
 /**
@@ -48,34 +49,34 @@ export function DashboardPage(): React.JSX.Element {
       platform: r.platform,
       hours: r.estimatedHours,
       free: r.isFree,
-      icon: '📘',
     })) ?? [];
 
   const displayName = user?.name ?? 'there';
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <main className="mx-auto max-w-7xl px-6 py-8 md:py-12">
+    <AppShell>
+      <div className="p-4 lg:p-8 max-w-7xl mx-auto">
+        {/* Header */}
         <div className="flex animate-fade-in-up flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="flex items-center gap-4">
             <Avatar name={displayName} size="lg" />
             <div>
-              <h1 className="text-2xl font-bold text-text-primary md:text-3xl">Welcome back, {displayName} 👋</h1>
+              <h1 className="text-2xl font-bold text-text-primary md:text-3xl">Welcome back, {displayName}</h1>
               <p className="mt-1 text-text-secondary">Here&apos;s your career progress at a glance.</p>
             </div>
           </div>
           <div className="flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm text-text-secondary shadow-card">
             <span className="h-2 w-2 animate-pulse rounded-full bg-success" />
-            {appsQuery.isFetching ? 'Syncing…' : 'Profile in sync'}
+            {appsQuery.isFetching ? 'Syncing...' : 'Profile in sync'}
           </div>
         </div>
 
+        {/* Quick Actions */}
         <div className="mt-8 grid animate-fade-in-up delay-100 gap-4 sm:grid-cols-3">
           {quickActions.map((a) => (
             <Link key={a.title} to={a.to}>
               <Card hover className="flex items-center gap-4 p-5">
-                <span className={`flex h-12 w-12 items-center justify-center rounded-xl text-xl ${a.color}`}>{a.icon}</span>
+                <span className={`flex h-12 w-12 items-center justify-center rounded-xl ${a.color}`}>{a.icon}</span>
                 <div>
                   <p className="font-semibold text-text-primary">{a.title}</p>
                   <p className="text-sm text-text-secondary">{a.desc}</p>
@@ -89,7 +90,9 @@ export function DashboardPage(): React.JSX.Element {
           <p className="mt-6 text-sm text-error">Could not load your applications. Try refreshing.</p>
         )}
 
+        {/* Stats Row */}
         <div className="mt-8 grid animate-fade-in-up delay-200 gap-6 lg:grid-cols-3">
+          {/* Match Score Card */}
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <h2 className="text-sm font-medium text-text-secondary">Overall Match Score</h2>
@@ -103,6 +106,7 @@ export function DashboardPage(): React.JSX.Element {
             </p>
           </Card>
 
+          {/* Skills Progress Card */}
           <Card className="p-6">
             <h2 className="text-sm font-medium text-text-secondary">Skills Progress</h2>
             <div className="mt-5 space-y-4">
@@ -121,41 +125,43 @@ export function DashboardPage(): React.JSX.Element {
             </div>
           </Card>
 
+          {/* AI Insights Card */}
           <div className="relative overflow-hidden rounded-card border border-ai-purple/20 bg-gradient-to-br from-ai-purple/5 to-ai-cyan/5 p-6 shadow-card">
             <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-ai-purple/10 blur-2xl" />
             <div className="mb-4 flex items-center gap-2">
-              <span className="text-lg">🧠</span>
+              <Sparkles className="h-5 w-5 text-ai-purple" />
               <h2 className="text-sm font-semibold text-ai-gradient">AI Insights</h2>
             </div>
             <p className="text-sm font-medium text-text-primary">Based on your latest application analysis:</p>
             <ul className="mt-3 space-y-2.5 text-sm text-text-secondary">
               {primaryGapReport?.strengths?.slice(0, 3).map((s) => (
                 <li key={s} className="flex items-start gap-2">
-                  <span className="mt-0.5 text-ai-purple">→</span>
+                  <CheckCircle2 className="h-4 w-4 mt-0.5 text-ai-purple flex-shrink-0" />
                   {s}
                 </li>
               ))}
               {!primaryGapReport && (
                 <li className="flex items-start gap-2">
-                  <span className="mt-0.5 text-ai-cyan">→</span>
+                  <ArrowRight className="h-4 w-4 mt-0.5 text-ai-cyan flex-shrink-0" />
                   Apply to a job to generate a personalized gap report.
                 </li>
               )}
             </ul>
             <Link to="/applications">
               <Button variant="ghost" size="sm" className="mt-4 text-ai-purple hover:bg-ai-purple/10">
-                View full report →
+                View full report <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             </Link>
           </div>
         </div>
 
+        {/* Recent Applications */}
         <Card className="mt-8 animate-fade-in-up delay-300 overflow-hidden">
           <div className="flex items-center justify-between border-b border-border p-6">
             <h2 className="text-lg font-semibold text-text-primary">Recent Applications</h2>
             <Link to="/applications">
               <Button variant="ghost" size="sm">
-                View all →
+                View all <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             </Link>
           </div>
@@ -201,7 +207,9 @@ export function DashboardPage(): React.JSX.Element {
           </div>
         </Card>
 
+        {/* Skill Gaps + Learning Recommendations */}
         <div className="mt-8 grid animate-fade-in-up delay-400 gap-6 lg:grid-cols-2">
+          {/* Skill Gaps */}
           <Card className="p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-text-primary">Skill Gaps</h2>
@@ -233,6 +241,7 @@ export function DashboardPage(): React.JSX.Element {
             </div>
           </Card>
 
+          {/* Learning Recommendations */}
           <Card className="p-6">
             <div className="mb-4 flex items-center justify-between">
               <h2 className="text-lg font-semibold text-text-primary">Learning Recommendations</h2>
@@ -244,11 +253,13 @@ export function DashboardPage(): React.JSX.Element {
                   key={r.title}
                   className="hover-lift flex items-center gap-4 rounded-card border border-border bg-background/50 p-4"
                 >
-                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-light text-lg">{r.icon}</span>
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-light">
+                    <BookOpen className="h-5 w-5 text-primary" />
+                  </span>
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-medium text-text-primary">{r.title}</p>
                     <p className="text-xs text-text-secondary">
-                      {r.platform} • {r.hours}h • {r.free ? 'Free' : 'Paid'}
+                      {r.platform} - {r.hours}h - {r.free ? 'Free' : 'Paid'}
                     </p>
                   </div>
                   <Button variant="ghost" size="sm" type="button">
@@ -262,7 +273,7 @@ export function DashboardPage(): React.JSX.Element {
             </div>
           </Card>
         </div>
-      </main>
-    </div>
+      </div>
+    </AppShell>
   );
 }
