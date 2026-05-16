@@ -11,6 +11,8 @@ const navLinks = [
   { to: '/profile', label: 'Profile' },
 ];
 
+const publicLinks: { to: string; label: string }[] = [];
+
 /**
  * Main navigation bar with mobile hamburger menu, active route highlighting,
  * and scroll-aware shadow.
@@ -102,6 +104,23 @@ export function Navbar(): React.JSX.Element {
               ))}
             </div>
           )}
+          {!authed && (
+            <div className="hidden items-center gap-1 md:flex">
+              {publicLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`relative rounded-lg px-3.5 py-2 text-sm font-medium transition-all duration-150 ${
+                    isActive(link.to)
+                      ? 'text-primary bg-primary-light/60'
+                      : 'text-text-secondary hover:text-text-primary hover:bg-background'
+                  }`}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          )}
 
           {/* Desktop CTA buttons */}
           <div className="hidden gap-2.5 md:flex">
@@ -174,6 +193,24 @@ export function Navbar(): React.JSX.Element {
           {authed && (
             <div className="flex flex-col gap-1">
               {navLinks.map((link, i) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`rounded-xl px-4 py-3.5 text-base font-medium transition-all duration-150 ${
+                    isActive(link.to)
+                      ? 'bg-primary-light/60 text-primary'
+                      : 'text-text-secondary hover:bg-background hover:text-text-primary'
+                  }`}
+                  style={{ animationDelay: `${i * 50 + 100}ms` }}
+                >
+                  {link.label}
+                </Link>
+              ))}
+            </div>
+          )}
+          {!authed && (
+            <div className="flex flex-col gap-1">
+              {publicLinks.map((link, i) => (
                 <Link
                   key={link.to}
                   to={link.to}

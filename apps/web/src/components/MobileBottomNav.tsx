@@ -1,6 +1,6 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, ClipboardList, User, Building2, Users, BarChart3 } from 'lucide-react';
-import { useRoleStore } from '../stores/roleStore';
+import { LayoutDashboard, Briefcase, ClipboardList, User, Building2, Users } from 'lucide-react';
+import { useAuthStore } from '../stores/authStore';
 
 interface NavItem {
   to: string;
@@ -19,12 +19,13 @@ const companyNav: NavItem[] = [
   { to: '/company', label: 'Home', icon: <LayoutDashboard className="h-5 w-5" /> },
   { to: '/company/jobs', label: 'Jobs', icon: <Briefcase className="h-5 w-5" /> },
   { to: '/company/candidates', label: 'Candidates', icon: <Users className="h-5 w-5" /> },
-  { to: '/company/profile', label: 'Profile', icon: <Building2 className="h-5 w-5" /> },
+  { to: '/company/verification', label: 'Verify', icon: <Building2 className="h-5 w-5" /> },
 ];
 
 export function MobileBottomNav(): React.JSX.Element {
   const location = useLocation();
-  const activeRole = useRoleStore((s) => s.activeRole);
+  const user = useAuthStore((s) => s.user);
+  const activeRole = user?.role === 'COMPANY' || user?.role === 'ADMIN' ? 'company' : 'candidate';
 
   const navItems = activeRole === 'company' ? companyNav : candidateNav;
 

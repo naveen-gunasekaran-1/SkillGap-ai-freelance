@@ -24,6 +24,8 @@ const gaps = [
  */
 export default function DashboardScreen(): React.JSX.Element {
   const userName = useMobileAuthStore((s) => s.userName);
+  const role = useMobileAuthStore((s) => s.role);
+  const isCompany = role === 'COMPANY' || role === 'ADMIN';
   const display = userName ?? 'there';
   const initials = display === 'there' ? 'SG' : display.slice(0, 2).toUpperCase();
   return (
@@ -41,7 +43,7 @@ export default function DashboardScreen(): React.JSX.Element {
             </View>
             <View>
               <Text style={{ ...t.typography.h3, color: t.colors.textPrimary }}>Good evening, {display}</Text>
-              <Text style={{ ...t.typography.caption, color: t.colors.textSecondary }}>Your career at a glance</Text>
+              <Text style={{ ...t.typography.caption, color: t.colors.textSecondary }}>{isCompany ? 'Your hiring at a glance' : 'Your career at a glance'}</Text>
             </View>
           </View>
           <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: t.colors.surface, alignItems: 'center', justifyContent: 'center', ...t.shadows.sm }}>
@@ -57,19 +59,19 @@ export default function DashboardScreen(): React.JSX.Element {
             <Text style={{ ...t.typography.caption, fontWeight: '700', color: t.colors.aiPurple }}>AI Insights</Text>
           </View>
           <Text style={{ ...t.typography.caption, color: '#5B21B6', lineHeight: 22 }}>
-            Learning <Text style={{ fontWeight: '700' }}>TypeScript generics</Text> could unlock 5 more job matches. Your React skills are top 10% in your area.
+            {isCompany ? 'Review applicants by match score and move strong candidates through your hiring pipeline.' : <>Learning <Text style={{ fontWeight: '700' }}>TypeScript generics</Text> could unlock 5 more job matches. Your React skills are top 10% in your area.</>}
           </Text>
         </View>
 
         {/* Match score card */}
         <View style={{ marginTop: t.spacing.lg, borderRadius: t.borderRadius.card, backgroundColor: t.colors.surface, padding: t.spacing.xl, alignItems: 'center', ...t.shadows.card }}>
-          <Text style={{ ...t.typography.small, fontWeight: '700', color: t.colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1.5 }}>Overall Match Score</Text>
+          <Text style={{ ...t.typography.small, fontWeight: '700', color: t.colors.textSecondary, textTransform: 'uppercase', letterSpacing: 1.5 }}>{isCompany ? 'Applicant Quality' : 'Overall Match Score'}</Text>
           <View style={{ width: 140, height: 140, borderRadius: 70, borderWidth: 12, borderColor: t.colors.primaryLight, borderTopColor: t.colors.success, alignItems: 'center', justifyContent: 'center', marginTop: t.spacing.lg, transform: [{ rotate: '45deg' }] }}>
             <View style={{ transform: [{ rotate: '-45deg' }], alignItems: 'center' }}>
               <Text style={{ fontSize: 36, fontWeight: '800', color: t.colors.textPrimary }}>78%</Text>
             </View>
           </View>
-          <Text style={{ ...t.typography.caption, color: t.colors.textSecondary, marginTop: t.spacing.md }}>Strong match for <Text style={{ fontWeight: '700', color: t.colors.textPrimary }}>12 jobs</Text></Text>
+          <Text style={{ ...t.typography.caption, color: t.colors.textSecondary, marginTop: t.spacing.md }}>{isCompany ? 'Strong applicants across open roles' : <>Strong match for <Text style={{ fontWeight: '700', color: t.colors.textPrimary }}>12 jobs</Text></>}</Text>
         </View>
 
         {/* Skills progress */}

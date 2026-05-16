@@ -6,9 +6,10 @@ import { HttpError } from '../lib/httpError';
 import { toApplicationDto } from '../lib/serializers';
 import { computeMatchScore, buildGapReport } from '../lib/matching';
 import { enrichGapReportWithOpenAI } from '../lib/aiGapEnrichment';
-import { requireAuth, requireRoles } from '../middleware/auth';
-import { APPLICATION_STATUS, ROLE } from '../lib/constants';
+import { requireAuth, requireRoles, requireVerifiedCompany } from '../middleware/auth';
+import { APPLICATION_STATUS, AUDIT_ACTION, ROLE } from '../lib/constants';
 import { parseStringArray } from '../lib/jsonFields';
+import { writeAuditLog } from '../lib/audit';
 
 const createSchema = z.object({
   jobId: z.string().min(1),
@@ -114,7 +115,7 @@ router.get(
       const apps = await prisma.application.findMany({
         orderBy: { appliedAt: 'desc' },
         take: 200,
-        include: { job: { include: { company: true, skills: { include: { skill: true } } } } },
+        include: { candidate: true, job: { include: { company: true, skills: { include: { skill: true } } } } },
       });
       res.json({ applications: apps.map((a) => toApplicationDto(a)) });
       return;
@@ -124,20 +125,26 @@ router.get(
       const apps = await prisma.application.findMany({
         where: { candidateId: req.auth!.id },
         orderBy: { appliedAt: 'desc' },
-        include: { job: { include: { company: true, skills: { include: { skill: true } } } } },
+        include: { candidate: true, job: { include: { company: true, skills: { include: { skill: true } } } } },
       });
       res.json({ applications: apps.map((a) => toApplicationDto(a)) });
       return;
     }
 
     if (req.auth!.role === ROLE.COMPANY) {
+      await new Promise<void>((resolve, reject) => {
+        requireVerifiedCompany()(req, res, (err?: unknown) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
       if (!req.auth!.companyId) {
         throw new HttpError(400, 'Company profile is not linked');
       }
       const apps = await prisma.application.findMany({
         where: { job: { companyId: req.auth!.companyId } },
         orderBy: { appliedAt: 'desc' },
-        include: { job: { include: { company: true, skills: { include: { skill: true } } } } },
+        include: { candidate: true, job: { include: { company: true, skills: { include: { skill: true } } } } },
       });
       res.json({ applications: apps.map((a) => toApplicationDto(a)) });
       return;
@@ -154,7 +161,7 @@ router.get(
     const id = z.string().min(1).parse(req.params.id);
     const app = await prisma.application.findUnique({
       where: { id },
-      include: { job: { include: { company: true, skills: { include: { skill: true } } } } },
+      include: { candidate: true, job: { include: { company: true, skills: { include: { skill: true } } } } },
     });
     if (!app) {
       throw new HttpError(404, 'Application not found');
@@ -169,6 +176,12 @@ router.get(
       return;
     }
     if (req.auth!.role === ROLE.COMPANY && req.auth!.companyId && app.job.companyId === req.auth!.companyId) {
+      await new Promise<void>((resolve, reject) => {
+        requireVerifiedCompany()(req, res, (err?: unknown) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
       res.json({ application: toApplicationDto(app) });
       return;
     }
@@ -181,6 +194,7 @@ router.patch(
   '/:id/status',
   requireAuth(),
   requireRoles(ROLE.COMPANY, ROLE.ADMIN),
+  requireVerifiedCompany(),
   asyncHandler(async (req, res) => {
     const id = z.string().min(1).parse(req.params.id);
     const body = updateStatusSchema.parse(req.body);
@@ -206,7 +220,21 @@ router.patch(
         rejectionReason:
           body.status === APPLICATION_STATUS.REJECTED ? body.rejectionReason!.trim() : null,
       },
-      include: { job: { include: { company: true, skills: { include: { skill: true } } } } },
+      include: { candidate: true, job: { include: { company: true, skills: { include: { skill: true } } } } },
+    });
+    await writeAuditLog({
+      req,
+      action:
+        body.status === APPLICATION_STATUS.REJECTED
+          ? AUDIT_ACTION.APPLICATION_REJECTED
+          : AUDIT_ACTION.APPLICATION_STATUS_CHANGED,
+      entityType: 'Application',
+      entityId: updated.id,
+      metadata: {
+        status: body.status,
+        jobId: updated.jobId,
+        candidateId: updated.candidateId,
+      },
     });
 
     res.json({ application: toApplicationDto(updated) });

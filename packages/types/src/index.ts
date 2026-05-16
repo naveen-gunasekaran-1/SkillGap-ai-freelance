@@ -74,10 +74,12 @@ export interface Company {
   name: string;
   logo?: string;
   isVerified: boolean;
+  verificationStatus?: 'NOT_STARTED' | 'DRAFT' | 'SUBMITTED' | 'IN_REVIEW' | 'APPROVED' | 'REJECTED' | 'SUSPENDED';
   verificationBadge?: 'GSTIN' | 'MCA' | 'MANUAL';
   industry: string;
   size: string;
   website?: string;
+  description?: string;
 }
 
 export interface Skill {
@@ -157,4 +159,5 @@ export interface Application {
   appliedAt: Date;
   updatedAt: Date;
   job?: Job;
+  candidate?: User;
 }

@@ -179,14 +179,14 @@ export function ProfilePage(): React.JSX.Element {
                 ) : (
                   <div className="space-y-4">
                     <div className="flex items-center gap-4">
-                      <Avatar name={displayName} size="xl" />
+                      <Avatar name={displayName} size="lg" />
                       <div>
                         <h3 className="text-lg font-semibold text-text-primary">{user?.name || 'Add your name'}</h3>
                         <p className="text-text-secondary">{user?.title || 'Add your job title'}</p>
                       </div>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2 pt-4 border-t border-border">
-                      <InfoRow icon={<Mail className="h-4 w-4" />} label="Email" value={user?.email} />
+                      <InfoRow icon={<Mail className="h-4 w-4" />} label="Email" value={user?.email ?? null} />
                       <InfoRow icon={<Phone className="h-4 w-4" />} label="Phone" value={user?.phone || 'Not set'} />
                       <InfoRow icon={<MapPin className="h-4 w-4" />} label="Location" value={user?.location || 'Not set'} />
                       <InfoRow icon={<Briefcase className="h-4 w-4" />} label="Title" value={user?.title || 'Not set'} />
@@ -397,11 +397,11 @@ export function ProfilePage(): React.JSX.Element {
               <div className="space-y-3">
                 <StatusRow
                   label="Email"
-                  verified={user?.emailVerified}
+                  verified={Boolean(user?.emailVerified)}
                 />
                 <StatusRow
                   label="Skills"
-                  verified={user?.skillsVerified}
+                  verified={Boolean(user?.skillsVerified)}
                 />
                 <StatusRow
                   label="Resume"

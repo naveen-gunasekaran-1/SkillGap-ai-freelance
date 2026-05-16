@@ -18,7 +18,7 @@ const menuItems = [
 interface UserProfile {
   name: string;
   email: string;
-  role: string;
+  role: 'CANDIDATE' | 'COMPANY' | 'ADMIN';
   title?: string;
   location?: string;
   skills?: string[];
@@ -27,6 +27,18 @@ interface UserProfile {
 interface ApplicationSummary {
   status: string;
   matchScore?: number;
+}
+
+interface CompanyProfile {
+  name: string;
+  industry?: string;
+  size?: string;
+  website?: string;
+  description?: string;
+}
+
+interface CompanyJobSummary {
+  id: string;
 }
 
 function initialsFor(name: string): string {
@@ -54,7 +66,10 @@ export default function ProfileScreen(): React.JSX.Element {
   const setSession = useMobileAuthStore((s) => s.setSession);
   const clearSession = useMobileAuthStore((s) => s.clear);
   const fallbackName = useMobileAuthStore((s) => s.userName);
+  const storedRole = useMobileAuthStore((s) => s.role);
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [company, setCompany] = useState<CompanyProfile | null>(null);
+  const [companyJobs, setCompanyJobs] = useState<CompanyJobSummary[]>([]);
   const [applications, setApplications] = useState<ApplicationSummary[]>([]);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -65,13 +80,19 @@ export default function ProfileScreen(): React.JSX.Element {
   };
 
   const loadProfile = useCallback(async () => {
-    const [meRes, appsRes] = await Promise.all([
-      mobileApi.get<{ user: UserProfile }>('/auth/me'),
-      mobileApi.get<{ applications: ApplicationSummary[] }>('/applications'),
-    ]);
+    const meRes = await mobileApi.get<{ user: UserProfile }>('/auth/me');
     setProfile(meRes.data.user);
-    setSession(meRes.data.user.name);
+    setSession(meRes.data.user.name, meRes.data.user.role);
+
+    const isCompany = meRes.data.user.role === 'COMPANY' || meRes.data.user.role === 'ADMIN';
+    const [appsRes, companyRes, jobsRes] = await Promise.all([
+      mobileApi.get<{ applications: ApplicationSummary[] }>('/applications'),
+      isCompany ? mobileApi.get<{ company: CompanyProfile }>('/companies/me') : Promise.resolve(null),
+      isCompany ? mobileApi.get<{ jobs: CompanyJobSummary[] }>('/jobs/company/mine') : Promise.resolve(null),
+    ]);
     setApplications(appsRes.data.applications);
+    setCompany(companyRes?.data.company ?? null);
+    setCompanyJobs(jobsRes?.data.jobs ?? []);
   }, [setSession]);
 
   useEffect(() => {
@@ -88,14 +109,32 @@ export default function ProfileScreen(): React.JSX.Element {
   };
 
   const displayName = profile?.name ?? fallbackName ?? 'SkillGap User';
-  const displayTitle = profile?.title?.trim() || (profile?.role === 'COMPANY' ? 'Company user' : 'Candidate');
-  const displayLocation = profile?.location?.trim() || profile?.email || 'Profile';
+  const activeRole = profile?.role ?? storedRole;
+  const isCompany = activeRole === 'COMPANY' || activeRole === 'ADMIN';
+  const profileName = isCompany ? company?.name ?? displayName : displayName;
+  const displayTitle = isCompany
+    ? company?.industry ?? 'Company workspace'
+    : profile?.title?.trim() || 'Candidate';
+  const displayLocation = isCompany
+    ? company?.website ?? company?.size ?? profile?.email ?? 'Company profile'
+    : profile?.location?.trim() || profile?.email || 'Profile';
   const userSkills = profile?.skills?.length ? profile.skills : [];
   const interviews = applications.filter((app) =>
     ['INTERVIEW_SCHEDULED', 'INTERVIEW_DONE'].includes(app.status),
   ).length;
   const offers = applications.filter((app) => ['OFFER_EXTENDED', 'HIRED'].includes(app.status)).length;
   const match = averageMatch(applications);
+  const stats = isCompany
+    ? [
+        { label: 'Open Jobs', value: String(companyJobs.length) },
+        { label: 'Applicants', value: String(applications.length) },
+        { label: 'Interviews', value: String(interviews) },
+      ]
+    : [
+        { label: 'Applications', value: String(applications.length) },
+        { label: 'Interviews', value: String(interviews) },
+        { label: 'Offers', value: String(offers) },
+      ];
 
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.background }}>
@@ -111,31 +150,27 @@ export default function ProfileScreen(): React.JSX.Element {
         {/* Profile info */}
         <View style={{ alignItems: 'center', marginTop: -48, paddingHorizontal: t.spacing.lg }}>
           <View style={{ width: 96, height: 96, borderRadius: 48, backgroundColor: t.colors.primaryLight, borderWidth: 4, borderColor: t.colors.surface, alignItems: 'center', justifyContent: 'center', ...t.shadows.elevated }}>
-            <Text style={{ fontSize: 32, fontWeight: '800', color: t.colors.primaryDark }}>{initialsFor(displayName)}</Text>
+            <Text style={{ fontSize: 32, fontWeight: '800', color: t.colors.primaryDark }}>{initialsFor(profileName)}</Text>
           </View>
-          <Text style={{ ...t.typography.h2, color: t.colors.textPrimary, marginTop: t.spacing.md }}>{displayName}</Text>
+          <Text style={{ ...t.typography.h2, color: t.colors.textPrimary, marginTop: t.spacing.md }}>{profileName}</Text>
           <Text style={{ ...t.typography.caption, color: t.colors.textSecondary, marginTop: 2 }}>{displayTitle}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 }}>
             <Ionicons name="location-outline" size={14} color={t.colors.textSecondary} />
             <Text style={{ ...t.typography.small, color: t.colors.textSecondary }}>{displayLocation}</Text>
           </View>
 
-          {/* Match score badge */}
+          {/* Status badge */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: t.spacing.md, backgroundColor: t.colors.primaryLight, borderRadius: t.borderRadius.pill, paddingHorizontal: 16, paddingVertical: 8 }}>
-            <Ionicons name="trophy" size={14} color={t.colors.primaryDark} />
+            <Ionicons name={isCompany ? 'business' : 'trophy'} size={14} color={t.colors.primaryDark} />
             <Text style={{ ...t.typography.small, fontWeight: '700', color: t.colors.primaryDark }}>
-              {match == null ? 'No match data yet' : `${match}% avg match`}
+              {isCompany ? `${applications.length} applicants tracked` : match == null ? 'No match data yet' : `${match}% avg match`}
             </Text>
           </View>
         </View>
 
         {/* Stats */}
         <View style={{ marginTop: t.spacing.xl, marginHorizontal: t.spacing.lg, flexDirection: 'row', gap: t.spacing.sm }}>
-          {[
-            { label: 'Applications', value: String(applications.length) },
-            { label: 'Interviews', value: String(interviews) },
-            { label: 'Offers', value: String(offers) },
-          ].map((s) => (
+          {stats.map((s) => (
             <View key={s.label} style={{ flex: 1, borderRadius: t.borderRadius.card, backgroundColor: t.colors.surface, padding: t.spacing.md, alignItems: 'center', ...t.shadows.card }}>
               <Text style={{ fontSize: 24, fontWeight: '800', color: t.colors.primary }}>{s.value}</Text>
               <Text style={{ ...t.typography.small, color: t.colors.textSecondary, marginTop: 4 }}>{s.label}</Text>
@@ -143,21 +178,32 @@ export default function ProfileScreen(): React.JSX.Element {
           ))}
         </View>
 
-        {/* Skills */}
+        {/* Role details */}
         <View style={{ marginTop: t.spacing.lg, marginHorizontal: t.spacing.lg, borderRadius: t.borderRadius.card, backgroundColor: t.colors.surface, padding: t.spacing.lg, ...t.shadows.card }}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: t.spacing.md }}>
-            <Text style={{ ...t.typography.h3, color: t.colors.textPrimary }}>Skills</Text>
+            <Text style={{ ...t.typography.h3, color: t.colors.textPrimary }}>{isCompany ? 'Company' : 'Skills'}</Text>
             <Ionicons name="create-outline" size={20} color={t.colors.textSecondary} />
           </View>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {userSkills.length === 0 ? (
-              <Text style={{ ...t.typography.caption, color: t.colors.textSecondary }}>No skills added yet</Text>
-            ) : userSkills.map((s) => (
-              <View key={s} style={{ backgroundColor: t.colors.primaryLight, borderRadius: t.borderRadius.pill, paddingHorizontal: 14, paddingVertical: 8 }}>
-                <Text style={{ ...t.typography.small, fontWeight: '600', color: t.colors.primaryDark }}>{s}</Text>
-              </View>
-            ))}
-          </View>
+          {isCompany ? (
+            <View style={{ gap: t.spacing.sm }}>
+              <Text style={{ ...t.typography.caption, color: t.colors.textSecondary }}>
+                {company?.description || 'Company profile details are ready to be completed from the web dashboard.'}
+              </Text>
+              <Text style={{ ...t.typography.small, color: t.colors.textSecondary }}>
+                {company?.industry ?? 'Industry not set'} · {company?.size ?? 'Size not set'}
+              </Text>
+            </View>
+          ) : (
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {userSkills.length === 0 ? (
+                <Text style={{ ...t.typography.caption, color: t.colors.textSecondary }}>No skills added yet</Text>
+              ) : userSkills.map((s) => (
+                <View key={s} style={{ backgroundColor: t.colors.primaryLight, borderRadius: t.borderRadius.pill, paddingHorizontal: 14, paddingVertical: 8 }}>
+                  <Text style={{ ...t.typography.small, fontWeight: '600', color: t.colors.primaryDark }}>{s}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
 
         {/* Settings menu */}

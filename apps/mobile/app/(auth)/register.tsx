@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useRouter } from 'expo-router';
 import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View, SafeAreaView } from 'react-native';
+import axios from 'axios';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../src/theme';
 import { mobileApi, setMobileAuthTokens } from '../../src/lib/http';
@@ -108,15 +109,18 @@ export default function RegisterScreen(): React.JSX.Element {
               },
             };
 
-      const res = await mobileApi.post<{ user: { name: string }; accessToken: string; refreshToken: string }>(
+      const res = await mobileApi.post<{ user: { name: string; role: 'CANDIDATE' | 'COMPANY' | 'ADMIN' }; accessToken: string; refreshToken: string }>(
         '/auth/register',
         payload,
       );
       await setMobileAuthTokens(res.data.accessToken, res.data.refreshToken);
-      setSession(res.data.user.name);
+      setSession(res.data.user.name, res.data.user.role);
       router.replace('/(tabs)');
-    } catch {
-      Alert.alert('Registration failed', 'Check your details and API URL (EXPO_PUBLIC_API_URL).');
+    } catch (error) {
+      const message = axios.isAxiosError(error)
+        ? error.response?.data?.message ?? error.message
+        : 'Check your details and API URL (EXPO_PUBLIC_API_URL).';
+      Alert.alert('Registration failed', message);
     } finally {
       setLoading(false);
     }

@@ -266,7 +266,7 @@ export function LandingPage(): React.JSX.Element {
           <div className="flex flex-wrap justify-center gap-6 text-sm text-text-secondary">
             <Link to="/jobs" className="hover:text-text-primary transition-colors">Jobs</Link>
             <Link to="/dashboard" className="hover:text-text-primary transition-colors">Dashboard</Link>
-            <Link to="/company" className="hover:text-text-primary transition-colors">For Companies</Link>
+            <Link to="/for-companies" className="hover:text-text-primary transition-colors">For Companies</Link>
             <Link to="/admin" className="hover:text-text-primary transition-colors">Admin</Link>
           </div>
           <p className="text-xs text-text-secondary">© 2026 SkillGap AI. Built for final year project.</p>

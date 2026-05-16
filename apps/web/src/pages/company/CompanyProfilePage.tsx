@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Card, Button, Input, Textarea, Badge, Avatar } from '@skillgap/ui';
 import {
@@ -18,7 +18,8 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { AppShell } from '../../components/AppShell';
-import { useAuthStore } from '../../stores/authStore';
+import { api } from '../../lib/api';
+import type { Company } from '@skillgap/types';
 
 interface CompanyFormData {
   name: string;
@@ -35,50 +36,68 @@ interface CompanyFormData {
  * Company profile page with editable company information.
  */
 export function CompanyProfilePage(): React.JSX.Element {
-  const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
   
   const [isEditing, setIsEditing] = useState(false);
 
-  // Mock company data
-  const company = {
-    id: '1',
-    name: 'Acme Corporation',
-    logo: null,
-    isVerified: true,
-    verificationBadge: 'MCA' as const,
-    industry: 'Technology',
-    size: '51-200 employees',
-    website: 'https://acme.example.com',
-    description: 'Acme Corporation is a leading technology company focused on building innovative solutions for businesses worldwide. We specialize in AI-powered tools and enterprise software.',
-    location: 'San Francisco, CA',
-    email: 'careers@acme.example.com',
-    phone: '+1 (555) 123-4567',
-    founded: '2015',
-    openJobs: 5,
-  };
-
-  const { register, handleSubmit, formState: { isDirty } } = useForm<CompanyFormData>({
-    defaultValues: {
-      name: company.name,
-      industry: company.industry,
-      size: company.size,
-      website: company.website,
-      description: company.description,
-      location: company.location,
-      email: company.email,
-      phone: company.phone,
+  const companyQuery = useQuery({
+    queryKey: ['company', 'me'],
+    queryFn: async (): Promise<Company> => {
+      const res = await api.get<{ company: Company }>('/companies/me');
+      return res.data.company;
     },
   });
 
+  const jobsQuery = useQuery({
+    queryKey: ['company', 'jobs'],
+    queryFn: async (): Promise<unknown[]> => {
+      const res = await api.get<{ jobs: unknown[] }>('/jobs/company/mine');
+      return res.data.jobs;
+    },
+  });
+
+  const company = companyQuery.data;
+
+  const { register, handleSubmit, reset, formState: { isDirty } } = useForm<CompanyFormData>({
+    defaultValues: {
+      name: '',
+      industry: '',
+      size: '',
+      website: '',
+      description: '',
+      location: '',
+      email: '',
+      phone: '',
+    },
+  });
+
+  useEffect(() => {
+    if (!company) return;
+    reset({
+      name: company.name,
+      industry: company.industry,
+      size: company.size,
+      website: company.website ?? '',
+      description: company.description ?? '',
+      location: '',
+      email: '',
+      phone: '',
+    });
+  }, [company, reset]);
+
   const updateMutation = useMutation({
     mutationFn: async (data: CompanyFormData) => {
-      // Simulated API call
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      return data;
+      const res = await api.patch<{ company: Company }>('/companies/me', {
+        name: data.name,
+        industry: data.industry,
+        size: data.size,
+        ...(data.website.trim() ? { website: data.website.trim() } : {}),
+        description: data.description,
+      });
+      return res.data.company;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['company'] });
+      queryClient.invalidateQueries({ queryKey: ['company', 'me'] });
       toast.success('Company profile updated');
       setIsEditing(false);
     },
@@ -90,6 +109,16 @@ export function CompanyProfilePage(): React.JSX.Element {
   const onSubmit = (data: CompanyFormData) => {
     updateMutation.mutate(data);
   };
+
+  if (companyQuery.isLoading || !company) {
+    return (
+      <AppShell>
+        <div className="mx-auto max-w-5xl p-4 lg:p-8">
+          <Card className="p-6">Loading company profile...</Card>
+        </div>
+      </AppShell>
+    );
+  }
 
   return (
     <AppShell>
@@ -158,7 +187,7 @@ export function CompanyProfilePage(): React.JSX.Element {
                   <div className="space-y-6">
                     {/* Company Header */}
                     <div className="flex items-center gap-4">
-                      <Avatar name={company.name} size="xl" />
+                      <Avatar name={company.name} size="lg" />
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="text-xl font-semibold text-text-primary">{company.name}</h3>
@@ -176,20 +205,20 @@ export function CompanyProfilePage(): React.JSX.Element {
                     {/* Info Grid */}
                     <div className="grid gap-4 sm:grid-cols-2 pt-4 border-t border-border">
                       <InfoRow icon={<Users className="h-4 w-4" />} label="Size" value={company.size} />
-                      <InfoRow icon={<MapPin className="h-4 w-4" />} label="Location" value={company.location} />
-                      <InfoRow icon={<Mail className="h-4 w-4" />} label="Email" value={company.email} />
-                      <InfoRow icon={<Phone className="h-4 w-4" />} label="Phone" value={company.phone} />
+                      <InfoRow icon={<MapPin className="h-4 w-4" />} label="Location" value="Not set" />
+                      <InfoRow icon={<Mail className="h-4 w-4" />} label="Email" value="Use account email" />
+                      <InfoRow icon={<Phone className="h-4 w-4" />} label="Phone" value="Not set" />
                       <InfoRow 
                         icon={<Globe className="h-4 w-4" />} 
                         label="Website" 
                         value={
                           <a 
-                            href={company.website} 
+                            href={company.website ?? '#'} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="text-primary hover:underline inline-flex items-center gap-1"
                           >
-                            {company.website}
+                            {company.website ?? 'Not set'}
                             <ExternalLink className="h-3 w-3" />
                           </a>
                         } 
@@ -213,7 +242,7 @@ export function CompanyProfilePage(): React.JSX.Element {
                 <h2 className="font-semibold text-text-primary">Company Logo</h2>
               </div>
               <div className="flex items-center gap-4">
-                <Avatar name={company.name} size="xl" />
+                <Avatar name={company.name} size="lg" />
                 <div className="flex-1">
                   <p className="text-sm text-text-secondary mb-3">
                     Upload a logo to make your company more recognizable to candidates.
@@ -261,11 +290,11 @@ export function CompanyProfilePage(): React.JSX.Element {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-text-secondary">Open Positions</span>
-                  <span className="text-sm font-semibold text-text-primary">{company.openJobs}</span>
+                  <span className="text-sm font-semibold text-text-primary">{jobsQuery.data?.length ?? 0}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-text-secondary">Founded</span>
-                  <span className="text-sm font-semibold text-text-primary">{company.founded}</span>
+                  <span className="text-sm font-semibold text-text-primary">Not set</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-text-secondary">Industry</span>

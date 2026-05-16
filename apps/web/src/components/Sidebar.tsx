@@ -4,14 +4,12 @@ import {
   Briefcase,
   ClipboardList,
   User,
-  Settings,
   Building2,
   Users,
-  FileText,
   PlusCircle,
   BarChart3,
+  ShieldCheck,
 } from 'lucide-react';
-import { useRoleStore, type AppRole } from '../stores/roleStore';
 import { useAuthStore } from '../stores/authStore';
 
 interface NavItem {
@@ -25,7 +23,6 @@ const candidateNav: NavItem[] = [
   { to: '/jobs', label: 'Jobs', icon: <Briefcase className="h-5 w-5" /> },
   { to: '/applications', label: 'Applications', icon: <ClipboardList className="h-5 w-5" /> },
   { to: '/profile', label: 'Profile', icon: <User className="h-5 w-5" /> },
-  { to: '/settings', label: 'Settings', icon: <Settings className="h-5 w-5" /> },
 ];
 
 const companyNav: NavItem[] = [
@@ -35,7 +32,7 @@ const companyNav: NavItem[] = [
   { to: '/company/candidates', label: 'Candidates', icon: <Users className="h-5 w-5" /> },
   { to: '/company/pipeline', label: 'Pipeline', icon: <BarChart3 className="h-5 w-5" /> },
   { to: '/company/profile', label: 'Company Profile', icon: <Building2 className="h-5 w-5" /> },
-  { to: '/company/settings', label: 'Settings', icon: <Settings className="h-5 w-5" /> },
+  { to: '/company/verification', label: 'Verification', icon: <ShieldCheck className="h-5 w-5" /> },
 ];
 
 interface SidebarProps {
@@ -45,12 +42,10 @@ interface SidebarProps {
 
 export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps): React.JSX.Element {
   const location = useLocation();
-  const activeRole = useRoleStore((s) => s.activeRole);
-  const setRole = useRoleStore((s) => s.setRole);
   const user = useAuthStore((s) => s.user);
+  const activeRole = user?.role === 'COMPANY' || user?.role === 'ADMIN' ? 'company' : 'candidate';
 
   const navItems = activeRole === 'company' ? companyNav : candidateNav;
-  const canSwitchRole = user?.role === 'COMPANY' || user?.role === 'ADMIN';
 
   const isActive = (path: string) => {
     if (path === '/company' && location.pathname === '/company') return true;
@@ -78,39 +73,11 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps): 
         </Link>
       </div>
 
-      {/* Role Switcher */}
-      {canSwitchRole && (
-        <div className={`p-4 border-b border-border ${collapsed ? 'px-2' : ''}`}>
-          {collapsed ? (
-            <button
-              onClick={() => setRole(activeRole === 'candidate' ? 'company' : 'candidate')}
-              className="w-full flex items-center justify-center h-10 rounded-lg bg-background hover:bg-primary-light/50 transition-colors"
-              title={`Switch to ${activeRole === 'candidate' ? 'Company' : 'Candidate'}`}
-            >
-              {activeRole === 'candidate' ? (
-                <User className="h-5 w-5 text-primary" />
-              ) : (
-                <Building2 className="h-5 w-5 text-ai-purple" />
-              )}
-            </button>
-          ) : (
-            <div className="flex items-center gap-1 p-1 bg-background rounded-xl">
-              <RoleSwitchButton
-                role="candidate"
-                active={activeRole === 'candidate'}
-                onClick={() => setRole('candidate')}
-                icon={<User className="h-4 w-4" />}
-                label="Candidate"
-              />
-              <RoleSwitchButton
-                role="company"
-                active={activeRole === 'company'}
-                onClick={() => setRole('company')}
-                icon={<Building2 className="h-4 w-4" />}
-                label="Company"
-              />
-            </div>
-          )}
+      {!collapsed && user && (
+        <div className="border-b border-border p-4">
+          <div className="rounded-xl bg-background px-3 py-2 text-sm font-medium text-text-secondary">
+            {activeRole === 'company' ? 'Company workspace' : 'Candidate workspace'}
+          </div>
         </div>
       )}
 
@@ -157,35 +124,5 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps): 
         </div>
       )}
     </aside>
-  );
-}
-
-function RoleSwitchButton({
-  role,
-  active,
-  onClick,
-  icon,
-  label,
-}: {
-  role: AppRole;
-  active: boolean;
-  onClick: () => void;
-  icon: React.ReactNode;
-  label: string;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex-1 flex items-center justify-center gap-2 rounded-lg py-2 text-sm font-medium transition-all duration-150 ${
-        active
-          ? role === 'candidate'
-            ? 'bg-primary text-white shadow-card'
-            : 'bg-ai-purple text-white shadow-card'
-          : 'text-text-secondary hover:text-text-primary'
-      }`}
-    >
-      {icon}
-      <span>{label}</span>
-    </button>
   );
 }

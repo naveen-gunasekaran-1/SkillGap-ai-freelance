@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../src/theme';
 import { mobileApi } from '../../src/lib/http';
+import { useMobileAuthStore } from '../../src/stores/authStore';
 
 const t = theme;
 
@@ -27,11 +28,14 @@ export default function JobsScreen(): React.JSX.Element {
   const [jobs, setJobs] = useState<JobRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const role = useMobileAuthStore((s) => s.role);
+  const isCompany = role === 'COMPANY' || role === 'ADMIN';
 
   const load = useCallback(async () => {
     const params = new URLSearchParams();
     if (search.trim()) params.set('search', search.trim());
     const qs = params.toString();
+    const url = isCompany ? '/jobs/company/mine' : (qs ? `/jobs?${qs}` : '/jobs');
     const res = await mobileApi.get<{
       jobs: Array<{
         id: string;
@@ -43,8 +47,9 @@ export default function JobsScreen(): React.JSX.Element {
         salaryMin?: number;
         salaryMax?: number;
         type: string;
+        applicantCount?: number;
       }>;
-    }>(qs ? `/jobs?${qs}` : '/jobs');
+    }>(url);
 
     const rows: JobRow[] = res.data.jobs.map((j) => {
       const skillNames = j.skillsRequired.map((s) => s.name);
@@ -68,7 +73,7 @@ export default function JobsScreen(): React.JSX.Element {
       };
     });
     setJobs(rows);
-  }, [search]);
+  }, [isCompany, search]);
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -100,13 +105,13 @@ export default function JobsScreen(): React.JSX.Element {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.background }}>
       <View style={{ paddingHorizontal: t.spacing.lg, paddingTop: t.spacing.md, paddingBottom: t.spacing.md, backgroundColor: t.colors.surface, ...t.shadows.sm, zIndex: 10 }}>
-        <Text style={{ ...t.typography.h2, color: t.colors.textPrimary, marginBottom: t.spacing.sm }}>Jobs</Text>
+        <Text style={{ ...t.typography.h2, color: t.colors.textPrimary, marginBottom: t.spacing.sm }}>{isCompany ? 'My Jobs' : 'Jobs'}</Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: t.colors.surfaceSecondary, borderRadius: t.borderRadius.lg, paddingHorizontal: t.spacing.md, height: 48, borderWidth: 1, borderColor: t.colors.border }}>
           <Ionicons name="search" size={20} color={t.colors.textSecondary} />
           <TextInput
             value={search}
             onChangeText={setSearch}
-            placeholder="Search jobs or companies..."
+            placeholder={isCompany ? 'Search your jobs...' : 'Search jobs or companies...'}
             placeholderTextColor={t.colors.textSecondary}
             style={{ flex: 1, marginLeft: t.spacing.sm, ...t.typography.body, color: t.colors.textPrimary }}
           />
@@ -129,7 +134,7 @@ export default function JobsScreen(): React.JSX.Element {
           !loading ? (
             <View style={{ alignItems: 'center', paddingVertical: t.spacing.xxxl, marginTop: t.spacing.xxxl }}>
               <Ionicons name="search" size={64} color={t.colors.border} />
-              <Text style={{ ...t.typography.h3, color: t.colors.textPrimary, marginTop: t.spacing.md }}>No jobs found</Text>
+              <Text style={{ ...t.typography.h3, color: t.colors.textPrimary, marginTop: t.spacing.md }}>{isCompany ? 'No posted jobs' : 'No jobs found'}</Text>
               <Text style={{ ...t.typography.body, color: t.colors.textSecondary, marginTop: 8 }}>Pull to refresh or adjust search</Text>
             </View>
           ) : null

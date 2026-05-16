@@ -28,10 +28,12 @@ export function LoginPage(): React.JSX.Element {
         email: email.trim().toLowerCase(),
         password,
       });
-      setSession(parseUser(res.data.user), res.data.accessToken, res.data.refreshToken);
+      const user = parseUser(res.data.user);
+      setSession(user, res.data.accessToken, res.data.refreshToken);
       toast.success('Signed in');
       const from = (location.state as { from?: string } | null)?.from;
-      navigate(from && from !== '/login' ? from : '/dashboard', { replace: true });
+      const home = user.role === 'COMPANY' ? '/company' : '/dashboard';
+      navigate(from && from !== '/login' ? from : home, { replace: true });
     } catch (err: unknown) {
       const msg =
         err && typeof err === 'object' && 'response' in err

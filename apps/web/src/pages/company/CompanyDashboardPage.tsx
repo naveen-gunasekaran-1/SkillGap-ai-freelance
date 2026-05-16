@@ -15,60 +15,50 @@ import {
 } from 'lucide-react';
 import { AppShell } from '../../components/AppShell';
 import { api } from '../../lib/api';
-
-interface DashboardStats {
-  activeJobs: number;
-  totalApplications: number;
-  scheduledInterviews: number;
-  responseRate: number;
-}
-
-interface RecentApplicant {
-  id: string;
-  name: string;
-  role: string;
-  matchScore: number;
-  appliedAt: string;
-  status: 'NEW' | 'REVIEWED' | 'SHORTLISTED';
-}
+import { parseApplication, parseJob } from '../../lib/normalize';
+import type { Application, Job } from '@skillgap/types';
 
 /**
  * Company dashboard with hiring metrics, recent applicants, and quick actions.
  */
 export function CompanyDashboardPage(): React.JSX.Element {
-  const statsQuery = useQuery({
-    queryKey: ['company', 'stats'],
-    queryFn: async (): Promise<DashboardStats> => {
-      // Mock data for now
-      return {
-        activeJobs: 5,
-        totalApplications: 42,
-        scheduledInterviews: 8,
-        responseRate: 94,
-      };
+  const jobsQuery = useQuery({
+    queryKey: ['company', 'jobs'],
+    queryFn: async (): Promise<Array<Job & { applicantCount: number }>> => {
+      const res = await api.get<{ jobs: unknown[] }>('/jobs/company/mine');
+      return res.data.jobs.map((raw) => ({
+        ...parseJob(raw),
+        applicantCount: Number((raw as Record<string, unknown>).applicantCount ?? 0),
+      }));
     },
   });
 
   const applicantsQuery = useQuery({
-    queryKey: ['company', 'recent-applicants'],
-    queryFn: async (): Promise<RecentApplicant[]> => {
-      // Mock data for now
-      return [
-        { id: '1', name: 'Alice Johnson', role: 'Frontend Engineer', matchScore: 92, appliedAt: '2 hours ago', status: 'NEW' },
-        { id: '2', name: 'Bob Smith', role: 'Full Stack Developer', matchScore: 85, appliedAt: '5 hours ago', status: 'REVIEWED' },
-        { id: '3', name: 'Carol Williams', role: 'Backend Engineer', matchScore: 78, appliedAt: '1 day ago', status: 'NEW' },
-        { id: '4', name: 'David Chen', role: 'DevOps Engineer', matchScore: 88, appliedAt: '2 days ago', status: 'SHORTLISTED' },
-      ];
+    queryKey: ['company', 'applications'],
+    queryFn: async (): Promise<Application[]> => {
+      const res = await api.get<{ applications: unknown[] }>('/applications');
+      return res.data.applications.map(parseApplication);
     },
   });
 
-  const stats = statsQuery.data;
-  const applicants = applicantsQuery.data ?? [];
+  const jobs = jobsQuery.data ?? [];
+  const applications = applicantsQuery.data ?? [];
+  const interviewCount = applications.filter((a) => a.status === 'INTERVIEW_SCHEDULED' || a.status === 'INTERVIEW_DONE').length;
+  const shortlistedCount = applications.filter((a) => a.status === 'SHORTLISTED').length;
+  const responseRate = applications.length > 0 ? Math.round(((applications.length - applications.filter((a) => a.status === 'APPLIED').length) / applications.length) * 100) : 0;
+  const applicants = applications.slice(0, 5).map((app) => ({
+    id: app.id,
+    name: app.candidate?.name ?? 'Candidate',
+    role: app.candidate?.title || app.job?.title || 'Applicant',
+    matchScore: app.matchScore,
+    appliedAt: app.appliedAt.toLocaleDateString(),
+    status: app.status === 'APPLIED' ? 'NEW' : app.status === 'SHORTLISTED' ? 'SHORTLISTED' : 'REVIEWED',
+  }));
 
   const statCards = [
     { 
       label: 'Active Jobs', 
-      value: stats?.activeJobs ?? 0, 
+      value: jobs.length, 
       icon: <Briefcase className="h-5 w-5" />, 
       trend: '+2 this month', 
       color: 'text-primary',
@@ -76,7 +66,7 @@ export function CompanyDashboardPage(): React.JSX.Element {
     },
     { 
       label: 'Applications', 
-      value: stats?.totalApplications ?? 0, 
+      value: applications.length, 
       icon: <Users className="h-5 w-5" />, 
       trend: '+12 this week', 
       color: 'text-ai-purple',
@@ -84,15 +74,15 @@ export function CompanyDashboardPage(): React.JSX.Element {
     },
     { 
       label: 'Interviews', 
-      value: stats?.scheduledInterviews ?? 0, 
-      icon: <Calendar className="h-5 w-5" />, 
-      trend: '3 scheduled today', 
+      value: interviewCount, 
+      icon: <Calendar className="h-5 w-5" />,
+      trend: `${shortlistedCount} shortlisted`,
       color: 'text-success',
       bgColor: 'bg-success/10',
     },
     { 
       label: 'Response Rate', 
-      value: `${stats?.responseRate ?? 0}%`, 
+      value: `${responseRate}%`, 
       icon: <TrendingUp className="h-5 w-5" />, 
       trend: 'Above average', 
       color: 'text-warning',

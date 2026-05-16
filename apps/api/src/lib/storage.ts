@@ -66,3 +66,37 @@ export async function uploadResume(params: {
 
   return buildPublicUrl(key);
 }
+
+export async function uploadPrivateVerificationDocument(params: {
+  buffer: Buffer;
+  originalName: string;
+  contentType: string;
+  companyId: string;
+}): Promise<{ storageKey: string; checksumSha256: string }> {
+  assertS3Configured();
+
+  if (params.buffer.length > MAX_RESUME_BYTES) {
+    throw new HttpError(413, 'Verification document is too large (max 6MB)');
+  }
+
+  const { createHash } = await import('node:crypto');
+  const ext = path.extname(params.originalName).toLowerCase();
+  const storageKey = `verification-documents/${params.companyId}/${randomUUID()}${ext || '.pdf'}`;
+  const checksumSha256 = createHash('sha256').update(params.buffer).digest('hex');
+
+  const client = getS3Client();
+  await client.send(
+    new PutObjectCommand({
+      Bucket: env.S3_BUCKET,
+      Key: storageKey,
+      Body: params.buffer,
+      ContentType: params.contentType,
+      Metadata: {
+        checksumSha256,
+        companyId: params.companyId,
+      },
+    }),
+  );
+
+  return { storageKey, checksumSha256 };
+}

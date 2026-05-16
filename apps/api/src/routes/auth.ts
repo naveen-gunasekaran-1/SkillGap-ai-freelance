@@ -9,7 +9,7 @@ import { asyncHandler } from '../lib/asyncHandler';
 import { toUserDto } from '../lib/serializers';
 import { requireAuth } from '../middleware/auth';
 import { authRateLimiter } from '../middleware/rateLimit';
-import { ROLE, type Role } from '../lib/constants';
+import { COMPANY_VERIFICATION_STATUS, ROLE, type Role } from '../lib/constants';
 import { stringifyJson, stringifyStringArray } from '../lib/jsonFields';
 
 const skillLevelSchema = z.object({
@@ -134,8 +134,8 @@ router.post(
           name: body.company.name,
           industry: body.company.industry,
           size: '1-50',
-          isVerified: true,
-          verificationBadge: 'MANUAL',
+          isVerified: false,
+          verificationStatus: COMPANY_VERIFICATION_STATUS.NOT_STARTED,
           ...(body.company.website ? { website: body.company.website } : {}),
         },
       });

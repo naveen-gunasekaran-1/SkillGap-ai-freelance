@@ -6,6 +6,7 @@ import aiRoutes from './ai';
 import jobsRoutes from './jobs';
 import usersRoutes from './users';
 import uploadsRoutes from './uploads';
+import adminRoutes from './admin';
 
 const router = Router();
 
@@ -20,5 +21,6 @@ router.use('/ai', aiRoutes);
 router.use('/jobs', jobsRoutes);
 router.use('/users', usersRoutes);
 router.use('/uploads', uploadsRoutes);
+router.use('/admin', adminRoutes);
 
 export default router;

@@ -6,30 +6,23 @@ import {
   Briefcase,
   Plus,
   Search,
-  Filter,
-  MoreVertical,
   Eye,
   Edit3,
-  Trash2,
   Users,
   Clock,
   CheckCircle2,
   PauseCircle,
-  ArrowUpDown,
 } from 'lucide-react';
 import { AppShell } from '../../components/AppShell';
 import { formatPosted } from '../../lib/format';
+import { api } from '../../lib/api';
+import { parseJob } from '../../lib/normalize';
+import type { Job } from '@skillgap/types';
 
-interface CompanyJob {
-  id: string;
-  title: string;
-  location: string;
-  type: 'FULL_TIME' | 'PART_TIME' | 'INTERNSHIP' | 'CONTRACT';
+type CompanyJob = Job & {
   status: 'ACTIVE' | 'PAUSED' | 'CLOSED';
   applicantCount: number;
-  postedAt: Date;
-  expiresAt?: Date;
-}
+};
 
 const typeLabels = {
   FULL_TIME: 'Full Time',
@@ -54,14 +47,15 @@ export function CompanyJobsPage(): React.JSX.Element {
   const jobsQuery = useQuery({
     queryKey: ['company', 'jobs'],
     queryFn: async (): Promise<CompanyJob[]> => {
-      // Mock data
-      return [
-        { id: '1', title: 'Senior Frontend Engineer', location: 'San Francisco, CA', type: 'FULL_TIME', status: 'ACTIVE', applicantCount: 24, postedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000) },
-        { id: '2', title: 'Full Stack Developer', location: 'Remote', type: 'FULL_TIME', status: 'ACTIVE', applicantCount: 18, postedAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000) },
-        { id: '3', title: 'DevOps Engineer', location: 'New York, NY', type: 'FULL_TIME', status: 'PAUSED', applicantCount: 12, postedAt: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000) },
-        { id: '4', title: 'Product Design Intern', location: 'San Francisco, CA', type: 'INTERNSHIP', status: 'ACTIVE', applicantCount: 45, postedAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000) },
-        { id: '5', title: 'Backend Engineer', location: 'Austin, TX', type: 'CONTRACT', status: 'CLOSED', applicantCount: 8, postedAt: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) },
-      ];
+      const res = await api.get<{ jobs: unknown[] }>('/jobs/company/mine');
+      return res.data.jobs.map((raw) => {
+        const record = raw as Record<string, unknown>;
+        return {
+          ...parseJob(raw),
+          applicantCount: Number(record.applicantCount ?? 0),
+          status: record.expiresAt && new Date(String(record.expiresAt)) < new Date() ? 'CLOSED' : 'ACTIVE',
+        };
+      });
     },
   });
 

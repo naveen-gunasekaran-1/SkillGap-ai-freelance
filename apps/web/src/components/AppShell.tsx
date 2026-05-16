@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { X, User, Building2 } from 'lucide-react';
+import { BarChart3, Briefcase, Building2, ClipboardList, LayoutDashboard, PlusCircle, ShieldCheck, User, Users, X } from 'lucide-react';
 import { Avatar, Button } from '@skillgap/ui';
 import { Sidebar } from './Sidebar';
 import { MobileBottomNav } from './MobileBottomNav';
-import { useRoleStore } from '../stores/roleStore';
 import { useAuthStore } from '../stores/authStore';
 import { hasAccessToken, revokeRefreshToken } from '../lib/api';
 
@@ -16,7 +15,7 @@ interface AppShellProps {
  * Main application shell with:
  * - Desktop: collapsible sidebar + topbar
  * - Mobile: topbar + bottom tab navigation
- * - Role switcher for company users
+ * - Role-aware navigation for candidate and company users
  */
 export function AppShell({ children }: AppShellProps): React.JSX.Element {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -26,11 +25,8 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
-  const activeRole = useRoleStore((s) => s.activeRole);
-  const setRole = useRoleStore((s) => s.setRole);
   const authed = hasAccessToken();
-
-  const canSwitchRole = user?.role === 'COMPANY' || user?.role === 'ADMIN';
+  const activeRole = user?.role === 'COMPANY' || user?.role === 'ADMIN' ? 'company' : 'candidate';
 
   const handleSignOut = () => {
     void revokeRefreshToken().finally(() => {
@@ -64,7 +60,7 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
   }, [mobileMenuOpen]);
 
   const displayName = user?.name ?? 'User';
-  const displayRole = activeRole === 'company' ? 'Company Admin' : 'Candidate';
+  const displayRole = activeRole === 'company' ? 'Company' : 'Candidate';
 
   return (
     <div className="min-h-screen bg-background">
@@ -191,36 +187,11 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
                 </button>
               </div>
 
-              {/* Role switcher */}
-              {canSwitchRole && (
-                <div className="p-4 border-b border-border">
-                  <p className="text-xs font-medium text-text-secondary uppercase tracking-wider mb-3">
-                    Switch View
+              {authed && (
+                <div className="border-b border-border p-4">
+                  <p className="text-xs font-medium uppercase tracking-wider text-text-secondary">
+                    {displayRole} workspace
                   </p>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setRole('candidate')}
-                      className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium transition-all ${
-                        activeRole === 'candidate'
-                          ? 'bg-primary text-white shadow-card'
-                          : 'bg-background text-text-secondary hover:text-text-primary'
-                      }`}
-                    >
-                      <User className="h-4 w-4" />
-                      Candidate
-                    </button>
-                    <button
-                      onClick={() => setRole('company')}
-                      className={`flex-1 flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-medium transition-all ${
-                        activeRole === 'company'
-                          ? 'bg-ai-purple text-white shadow-card'
-                          : 'bg-background text-text-secondary hover:text-text-primary'
-                      }`}
-                    >
-                      <Building2 className="h-4 w-4" />
-                      Company
-                    </button>
-                  </div>
                 </div>
               )}
 
@@ -280,21 +251,20 @@ function MobileNavLinks({
   const location = useLocation();
 
   const candidateLinks = [
-    { to: '/dashboard', label: 'Dashboard', icon: '📊' },
-    { to: '/jobs', label: 'Browse Jobs', icon: '💼' },
-    { to: '/applications', label: 'My Applications', icon: '📋' },
-    { to: '/profile', label: 'My Profile', icon: '👤' },
-    { to: '/settings', label: 'Settings', icon: '⚙️' },
+    { to: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { to: '/jobs', label: 'Browse Jobs', icon: <Briefcase className="h-5 w-5" /> },
+    { to: '/applications', label: 'My Applications', icon: <ClipboardList className="h-5 w-5" /> },
+    { to: '/profile', label: 'My Profile', icon: <User className="h-5 w-5" /> },
   ];
 
   const companyLinks = [
-    { to: '/company', label: 'Dashboard', icon: '📊' },
-    { to: '/company/jobs', label: 'Job Listings', icon: '💼' },
-    { to: '/company/jobs/new', label: 'Post New Job', icon: '➕' },
-    { to: '/company/candidates', label: 'Candidates', icon: '👥' },
-    { to: '/company/pipeline', label: 'Hiring Pipeline', icon: '📈' },
-    { to: '/company/profile', label: 'Company Profile', icon: '🏢' },
-    { to: '/company/settings', label: 'Settings', icon: '⚙️' },
+    { to: '/company', label: 'Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
+    { to: '/company/jobs', label: 'Job Listings', icon: <Briefcase className="h-5 w-5" /> },
+    { to: '/company/jobs/new', label: 'Post New Job', icon: <PlusCircle className="h-5 w-5" /> },
+    { to: '/company/candidates', label: 'Candidates', icon: <Users className="h-5 w-5" /> },
+    { to: '/company/pipeline', label: 'Hiring Pipeline', icon: <BarChart3 className="h-5 w-5" /> },
+    { to: '/company/profile', label: 'Company Profile', icon: <Building2 className="h-5 w-5" /> },
+    { to: '/company/verification', label: 'Verification', icon: <ShieldCheck className="h-5 w-5" /> },
   ];
 
   const links = activeRole === 'company' ? companyLinks : candidateLinks;
@@ -318,7 +288,7 @@ function MobileNavLinks({
                 : 'text-text-secondary hover:bg-background hover:text-text-primary'
             }`}
           >
-            <span className="text-lg">{link.icon}</span>
+            <span>{link.icon}</span>
             <span>{link.label}</span>
           </Link>
         </li>

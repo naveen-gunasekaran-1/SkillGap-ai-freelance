@@ -3,7 +3,6 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search, Bell, Menu, X, ChevronDown, LogOut, Settings, User } from 'lucide-react';
 import { Avatar, Button } from '@skillgap/ui';
 import { useAuthStore } from '../stores/authStore';
-import { useRoleStore } from '../stores/roleStore';
 import { hasAccessToken, revokeRefreshToken } from '../lib/api';
 
 interface TopbarProps {
@@ -18,8 +17,8 @@ export function Topbar({ sidebarCollapsed = false, onMobileMenuToggle }: TopbarP
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
-  const activeRole = useRoleStore((s) => s.activeRole);
   const authed = hasAccessToken();
+  const activeRole = user?.role === 'COMPANY' || user?.role === 'ADMIN' ? 'company' : 'candidate';
 
   const handleSignOut = () => {
     void revokeRefreshToken().finally(() => {
@@ -46,7 +45,7 @@ export function Topbar({ sidebarCollapsed = false, onMobileMenuToggle }: TopbarP
   }, []);
 
   const displayName = user?.name ?? 'User';
-  const displayRole = activeRole === 'company' ? 'Company Admin' : 'Candidate';
+  const displayRole = activeRole === 'company' ? 'Company' : 'Candidate';
 
   return (
     <header

@@ -3,6 +3,7 @@ import { FlatList, Pressable, ScrollView, Text, View, SafeAreaView, RefreshContr
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../src/theme';
 import { mobileApi } from '../../src/lib/http';
+import { useMobileAuthStore } from '../../src/stores/authStore';
 
 const t = theme;
 
@@ -17,6 +18,7 @@ interface ApplicationRow {
   filterKey: StatusFilter;
   color: string;
   date: string;
+  candidate?: string;
 }
 
 function statusToFilter(status: string): StatusFilter {
@@ -49,9 +51,11 @@ export default function ApplicationsScreen(): React.JSX.Element {
   const [rows, setRows] = useState<ApplicationRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const role = useMobileAuthStore((s) => s.role);
+  const isCompany = role === 'COMPANY' || role === 'ADMIN';
 
   const load = useCallback(async () => {
-    const res = await mobileApi.get<{ applications: Array<{ id: string; status: string; appliedAt: string; job?: { title: string; company: { name: string } } }> }>(
+    const res = await mobileApi.get<{ applications: Array<{ id: string; status: string; appliedAt: string; candidate?: { name: string }; job?: { title: string; company: { name: string } } }> }>(
       '/applications',
     );
     const formatted = res.data.applications.map((app) => {
@@ -68,6 +72,7 @@ export default function ApplicationsScreen(): React.JSX.Element {
         filterKey: statusToFilter(app.status),
         color,
         date,
+        ...(app.candidate?.name ? { candidate: app.candidate.name } : {}),
       };
     });
     setRows(formatted);
@@ -101,7 +106,7 @@ export default function ApplicationsScreen(): React.JSX.Element {
     <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.background }}>
       {/* Header */}
       <View style={{ paddingHorizontal: t.spacing.lg, paddingTop: t.spacing.md, paddingBottom: t.spacing.md, backgroundColor: t.colors.surface, ...t.shadows.sm, zIndex: 10 }}>
-        <Text style={{ ...t.typography.h2, color: t.colors.textPrimary, marginBottom: t.spacing.xs }}>Applications</Text>
+        <Text style={{ ...t.typography.h2, color: t.colors.textPrimary, marginBottom: t.spacing.xs }}>{isCompany ? 'Applicants' : 'Applications'}</Text>
         
         {/* Filter chips */}
         <View>
@@ -139,6 +144,7 @@ export default function ApplicationsScreen(): React.JSX.Element {
             <View style={{ flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: t.spacing.sm }}>
               <View style={{ flex: 1, paddingRight: t.spacing.md }}>
                 <Text style={{ ...t.typography.h3, color: t.colors.textPrimary, marginBottom: 4 }}>{item.title}</Text>
+                {isCompany && item.candidate ? <Text style={{ ...t.typography.caption, color: t.colors.textPrimary, marginBottom: 4 }}>{item.candidate}</Text> : null}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
                   <Ionicons name="business-outline" size={14} color={t.colors.textSecondary} />
                   <Text style={{ ...t.typography.caption, color: t.colors.textSecondary }}>{item.company}</Text>

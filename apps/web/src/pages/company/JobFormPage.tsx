@@ -3,17 +3,17 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Button, Card, Input, Badge } from '@skillgap/ui';
-import type { Job, JobType } from '@skillgap/types';
 import { ArrowLeft, Plus, X, Sparkles, Save, Trash2 } from 'lucide-react';
 import { AppShell } from '../../components/AppShell';
 import { api } from '../../lib/api';
 import { parseJob } from '../../lib/normalize';
 
+type JobType = 'FULL_TIME' | 'PART_TIME' | 'INTERNSHIP' | 'CONTRACT';
+
 const jobTypes: { value: JobType; label: string }[] = [
   { value: 'FULL_TIME', label: 'Full-time' },
   { value: 'PART_TIME', label: 'Part-time' },
   { value: 'CONTRACT', label: 'Contract' },
-  { value: 'FREELANCE', label: 'Freelance' },
   { value: 'INTERNSHIP', label: 'Internship' },
 ];
 

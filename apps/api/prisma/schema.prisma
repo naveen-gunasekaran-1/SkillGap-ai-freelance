@@ -8,33 +8,39 @@ datasource db {
 }
 
 model User {
-  id             String   @id @default(cuid())
-  email          String   @unique
-  passwordHash   String
-  name           String
-  role           String
-  title          String   @default("Candidate")
-  location       String   @default("")
-  summary        String   @default("")
-  phone          String?
-  avatar         String?
-  skillsJson     String   @default("[]")
-  skillLevelsJson String  @default("[]")
-  educationJson  String   @default("[]")
-  experienceJson String   @default("[]")
-  internshipsJson String  @default("[]")
-  projectsJson   String   @default("[]")
-  linksJson      String   @default("[]")
-  resumeUrl      String?
-  resumeStatus   String   @default("PENDING")
-  resumeVerifiedAt DateTime?
-  emailVerified  Boolean  @default(false)
-  skillsVerified Boolean  @default(false)
-  createdAt      DateTime @default(now())
-  companyId      String?
-  company        Company? @relation(fields: [companyId], references: [id])
-  applications   Application[] @relation("CandidateApplications")
-  refreshTokens  RefreshToken[]
+  id                    String                 @id @default(cuid())
+  email                 String                 @unique
+  passwordHash          String
+  name                  String
+  role                  String
+  title                 String                 @default("Candidate")
+  location              String                 @default("")
+  summary               String                 @default("")
+  phone                 String?
+  avatar                String?
+  skillsJson            String                 @default("[]")
+  skillLevelsJson       String                 @default("[]")
+  educationJson         String                 @default("[]")
+  experienceJson        String                 @default("[]")
+  internshipsJson       String                 @default("[]")
+  projectsJson          String                 @default("[]")
+  linksJson             String                 @default("[]")
+  resumeUrl             String?
+  resumeStatus          String                 @default("PENDING")
+  resumeVerifiedAt      DateTime?
+  emailVerified         Boolean                @default(false)
+  skillsVerified        Boolean                @default(false)
+  createdAt             DateTime               @default(now())
+  companyId             String?
+  company               Company?               @relation(fields: [companyId], references: [id])
+  applications          Application[]          @relation("CandidateApplications")
+  refreshTokens         RefreshToken[]
+  auditLogs             AuditLog[]             @relation("AuditActor")
+  recruiterActivityLogs RecruiterActivityLog[]
+  adminReviewsCreated   AdminReview[]          @relation("AdminReviewCreator")
+  adminReviewsReviewed  AdminReview[]          @relation("AdminReviewReviewer")
+  legalAcceptances      LegalAcceptance[]
+  cookieConsents        CookieConsent[]
 }
 
 model RefreshToken {
@@ -49,71 +55,304 @@ model RefreshToken {
 }
 
 model Company {
-  id                String  @id @default(cuid())
-  name              String
-  logo              String?
-  isVerified        Boolean @default(false)
-  verificationBadge String?
-  industry          String
-  size              String
-  website           String?
-  description       String  @default("")
-  users             User[]
-  jobs              Job[]
+  id                      String                 @id @default(cuid())
+  name                    String
+  logo                    String?
+  isVerified              Boolean                @default(false)
+  verificationStatus      String                 @default("NOT_STARTED")
+  verificationBadge       String?
+  industry                String
+  size                    String
+  website                 String?
+  description             String                 @default("")
+  verificationSubmittedAt DateTime?
+  verificationReviewedAt  DateTime?
+  users                   User[]
+  jobs                    Job[]
+  verifications           CompanyVerification[]
+  verificationDocuments   VerificationDocument[]
+  fraudFlags              FraudFlag[]
+  adminReviews            AdminReview[]
+  recruiterActivityLogs   RecruiterActivityLog[]
 }
 
 model Skill {
-  id                String     @id @default(cuid())
-  name              String     @unique
-  category          String     @default("General")
-  aliasesJson       String     @default("[]")
-  marketDemandScore Int        @default(50)
+  id                String           @id @default(cuid())
+  name              String           @unique
+  category          String           @default("General")
+  aliasesJson       String           @default("[]")
+  marketDemandScore Int              @default(50)
   jobs              JobSkill[]
+  embeddings        SkillEmbedding[]
 }
 
 model Job {
-  id                 String   @id @default(cuid())
-  companyId          String
-  company            Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
-  title              String
-  description        String
-  requirementsJson   String   @default("[]")
-  responsibilitiesJson String @default("[]")
-  location           String
-  type               String
-  isVerified         Boolean  @default(false)
-  salaryMin          Int?
-  salaryMax          Int?
-  postedAt           DateTime @default(now())
-  expiresAt          DateTime?
-  applications       Application[]
-  skills             JobSkill[]
+  id                   String        @id @default(cuid())
+  companyId            String
+  company              Company       @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  title                String
+  description          String
+  requirementsJson     String        @default("[]")
+  responsibilitiesJson String        @default("[]")
+  location             String
+  type                 String
+  isVerified           Boolean       @default(false)
+  salaryMin            Int?
+  salaryMax            Int?
+  postedAt             DateTime      @default(now())
+  expiresAt            DateTime?
+  applications         Application[]
+  skills               JobSkill[]
 }
 
 model JobSkill {
   jobId   String
   skillId String
-  job     Job   @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  skill   Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  job     Job    @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  skill   Skill  @relation(fields: [skillId], references: [id], onDelete: Cascade)
 
   @@id([jobId, skillId])
 }
 
 model Application {
-  id              String   @id @default(cuid())
+  id              String          @id @default(cuid())
   candidateId     String
-  candidate       User     @relation("CandidateApplications", fields: [candidateId], references: [id], onDelete: Cascade)
+  candidate       User            @relation("CandidateApplications", fields: [candidateId], references: [id], onDelete: Cascade)
   jobId           String
-  job             Job      @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  status          String   @default("APPLIED")
+  job             Job             @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  status          String          @default("APPLIED")
   matchScore      Int
   gapReportJson   String?
   rejectionReason String?
-  appliedAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
+  appliedAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
   coverNote       String?
+  aiExplanations  AiExplanation[]
+  adminReviews    AdminReview[]
 
   @@unique([candidateId, jobId])
   @@index([candidateId])
   @@index([jobId])
+}
+
+model CompanyVerification {
+  id              String                 @id @default(cuid())
+  companyId       String
+  company         Company                @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  status          String                 @default("DRAFT")
+  region          String
+  countryCode     String
+  submittedById   String?
+  reviewedById    String?
+  rejectionReason String?
+  fraudScore      Int                    @default(0)
+  metadataJson    Json?
+  submittedAt     DateTime?
+  reviewedAt      DateTime?
+  createdAt       DateTime               @default(now())
+  updatedAt       DateTime               @updatedAt
+  documents       VerificationDocument[]
+  fraudFlags      FraudFlag[]
+  adminReviews    AdminReview[]
+
+  @@index([companyId])
+  @@index([status])
+  @@index([countryCode])
+  @@map("company_verifications")
+}
+
+model VerificationDocument {
+  id                String               @id @default(cuid())
+  companyId         String
+  company           Company              @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  verificationId    String?
+  verification      CompanyVerification? @relation(fields: [verificationId], references: [id], onDelete: Cascade)
+  type              String
+  originalName      String
+  storageKey        String
+  contentType       String
+  sizeBytes         Int
+  checksumSha256    String?
+  encryptionKeyId   String?
+  malwareScanStatus String               @default("PENDING")
+  status            String               @default("UPLOADED")
+  uploadedById      String?
+  reviewedById      String?
+  rejectionReason   String?
+  createdAt         DateTime             @default(now())
+  reviewedAt        DateTime?
+
+  @@index([companyId])
+  @@index([verificationId])
+  @@index([type])
+  @@index([status])
+  @@map("verification_documents")
+}
+
+model AiExplanation {
+  id                  String      @id @default(cuid())
+  applicationId       String
+  application         Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  type                String
+  model               String
+  promptVersion       String
+  confidence          Int
+  summary             String
+  missingSkillsJson   Json
+  weakEvidenceJson    Json
+  strengthsJson       Json
+  recommendationsJson Json
+  rawOutputJson       Json?
+  generatedBy         String      @default("system")
+  createdAt           DateTime    @default(now())
+
+  @@index([applicationId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("ai_explanations")
+}
+
+model AuditLog {
+  id           String   @id @default(cuid())
+  actorId      String?
+  actor        User?    @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  actorRole    String?
+  action       String
+  entityType   String
+  entityId     String?
+  ipAddress    String?
+  userAgent    String?
+  metadataJson Json?
+  createdAt    DateTime @default(now())
+
+  @@index([actorId])
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([createdAt])
+  @@map("audit_logs")
+}
+
+model RecruiterActivityLog {
+  id           String   @id @default(cuid())
+  recruiterId  String
+  recruiter    User     @relation(fields: [recruiterId], references: [id], onDelete: Cascade)
+  companyId    String?
+  company      Company? @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  action       String
+  targetType   String
+  targetId     String?
+  riskScore    Int      @default(0)
+  metadataJson Json?
+  ipAddress    String?
+  createdAt    DateTime @default(now())
+
+  @@index([recruiterId])
+  @@index([companyId])
+  @@index([action])
+  @@index([riskScore])
+  @@index([createdAt])
+  @@map("recruiter_activity_logs")
+}
+
+model CookieConsent {
+  id            String   @id @default(cuid())
+  userId        String?
+  user          User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  anonymousId   String?
+  essential     Boolean  @default(true)
+  analytics     Boolean  @default(false)
+  marketing     Boolean  @default(false)
+  preferences   Boolean  @default(false)
+  policyVersion String
+  ipAddress     String?
+  userAgent     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([userId])
+  @@index([anonymousId])
+  @@index([createdAt])
+  @@map("cookie_consents")
+}
+
+model FraudFlag {
+  id             String               @id @default(cuid())
+  companyId      String?
+  company        Company?             @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  verificationId String?
+  verification   CompanyVerification? @relation(fields: [verificationId], references: [id], onDelete: Cascade)
+  severity       String
+  reason         String
+  status         String               @default("OPEN")
+  evidenceJson   Json?
+  createdBy      String               @default("system")
+  resolvedById   String?
+  resolvedAt     DateTime?
+  createdAt      DateTime             @default(now())
+
+  @@index([companyId])
+  @@index([verificationId])
+  @@index([severity])
+  @@index([status])
+  @@map("fraud_flags")
+}
+
+model AdminReview {
+  id             String               @id @default(cuid())
+  entityType     String
+  entityId       String
+  companyId      String?
+  company        Company?             @relation(fields: [companyId], references: [id], onDelete: SetNull)
+  applicationId  String?
+  application    Application?         @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+  verificationId String?
+  verification   CompanyVerification? @relation(fields: [verificationId], references: [id], onDelete: SetNull)
+  createdById    String?
+  createdBy      User?                @relation("AdminReviewCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  reviewedById   String?
+  reviewedBy     User?                @relation("AdminReviewReviewer", fields: [reviewedById], references: [id], onDelete: SetNull)
+  status         String               @default("OPEN")
+  decision       String?
+  notes          String?
+  metadataJson   Json?
+  createdAt      DateTime             @default(now())
+  reviewedAt     DateTime?
+
+  @@index([entityType, entityId])
+  @@index([companyId])
+  @@index([applicationId])
+  @@index([verificationId])
+  @@index([status])
+  @@map("admin_reviews")
+}
+
+model LegalAcceptance {
+  id           String   @id @default(cuid())
+  userId       String?
+  user         User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  documentType String
+  version      String
+  acceptedAt   DateTime @default(now())
+  ipAddress    String?
+  userAgent    String?
+
+  @@index([userId])
+  @@index([documentType, version])
+  @@map("legal_acceptances")
+}
+
+model SkillEmbedding {
+  id            String   @id @default(cuid())
+  skillId       String
+  skill         Skill    @relation(fields: [skillId], references: [id], onDelete: Cascade)
+  provider      String
+  model         String
+  dimensions    Int
+  embeddingJson Json
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([skillId, provider, model])
+  @@index([skillId])
+  @@map("skill_embeddings")
 }

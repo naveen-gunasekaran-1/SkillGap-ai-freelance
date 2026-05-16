@@ -3,7 +3,7 @@ import { verifyAccessToken } from '../lib/jwt';
 import { HttpError } from '../lib/httpError';
 import { prisma } from '../lib/prisma';
 import { parseStringArray } from '../lib/jsonFields';
-import type { Role } from '../lib/constants';
+import { COMPANY_VERIFICATION_STATUS, ROLE, type Role } from '../lib/constants';
 
 export interface AuthUser {
   id: string;
@@ -84,6 +84,42 @@ export function requireRoles(...roles: Role[]): RequestHandler {
       return;
     }
     next();
+  };
+}
+
+/**
+ * Require a company account to be verified before sensitive recruiter actions.
+ * Admin users are allowed through for operational support.
+ */
+export function requireVerifiedCompany(): RequestHandler {
+  return (req, _res, next) => {
+    void (async () => {
+      try {
+        if (!req.auth) {
+          next(new HttpError(401, 'Unauthorized'));
+          return;
+        }
+        if (req.auth.role === ROLE.ADMIN) {
+          next();
+          return;
+        }
+        if (req.auth.role !== ROLE.COMPANY || !req.auth.companyId) {
+          next(new HttpError(403, 'Verified company access required'));
+          return;
+        }
+        const company = await prisma.company.findUnique({
+          where: { id: req.auth.companyId },
+          select: { isVerified: true, verificationStatus: true },
+        });
+        if (!company?.isVerified || company.verificationStatus !== COMPANY_VERIFICATION_STATUS.APPROVED) {
+          next(new HttpError(403, 'Company verification is required before using this feature'));
+          return;
+        }
+        next();
+      } catch (err) {
+        next(err);
+      }
+    })();
   };
 }
 

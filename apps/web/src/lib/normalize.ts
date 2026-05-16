@@ -15,6 +15,20 @@ function parseCompany(raw: unknown): Company {
   if (typeof c.website === 'string' && c.website.length > 0) {
     out.website = c.website;
   }
+  if (typeof c.description === 'string') {
+    out.description = c.description;
+  }
+  if (
+    c.verificationStatus === 'NOT_STARTED' ||
+    c.verificationStatus === 'DRAFT' ||
+    c.verificationStatus === 'SUBMITTED' ||
+    c.verificationStatus === 'IN_REVIEW' ||
+    c.verificationStatus === 'APPROVED' ||
+    c.verificationStatus === 'REJECTED' ||
+    c.verificationStatus === 'SUSPENDED'
+  ) {
+    out.verificationStatus = c.verificationStatus;
+  }
   if (c.verificationBadge === 'GSTIN' || c.verificationBadge === 'MCA' || c.verificationBadge === 'MANUAL') {
     out.verificationBadge = c.verificationBadge;
   }
@@ -91,6 +105,7 @@ export function parseApplication(raw: unknown): Application {
     appliedAt: new Date(String(a.appliedAt)),
     updatedAt: new Date(String(a.updatedAt)),
     ...(a.job ? { job: parseJob(a.job) } : {}),
+    ...(a.candidate ? { candidate: parseUser(a.candidate) } : {}),
   };
 }
 
@@ -114,12 +129,12 @@ export function parseUser(raw: unknown): User {
     phone: u.phone == null ? null : String(u.phone),
     ...(u.avatar ? { avatar: String(u.avatar) } : {}),
     ...(Array.isArray(u.skills) ? { skills: u.skills.filter((x): x is string => typeof x === 'string') } : {}),
-    ...(Array.isArray(u.skillLevels) ? { skillLevels: u.skillLevels as User['skillLevels'] } : {}),
-    ...(Array.isArray(u.education) ? { education: u.education as User['education'] } : {}),
-    ...(Array.isArray(u.experience) ? { experience: u.experience as User['experience'] } : {}),
-    ...(Array.isArray(u.internships) ? { internships: u.internships as User['internships'] } : {}),
-    ...(Array.isArray(u.projects) ? { projects: u.projects as User['projects'] } : {}),
-    ...(Array.isArray(u.links) ? { links: u.links as User['links'] } : {}),
+    ...(Array.isArray(u.skillLevels) ? { skillLevels: u.skillLevels as NonNullable<User['skillLevels']> } : {}),
+    ...(Array.isArray(u.education) ? { education: u.education as NonNullable<User['education']> } : {}),
+    ...(Array.isArray(u.experience) ? { experience: u.experience as NonNullable<User['experience']> } : {}),
+    ...(Array.isArray(u.internships) ? { internships: u.internships as NonNullable<User['internships']> } : {}),
+    ...(Array.isArray(u.projects) ? { projects: u.projects as NonNullable<User['projects']> } : {}),
+    ...(Array.isArray(u.links) ? { links: u.links as NonNullable<User['links']> } : {}),
     ...(u.resumeUrl ? { resumeUrl: String(u.resumeUrl) } : {}),
     ...(u.resumeStatus ? { resumeStatus: String(u.resumeStatus) } : {}),
     ...(u.resumeVerifiedAt ? { resumeVerifiedAt: new Date(String(u.resumeVerifiedAt)) } : {}),

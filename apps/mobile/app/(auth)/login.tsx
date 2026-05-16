@@ -27,7 +27,7 @@ export default function LoginScreen(): React.JSX.Element {
     }
     setLoading(true);
     try {
-      const res = await mobileApi.post<{ user: { name: string }; accessToken: string; refreshToken: string }>(
+      const res = await mobileApi.post<{ user: { name: string; role: 'CANDIDATE' | 'COMPANY' | 'ADMIN' }; accessToken: string; refreshToken: string }>(
         '/auth/login',
         {
           email: email.trim().toLowerCase(),
@@ -35,7 +35,7 @@ export default function LoginScreen(): React.JSX.Element {
         },
       );
       await setMobileAuthTokens(res.data.accessToken, res.data.refreshToken);
-      setSession(res.data.user.name);
+      setSession(res.data.user.name, res.data.user.role);
       router.replace('/(tabs)');
     } catch (error) {
       const message = axios.isAxiosError(error)

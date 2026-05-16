@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 import { Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../src/theme';
+import { useMobileAuthStore } from '../../src/stores/authStore';
 
 const t = theme;
 
@@ -9,6 +10,8 @@ const t = theme;
  * Tab bar layout with Dashboard, Jobs, Applications, and Profile tabs.
  */
 export default function TabsLayout(): React.JSX.Element {
+  const role = useMobileAuthStore((s) => s.role);
+  const isCompany = role === 'COMPANY' || role === 'ADMIN';
   return (
     <Tabs
       screenOptions={{
@@ -53,7 +56,7 @@ export default function TabsLayout(): React.JSX.Element {
       <Tabs.Screen
         name="applications"
         options={{
-          tabBarLabel: 'Applied',
+          tabBarLabel: isCompany ? 'Applicants' : 'Applied',
           tabBarIcon: ({ focused, color }) => (
             <Ionicons name={focused ? 'document-text' : 'document-text-outline'} size={24} color={color} />
           ),

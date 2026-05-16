@@ -8,6 +8,7 @@ type JobWithRelations = Job & {
 
 type ApplicationWithJob = Application & {
   job: JobWithRelations;
+  candidate?: User;
 };
 
 /**
@@ -73,17 +74,21 @@ export function toCompanyDto(company: Company): {
   name: string;
   logo?: string;
   isVerified: boolean;
+  verificationStatus: string;
   verificationBadge?: string | null;
   industry: string;
   size: string;
   website?: string;
+  description: string;
 } {
   return {
     id: company.id,
     name: company.name,
     isVerified: company.isVerified,
+    verificationStatus: company.verificationStatus,
     industry: company.industry,
     size: company.size,
+    description: company.description,
     ...(company.logo ? { logo: company.logo } : {}),
     ...(company.verificationBadge ? { verificationBadge: company.verificationBadge } : {}),
     ...(company.website ? { website: company.website } : {}),
@@ -145,6 +150,7 @@ export function toApplicationDto(app: ApplicationWithJob): Record<string, unknow
     appliedAt: app.appliedAt.toISOString(),
     updatedAt: app.updatedAt.toISOString(),
     ...(app.coverNote ? { coverNote: app.coverNote } : {}),
+    ...(app.candidate ? { candidate: toUserDto(app.candidate) } : {}),
     job: toJobDto(app.job),
   };
 }
