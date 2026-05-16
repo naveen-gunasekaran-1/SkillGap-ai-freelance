@@ -4,7 +4,19 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Button, Badge, Card, ProgressBar, MatchScore, Avatar } from '@skillgap/ui';
 import type { GapReport, Job } from '@skillgap/types';
-import { Navbar } from '../components/Navbar';
+import { 
+  ArrowLeft, 
+  Bookmark, 
+  Building2, 
+  MapPin, 
+  Clock, 
+  CheckCircle2, 
+  ExternalLink, 
+  Sparkles,
+  X,
+  FileText,
+} from 'lucide-react';
+import { AppShell } from '../components/AppShell';
 import { api, hasAccessToken } from '../lib/api';
 import { parseGapReport, parseJob } from '../lib/normalize';
 import { formatJobSalary, formatPosted, jobTypeLabel } from '../lib/format';
@@ -76,30 +88,31 @@ export function JobDetailPage(): React.JSX.Element {
 
   if (jobQuery.isError) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <main className="mx-auto max-w-6xl px-6 py-16 text-center">
-          <p className="text-text-primary font-medium">Job not found</p>
-          <Link to="/jobs" className="mt-4 inline-block text-primary">
-            Back to jobs
-          </Link>
-        </main>
-      </div>
+      <AppShell>
+        <div className="p-4 lg:p-8 max-w-6xl mx-auto">
+          <div className="py-16 text-center">
+            <p className="text-text-primary font-medium">Job not found</p>
+            <Link to="/jobs" className="mt-4 inline-block text-primary hover:text-primary-dark">
+              <ArrowLeft className="h-4 w-4 inline mr-1" />
+              Back to jobs
+            </Link>
+          </div>
+        </div>
+      </AppShell>
     );
   }
 
   if (!job) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <main className="mx-auto max-w-6xl px-6 py-12">
+      <AppShell>
+        <div className="p-4 lg:p-8 max-w-6xl mx-auto">
           <div className="animate-pulse space-y-4">
             <div className="h-6 w-48 rounded bg-border" />
             <div className="h-10 w-3/4 rounded bg-border" />
             <div className="h-40 rounded-card bg-border/60" />
           </div>
-        </main>
-      </div>
+        </div>
+      </AppShell>
     );
   }
 
@@ -115,17 +128,19 @@ export function JobDetailPage(): React.JSX.Element {
       : [];
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <main className="mx-auto max-w-6xl px-6 py-8 md:py-12">
+    <AppShell>
+      <div className="p-4 lg:p-8 max-w-6xl mx-auto">
+        {/* Breadcrumb */}
         <nav className="flex items-center gap-2 text-sm text-text-secondary animate-fade-in-up">
-          <Link to="/jobs" className="hover:text-primary transition-colors">
+          <Link to="/jobs" className="hover:text-primary transition-colors flex items-center gap-1">
+            <ArrowLeft className="h-4 w-4" />
             Jobs
           </Link>
           <span>/</span>
-          <span className="text-text-primary font-medium">{job.title}</span>
+          <span className="text-text-primary font-medium truncate">{job.title}</span>
         </nav>
 
+        {/* Header */}
         <div className="mt-6 animate-fade-in-up delay-100">
           <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
             <div className="flex items-start gap-4">
@@ -135,32 +150,32 @@ export function JobDetailPage(): React.JSX.Element {
                   <h1 className="text-2xl font-bold text-text-primary md:text-3xl">{job.title}</h1>
                   {job.isVerified && (
                     <span className="inline-flex items-center gap-1 rounded-full bg-primary-light px-2.5 py-0.5 text-xs font-medium text-primary">
-                      <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
-                        <path
-                          fillRule="evenodd"
-                          d="M16.403 12.652a3 3 0 0 0 0-5.304 3 3 0 0 0-3.75-3.751 3 3 0 0 0-5.305 0 3 3 0 0 0-3.751 3.75 3 3 0 0 0 0 5.305 3 3 0 0 0 3.75 3.751 3 3 0 0 0 5.305 0 3 3 0 0 0 3.751-3.75Zm-2.546-4.46a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z"
-                          clipRule="evenodd"
-                        />
-                      </svg>
+                      <CheckCircle2 className="h-3 w-3" />
                       Verified
                     </span>
                   )}
                 </div>
                 <div className="mt-2 flex flex-wrap items-center gap-3 text-sm text-text-secondary">
-                  <span className="font-medium text-primary">{job.company.name}</span>
-                  <span>•</span>
-                  <span>{job.location}</span>
-                  <span>•</span>
+                  <span className="flex items-center gap-1 font-medium text-primary">
+                    <Building2 className="h-3.5 w-3.5" />
+                    {job.company.name}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3.5 w-3.5" />
+                    {job.location}
+                  </span>
                   <Badge variant="info">{jobTypeLabel(job.type)}</Badge>
-                  <span>•</span>
                   <span className="font-semibold text-text-primary">{formatJobSalary(job)}</span>
-                  <span>•</span>
-                  <span>{formatPosted(job.postedAt)}</span>
+                  <span className="flex items-center gap-1">
+                    <Clock className="h-3.5 w-3.5" />
+                    {formatPosted(job.postedAt)}
+                  </span>
                 </div>
               </div>
             </div>
             <div className="flex gap-3">
               <Button variant="secondary" size="sm" type="button">
+                <Bookmark className="h-4 w-4 mr-1" />
                 Save
               </Button>
               <Button type="button" onClick={openApply}>
@@ -170,6 +185,7 @@ export function JobDetailPage(): React.JSX.Element {
           </div>
         </div>
 
+        {/* Tabs */}
         <div className="mt-8 border-b border-border animate-fade-in-up delay-200">
           <div className="flex gap-1 overflow-x-auto">
             {tabs.map((tab) => (
@@ -181,12 +197,14 @@ export function JobDetailPage(): React.JSX.Element {
                   activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'
                 }`}
               >
+                {tab === 'Gap Analysis' && <Sparkles className="h-4 w-4 inline mr-1" />}
                 {tab}
               </button>
             ))}
           </div>
         </div>
 
+        {/* Content Grid */}
         <div className="mt-8 grid gap-8 lg:grid-cols-[1fr_320px] animate-fade-in-up delay-300">
           <div>
             {activeTab === 'Overview' && (
@@ -214,7 +232,7 @@ export function JobDetailPage(): React.JSX.Element {
                 <ul className="mt-4 space-y-3">
                   {job.requirements.map((r) => (
                     <li key={r} className="flex items-start gap-2.5 text-sm text-text-secondary">
-                      <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
+                      <CheckCircle2 className="h-4 w-4 mt-0.5 text-success flex-shrink-0" />
                       {r}
                     </li>
                   ))}
@@ -228,16 +246,20 @@ export function JobDetailPage(): React.JSX.Element {
                   <div>
                     <h2 className="text-lg font-semibold text-text-primary">{job.company.name}</h2>
                     <p className="text-sm text-text-secondary">
-                      {job.company.industry} • {job.company.size} employees
+                      {job.company.industry} - {job.company.size} employees
                     </p>
                   </div>
                 </div>
                 {job.company.website && (
-                  <p className="mt-4 text-sm">
-                    <a href={job.company.website} className="text-primary hover:underline" target="_blank" rel="noreferrer">
-                      {job.company.website}
-                    </a>
-                  </p>
+                  <a 
+                    href={job.company.website} 
+                    className="mt-4 inline-flex items-center gap-1 text-sm text-primary hover:underline" 
+                    target="_blank" 
+                    rel="noreferrer"
+                  >
+                    <ExternalLink className="h-4 w-4" />
+                    {job.company.website}
+                  </a>
                 )}
                 <div className="mt-6 grid gap-4 sm:grid-cols-3">
                   {[
@@ -256,10 +278,13 @@ export function JobDetailPage(): React.JSX.Element {
             {activeTab === 'Gap Analysis' && (
               <Card className="p-6 md:p-8">
                 <div className="mb-6 flex items-center gap-2">
-                  <Badge variant="ai">AI Analysis</Badge>
+                  <Badge variant="ai">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    AI Analysis
+                  </Badge>
                   <h2 className="text-lg font-semibold text-text-primary">Your Skill Match</h2>
                 </div>
-                {gapQuery.isLoading && <p className="text-sm text-text-secondary">Generating preview…</p>}
+                {gapQuery.isLoading && <p className="text-sm text-text-secondary">Generating preview...</p>}
                 {gapQuery.isError && (
                   <p className="text-sm text-error">Could not load gap preview. Try signing in for personalized results.</p>
                 )}
@@ -289,6 +314,7 @@ export function JobDetailPage(): React.JSX.Element {
             )}
           </div>
 
+          {/* Sidebar */}
           <div className="space-y-6">
             <Card className="p-6 text-center">
               <h3 className="text-sm font-semibold text-text-secondary">Your Match</h3>
@@ -302,6 +328,7 @@ export function JobDetailPage(): React.JSX.Element {
                 Apply Now
               </Button>
               <Button variant="secondary" className="mt-2 w-full" type="button">
+                <Bookmark className="h-4 w-4 mr-1" />
                 Save Job
               </Button>
             </Card>
@@ -317,8 +344,9 @@ export function JobDetailPage(): React.JSX.Element {
             </Card>
           </div>
         </div>
-      </main>
+      </div>
 
+      {/* Apply Drawer */}
       {applyOpen && (
         <>
           <div
@@ -336,16 +364,14 @@ export function JobDetailPage(): React.JSX.Element {
                   className="rounded-lg p-2 text-text-secondary transition-colors hover:bg-background"
                   aria-label="Close"
                 >
-                  <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
-                  </svg>
+                  <X className="h-5 w-5" />
                 </button>
               </div>
               <div className="flex-1 space-y-6">
                 <div className="rounded-card border-2 border-dashed border-border p-8 text-center">
-                  <span className="text-3xl">📄</span>
-                  <p className="mt-2 text-sm font-medium text-text-primary">Resume</p>
-                  <p className="mt-1 text-xs text-text-secondary">Resume upload is coming soon — your profile skills are used for matching today.</p>
+                  <FileText className="h-8 w-8 text-text-secondary mx-auto mb-2" />
+                  <p className="text-sm font-medium text-text-primary">Resume</p>
+                  <p className="mt-1 text-xs text-text-secondary">Resume upload is coming soon - your profile skills are used for matching today.</p>
                 </div>
                 <div>
                   <label className="mb-1.5 block text-sm font-medium text-text-primary" htmlFor="cover">
@@ -368,12 +394,12 @@ export function JobDetailPage(): React.JSX.Element {
                 disabled={applyMutation.isPending}
                 onClick={() => applyMutation.mutate()}
               >
-                {applyMutation.isPending ? 'Submitting…' : 'Confirm & Apply'}
+                {applyMutation.isPending ? 'Submitting...' : 'Confirm & Apply'}
               </Button>
             </div>
           </div>
         </>
       )}
-    </div>
+    </AppShell>
   );
 }
