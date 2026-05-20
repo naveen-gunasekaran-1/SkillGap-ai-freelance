@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -46,6 +46,7 @@ export function ProfilePage(): React.JSX.Element {
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [newSkill, setNewSkill] = useState('');
   const [skills, setSkills] = useState<string[]>(user?.skills ?? []);
+  const resumeInputRef = useRef<HTMLInputElement | null>(null);
 
   const {
     register,
@@ -85,6 +86,32 @@ export function ProfilePage(): React.JSX.Element {
     onError: () => toast.error('Could not send verification email'),
   });
 
+  const uploadResumeMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const body = new FormData();
+      body.append('file', file);
+      const res = await api.post<{ user: unknown }>('/uploads/resume/profile', body, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return parseUser(res.data.user);
+    },
+    onSuccess: (updatedUser) => {
+      setUser(updatedUser);
+      setSkills(updatedUser.skills ?? []);
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+      toast.success('Resume parsed and profile updated');
+      if (resumeInputRef.current) {
+        resumeInputRef.current.value = '';
+      }
+    },
+    onError: () => {
+      toast.error('Resume upload failed. Try a PDF or DOCX resume.');
+      if (resumeInputRef.current) {
+        resumeInputRef.current.value = '';
+      }
+    },
+  });
+
   const onSubmitProfile = (data: ProfileFormData) => {
     updateProfileMutation.mutate(data);
   };
@@ -102,6 +129,12 @@ export function ProfilePage(): React.JSX.Element {
     const updated = skills.filter((s) => s !== skill);
     setSkills(updated);
     updateProfileMutation.mutate({ skills: updated });
+  };
+
+  const handleResumeSelect = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    uploadResumeMutation.mutate(file);
   };
 
   const displayName = user?.name ?? 'User';
@@ -210,7 +243,7 @@ export function ProfilePage(): React.JSX.Element {
                         <p className="text-text-secondary">{user?.title || 'Add your job title'}</p>
                       </div>
                     </div>
-                    <div className="grid gap-3 sm:grid-cols-2 pt-4 border-t border-border">
+                    <div className="grid gap-3 pt-4 border-t border-border sm:grid-cols-2">
                       <InfoRow
                         icon={<Mail className="h-4 w-4" />}
                         label="Email"
@@ -382,6 +415,13 @@ export function ProfilePage(): React.JSX.Element {
           <div className="space-y-6">
             {/* Resume Upload */}
             <Card className="p-5 animate-fade-in-up delay-300">
+              <input
+                ref={resumeInputRef}
+                type="file"
+                accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+                className="hidden"
+                onChange={handleResumeSelect}
+              />
               <div className="flex items-center gap-3 mb-4">
                 <FileText className="h-5 w-5 text-text-secondary" />
                 <h2 className="font-semibold text-text-primary">Resume</h2>
@@ -400,20 +440,38 @@ export function ProfilePage(): React.JSX.Element {
                     </div>
                   </div>
                   <div className="flex gap-2">
-                    <Button variant="secondary" size="sm" className="flex-1">
+                    <a
+                      href={user.resumeUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex h-9 flex-1 items-center justify-center rounded-card border border-border bg-white px-3 text-sm font-medium text-text-primary shadow-card transition-all duration-200 hover:-translate-y-0.5 hover:shadow-card-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+                    >
                       <ExternalLink className="h-4 w-4 mr-1" /> View
-                    </Button>
-                    <Button variant="ghost" size="sm" className="flex-1">
+                    </a>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="flex-1"
+                      loading={uploadResumeMutation.isPending}
+                      onClick={() => resumeInputRef.current?.click()}
+                    >
                       <Upload className="h-4 w-4 mr-1" /> Replace
                     </Button>
                   </div>
                 </div>
               ) : (
-                <div className="border-2 border-dashed border-border rounded-xl p-6 text-center hover:border-primary hover:bg-primary-light/10 transition-colors cursor-pointer">
+                <button
+                  type="button"
+                  className="w-full border-2 border-dashed border-border rounded-xl p-6 text-center hover:border-primary hover:bg-primary-light/10 transition-colors cursor-pointer disabled:cursor-wait disabled:opacity-70"
+                  disabled={uploadResumeMutation.isPending}
+                  onClick={() => resumeInputRef.current?.click()}
+                >
                   <Upload className="h-8 w-8 text-text-secondary mx-auto mb-3" />
-                  <p className="text-sm font-medium text-text-primary">Upload your resume</p>
-                  <p className="text-xs text-text-secondary mt-1">PDF, DOCX up to 5MB</p>
-                </div>
+                  <p className="text-sm font-medium text-text-primary">
+                    {uploadResumeMutation.isPending ? 'Parsing resume...' : 'Upload your resume'}
+                  </p>
+                  <p className="text-xs text-text-secondary mt-1">PDF, DOCX, or TXT up to 6MB</p>
+                </button>
               )}
             </Card>
 
@@ -488,11 +546,13 @@ function InfoRow({
   value?: string | null;
 }) {
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <span className="text-text-secondary">{icon}</span>
-      <span className="text-text-secondary">{label}:</span>
+    <div className="flex min-w-0 items-start gap-2 text-sm">
+      <span className="mt-0.5 shrink-0 text-text-secondary">{icon}</span>
+      <span className="shrink-0 text-text-secondary">{label}:</span>
       <span
-        className={`font-medium ${value && value !== 'Not set' ? 'text-text-primary' : 'text-text-secondary'}`}
+        className={`min-w-0 flex-1 break-words font-medium leading-5 ${
+          value && value !== 'Not set' ? 'text-text-primary' : 'text-text-secondary'
+        }`}
       >
         {value || 'Not set'}
       </span>

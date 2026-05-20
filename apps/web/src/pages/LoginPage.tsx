@@ -26,7 +26,7 @@ export function LoginPage(): React.JSX.Element {
     const from = (location.state as { from?: string } | null)?.from;
     const returnTo = from && from !== '/login' ? from : '/dashboard';
     window.location.assign(
-      `${getApiBaseUrl()}/auth/oauth/${provider}/start?returnTo=${encodeURIComponent(returnTo)}`,
+      `${getApiBaseUrl()}/auth/oauth/${provider}/start?client=web&returnTo=${encodeURIComponent(returnTo)}`,
     );
   };
 

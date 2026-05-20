@@ -367,7 +367,14 @@ router.get(
 
     let state: ReturnType<typeof verifyOAuthState> | null = null;
     if (query.state) {
-      state = verifyOAuthState(query.state, provider);
+      try {
+        state = verifyOAuthState(query.state, provider);
+      } catch {
+        const redirect = oauthCallbackUrl(undefined);
+        redirect.searchParams.set('error', 'oauth_state_invalid');
+        res.redirect(redirect.toString());
+        return;
+      }
     }
 
     if (query.error || !query.code || !state) {

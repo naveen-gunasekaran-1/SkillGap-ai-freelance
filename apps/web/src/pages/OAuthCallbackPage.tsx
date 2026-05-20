@@ -21,7 +21,13 @@ export function OAuthCallbackPage(): React.JSX.Element {
     didRun.current = true;
 
     if (error || !code) {
-      toast.error('Social sign-in failed');
+      const message =
+        error === 'OAUTH_CODE_EXCHANGE_FAILED'
+          ? 'Provider login failed. Check OAuth secret and callback settings.'
+          : error === 'oauth_state_invalid'
+            ? 'Social sign-in expired. Please try again.'
+            : 'Social sign-in failed';
+      toast.error(message);
       navigate('/login', { replace: true });
       return;
     }

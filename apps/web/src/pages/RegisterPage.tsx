@@ -10,6 +10,28 @@ import { useAuthStore } from '../stores/authStore';
 
 type Role = 'CANDIDATE' | 'COMPANY' | null;
 type SkillLevel = 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED' | 'EXPERT';
+type ParsedResume = {
+  title?: string;
+  summary?: string;
+  skills?: string[];
+  skillLevels?: Array<{ name: string; level: SkillLevel }>;
+  education?: Array<{
+    school: string;
+    degree: string;
+    field?: string;
+    startYear: number;
+    endYear?: number;
+    gpa?: string;
+  }>;
+  experience?: Array<{
+    company: string;
+    role: string;
+    startDate: string;
+    endDate?: string;
+    summary?: string;
+    bullets?: string[];
+  }>;
+};
 
 const skillOptions = [
   'React',
@@ -61,6 +83,16 @@ const emptyExperience = {
 };
 const emptyProject = { name: '', stack: '', link: '', summary: '' };
 const emptyLink = { label: '', url: '' };
+
+function mergeText(existing: string[], incoming: string[]): string[] {
+  const seen = new Set<string>();
+  return [...existing, ...incoming].filter((value) => {
+    const key = value.trim().toLowerCase();
+    if (!key || seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
 
 /**
  * Multi-step registration page: Role → Info → Profile → Background.
@@ -141,12 +173,19 @@ export function RegisterPage(): React.JSX.Element {
     try {
       const formData = new FormData();
       formData.append('file', file);
-      const res = await api.post<{ url: string }>('/uploads/resume', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
+      const res = await api.post<{ url: string; parsed?: ParsedResume }>(
+        '/uploads/resume?parse=true',
+        formData,
+        {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        },
+      );
       setResumeUrl(res.data.url);
       setResumeName(file.name);
-      toast.success('Resume uploaded');
+      if (res.data.parsed) {
+        applyParsedResume(res.data.parsed);
+      }
+      toast.success(res.data.parsed ? 'Resume uploaded and parsed' : 'Resume uploaded');
     } catch (err: unknown) {
       const msg =
         err && typeof err === 'object' && 'response' in err
@@ -158,6 +197,60 @@ export function RegisterPage(): React.JSX.Element {
       toast.error(msg);
     } finally {
       setUploading(false);
+    }
+  };
+
+  const applyParsedResume = (parsed: ParsedResume) => {
+    if (parsed.title || parsed.summary) {
+      setProfile((current) => ({
+        ...current,
+        title: current.title || parsed.title || '',
+        summary: current.summary || parsed.summary || '',
+      }));
+    }
+
+    if (parsed.skills?.length) {
+      setSkills((current) => mergeText(current, parsed.skills ?? []).slice(0, 20));
+      setSkillLevels((current) => {
+        const next = { ...current };
+        parsed.skillLevels?.forEach((entry) => {
+          next[entry.name] = entry.level;
+        });
+        parsed.skills?.forEach((skill) => {
+          next[skill] = next[skill] ?? 'INTERMEDIATE';
+        });
+        return next;
+      });
+    }
+
+    if (parsed.education?.length) {
+      setEducation((current) => {
+        const emptyCurrent = current.length === 1 && !current[0]?.school && !current[0]?.degree;
+        const parsedRows = parsed.education!.map((entry) => ({
+          school: entry.school,
+          degree: entry.degree,
+          field: entry.field ?? '',
+          startYear: String(entry.startYear),
+          endYear: entry.endYear ? String(entry.endYear) : '',
+          gpa: entry.gpa ?? '',
+        }));
+        return emptyCurrent ? parsedRows : [...current, ...parsedRows];
+      });
+    }
+
+    if (parsed.experience?.length) {
+      setExperience((current) => {
+        const emptyCurrent = current.length === 1 && !current[0]?.company && !current[0]?.role;
+        const parsedRows = parsed.experience!.map((entry) => ({
+          company: entry.company,
+          role: entry.role,
+          startDate: entry.startDate,
+          endDate: entry.endDate ?? '',
+          summary: entry.summary ?? '',
+          bullets: entry.bullets?.length ? entry.bullets : [''],
+        }));
+        return emptyCurrent ? parsedRows : [...current, ...parsedRows];
+      });
     }
   };
 
@@ -591,7 +684,7 @@ export function RegisterPage(): React.JSX.Element {
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div>
                             <p className="text-sm font-medium text-text-primary">
-                              {resumeName || 'Upload your resume (PDF/DOCX)'}
+                              {resumeName || 'Upload your resume (PDF/DOCX/TXT)'}
                             </p>
                             <p className="text-xs text-text-secondary">
                               Max 6MB. Required for verification.
@@ -600,7 +693,7 @@ export function RegisterPage(): React.JSX.Element {
                           <label className="inline-flex cursor-pointer items-center gap-2 rounded-card border border-border bg-white px-4 py-2 text-sm font-medium text-text-primary shadow-card">
                             <input
                               type="file"
-                              accept=".pdf,.doc,.docx"
+                              accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
                               className="hidden"
                               onChange={(e) => {
                                 const file = e.target.files?.[0];
