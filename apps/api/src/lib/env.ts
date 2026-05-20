@@ -35,6 +35,10 @@ const envSchema = z.object({
   GOOGLE_CLIENT_SECRET: z.string().optional(),
   LINKEDIN_CLIENT_ID: z.string().optional(),
   LINKEDIN_CLIENT_SECRET: z.string().optional(),
+  EXPOSE_ERROR_DETAILS: z
+    .string()
+    .optional()
+    .transform((value) => value === 'true'),
 });
 
 export type Env = z.infer<typeof envSchema>;

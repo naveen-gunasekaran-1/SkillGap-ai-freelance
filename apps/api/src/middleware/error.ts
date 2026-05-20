@@ -1,6 +1,15 @@
 import type { NextFunction, Request, Response } from 'express';
 import { ZodError } from 'zod';
 import { HttpError } from '../lib/httpError';
+import { env } from '../lib/env';
+
+function errorDetails(err: unknown): { errorName?: string; errorMessage?: string } | undefined {
+  if (!env.EXPOSE_ERROR_DETAILS) return undefined;
+  if (err instanceof Error) {
+    return { errorName: err.name, errorMessage: err.message };
+  }
+  return { errorMessage: String(err) };
+}
 
 /**
  * Central API error handler (maps HttpError/ZodError to JSON responses).
@@ -20,5 +29,7 @@ export function errorHandler(err: unknown, req: Request, res: Response, _next: N
   }
 
   console.error({ requestId: req.requestId, err });
-  res.status(500).json({ message: 'Internal server error', requestId: req.requestId });
+  res
+    .status(500)
+    .json({ message: 'Internal server error', requestId: req.requestId, ...errorDetails(err) });
 }

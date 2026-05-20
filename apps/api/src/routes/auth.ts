@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, type Request } from 'express';
 import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
@@ -208,6 +208,38 @@ async function recordSuccessfulLogin(userId: string): Promise<void> {
       lastLoginAt: new Date(),
     },
   });
+}
+
+async function sendVerificationEmailBestEffort(input: {
+  req: Request;
+  user: { id: string; email: string; name: string; role: string };
+}): Promise<void> {
+  try {
+    const verificationToken = await createAccountToken({
+      userId: input.user.id,
+      type: ACCOUNT_TOKEN_TYPE.EMAIL_VERIFICATION,
+    });
+    await sendEmailVerificationEmail({
+      email: input.user.email,
+      name: input.user.name,
+      token: verificationToken,
+    });
+    await writeAuditLog({
+      req: input.req,
+      actorId: input.user.id,
+      actorRole: input.user.role,
+      action: AUDIT_ACTION.AUTH_EMAIL_VERIFICATION_SENT,
+      entityType: 'User',
+      entityId: input.user.id,
+    });
+  } catch (error) {
+    console.error({
+      requestId: input.req.requestId,
+      userId: input.user.id,
+      err: error,
+      message: 'Email verification dispatch failed',
+    });
+  }
 }
 
 async function findOrCreateOAuthUser(
@@ -437,23 +469,7 @@ router.post(
         },
       });
       const tokens = await issueTokens(user.id, user.role as Role);
-      const verificationToken = await createAccountToken({
-        userId: user.id,
-        type: ACCOUNT_TOKEN_TYPE.EMAIL_VERIFICATION,
-      });
-      await sendEmailVerificationEmail({
-        email: user.email,
-        name: user.name,
-        token: verificationToken,
-      });
-      await writeAuditLog({
-        req,
-        actorId: user.id,
-        actorRole: user.role,
-        action: AUDIT_ACTION.AUTH_EMAIL_VERIFICATION_SENT,
-        entityType: 'User',
-        entityId: user.id,
-      });
+      await sendVerificationEmailBestEffort({ req, user });
       res.status(201).json({ user: toUserDto(user), ...tokens });
       return;
     }
@@ -495,23 +511,7 @@ router.post(
     });
 
     const tokens = await issueTokens(user.id, user.role as Role, true);
-    const verificationToken = await createAccountToken({
-      userId: user.id,
-      type: ACCOUNT_TOKEN_TYPE.EMAIL_VERIFICATION,
-    });
-    await sendEmailVerificationEmail({
-      email: user.email,
-      name: user.name,
-      token: verificationToken,
-    });
-    await writeAuditLog({
-      req,
-      actorId: user.id,
-      actorRole: user.role,
-      action: AUDIT_ACTION.AUTH_EMAIL_VERIFICATION_SENT,
-      entityType: 'User',
-      entityId: user.id,
-    });
+    await sendVerificationEmailBestEffort({ req, user });
     res.status(201).json({ user: toUserDto(user), ...tokens });
   }),
 );
