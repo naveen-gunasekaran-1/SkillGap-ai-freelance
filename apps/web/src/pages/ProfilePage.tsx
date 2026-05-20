@@ -2,15 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { 
-  Card, 
-  Button, 
-  Input, 
-  Textarea, 
-  Badge, 
-  Avatar, 
-  ProgressBar 
-} from '@skillgap/ui';
+import { Card, Button, Input, Textarea, Badge, Avatar, ProgressBar } from '@skillgap/ui';
 import {
   User,
   Mail,
@@ -50,12 +42,16 @@ export function ProfilePage(): React.JSX.Element {
   const user = useAuthStore((s) => s.user);
   const setUser = useAuthStore((s) => s.setUser);
   const queryClient = useQueryClient();
-  
+
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [newSkill, setNewSkill] = useState('');
   const [skills, setSkills] = useState<string[]>(user?.skills ?? []);
 
-  const { register, handleSubmit, formState: { isDirty } } = useForm<ProfileFormData>({
+  const {
+    register,
+    handleSubmit,
+    formState: { isDirty },
+  } = useForm<ProfileFormData>({
     defaultValues: {
       name: user?.name ?? '',
       title: user?.title ?? '',
@@ -117,7 +113,9 @@ export function ProfilePage(): React.JSX.Element {
         {/* Header */}
         <div className="animate-fade-in-up">
           <h1 className="text-2xl font-bold text-text-primary md:text-3xl">Your Profile</h1>
-          <p className="mt-2 text-text-secondary">Manage your professional information and skills</p>
+          <p className="mt-2 text-text-secondary">
+            Manage your professional information and skills
+          </p>
         </div>
 
         {/* Profile Completion Banner */}
@@ -153,12 +151,16 @@ export function ProfilePage(): React.JSX.Element {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => setEditingSection(editingSection === 'personal' ? null : 'personal')}
+                  onClick={() =>
+                    setEditingSection(editingSection === 'personal' ? null : 'personal')
+                  }
                 >
                   {editingSection === 'personal' ? (
                     <>Cancel</>
                   ) : (
-                    <><Edit3 className="h-4 w-4 mr-1" /> Edit</>
+                    <>
+                      <Edit3 className="h-4 w-4 mr-1" /> Edit
+                    </>
                   )}
                 </Button>
               </div>
@@ -167,13 +169,26 @@ export function ProfilePage(): React.JSX.Element {
                   <form onSubmit={handleSubmit(onSubmitProfile)} className="space-y-4">
                     <div className="grid gap-4 sm:grid-cols-2">
                       <Input label="Full Name" {...register('name')} />
-                      <Input label="Job Title" {...register('title')} placeholder="e.g. Frontend Developer" />
+                      <Input
+                        label="Job Title"
+                        {...register('title')}
+                        placeholder="e.g. Frontend Developer"
+                      />
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
-                      <Input label="Location" {...register('location')} placeholder="e.g. San Francisco, CA" />
+                      <Input
+                        label="Location"
+                        {...register('location')}
+                        placeholder="e.g. San Francisco, CA"
+                      />
                       <Input label="Phone" {...register('phone')} type="tel" />
                     </div>
-                    <Textarea label="Professional Summary" {...register('summary')} rows={4} placeholder="A brief overview of your experience and career goals..." />
+                    <Textarea
+                      label="Professional Summary"
+                      {...register('summary')}
+                      rows={4}
+                      placeholder="A brief overview of your experience and career goals..."
+                    />
                     <div className="flex justify-end gap-2">
                       <Button type="button" variant="ghost" onClick={() => setEditingSection(null)}>
                         Cancel
@@ -187,21 +202,41 @@ export function ProfilePage(): React.JSX.Element {
                 ) : (
                   <div className="space-y-4">
                     <div className="flex items-center gap-4">
-                      <Avatar name={displayName} size="lg" />
+                      <Avatar name={displayName} src={user?.avatar} size="lg" />
                       <div>
-                        <h3 className="text-lg font-semibold text-text-primary">{user?.name || 'Add your name'}</h3>
+                        <h3 className="text-lg font-semibold text-text-primary">
+                          {user?.name || 'Add your name'}
+                        </h3>
                         <p className="text-text-secondary">{user?.title || 'Add your job title'}</p>
                       </div>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-2 pt-4 border-t border-border">
-                      <InfoRow icon={<Mail className="h-4 w-4" />} label="Email" value={user?.email ?? null} />
-                      <InfoRow icon={<Phone className="h-4 w-4" />} label="Phone" value={user?.phone || 'Not set'} />
-                      <InfoRow icon={<MapPin className="h-4 w-4" />} label="Location" value={user?.location || 'Not set'} />
-                      <InfoRow icon={<Briefcase className="h-4 w-4" />} label="Title" value={user?.title || 'Not set'} />
+                      <InfoRow
+                        icon={<Mail className="h-4 w-4" />}
+                        label="Email"
+                        value={user?.email ?? null}
+                      />
+                      <InfoRow
+                        icon={<Phone className="h-4 w-4" />}
+                        label="Phone"
+                        value={user?.phone || 'Not set'}
+                      />
+                      <InfoRow
+                        icon={<MapPin className="h-4 w-4" />}
+                        label="Location"
+                        value={user?.location || 'Not set'}
+                      />
+                      <InfoRow
+                        icon={<Briefcase className="h-4 w-4" />}
+                        label="Title"
+                        value={user?.title || 'Not set'}
+                      />
                     </div>
                     {user?.summary && (
                       <div className="pt-4 border-t border-border">
-                        <p className="text-sm text-text-secondary leading-relaxed">{user.summary}</p>
+                        <p className="text-sm text-text-secondary leading-relaxed">
+                          {user.summary}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -273,7 +308,10 @@ export function ProfilePage(): React.JSX.Element {
                 {user?.experience?.length ? (
                   <div className="space-y-4">
                     {user.experience.map((exp, idx) => (
-                      <div key={idx} className="flex gap-4 pb-4 border-b border-border last:border-0 last:pb-0">
+                      <div
+                        key={idx}
+                        className="flex gap-4 pb-4 border-b border-border last:border-0 last:pb-0"
+                      >
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-light flex-shrink-0">
                           <Briefcase className="h-5 w-5 text-primary" />
                         </div>
@@ -291,7 +329,9 @@ export function ProfilePage(): React.JSX.Element {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-text-secondary">No experience added yet. Add your work history to improve matches.</p>
+                  <p className="text-sm text-text-secondary">
+                    No experience added yet. Add your work history to improve matches.
+                  </p>
                 )}
               </div>
             </Card>
@@ -311,7 +351,10 @@ export function ProfilePage(): React.JSX.Element {
                 {user?.education?.length ? (
                   <div className="space-y-4">
                     {user.education.map((edu, idx) => (
-                      <div key={idx} className="flex gap-4 pb-4 border-b border-border last:border-0 last:pb-0">
+                      <div
+                        key={idx}
+                        className="flex gap-4 pb-4 border-b border-border last:border-0 last:pb-0"
+                      >
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ai-purple/10 flex-shrink-0">
                           <GraduationCap className="h-5 w-5 text-ai-purple" />
                         </div>
@@ -327,7 +370,9 @@ export function ProfilePage(): React.JSX.Element {
                     ))}
                   </div>
                 ) : (
-                  <p className="text-sm text-text-secondary">No education added yet. Add your academic background.</p>
+                  <p className="text-sm text-text-secondary">
+                    No education added yet. Add your academic background.
+                  </p>
                 )}
               </div>
             </Card>
@@ -346,7 +391,9 @@ export function ProfilePage(): React.JSX.Element {
                   <div className="flex items-center gap-3 p-3 rounded-xl bg-success/10 border border-success/20">
                     <CheckCircle className="h-5 w-5 text-success" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-text-primary truncate">Resume uploaded</p>
+                      <p className="text-sm font-medium text-text-primary truncate">
+                        Resume uploaded
+                      </p>
                       <p className="text-xs text-text-secondary">
                         {user.resumeStatus === 'VERIFIED' ? 'Verified' : 'Processing...'}
                       </p>
@@ -392,7 +439,9 @@ export function ProfilePage(): React.JSX.Element {
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-text-secondary">Add links to your portfolio, GitHub, LinkedIn, etc.</p>
+                <p className="text-sm text-text-secondary">
+                  Add links to your portfolio, GitHub, LinkedIn, etc.
+                </p>
               )}
               <Button variant="ghost" size="sm" className="mt-3 w-full">
                 <Plus className="h-4 w-4 mr-1" /> Add Link
@@ -403,10 +452,7 @@ export function ProfilePage(): React.JSX.Element {
             <Card className="p-5 animate-fade-in-up delay-500">
               <h2 className="font-semibold text-text-primary mb-4">Account Status</h2>
               <div className="space-y-3">
-                <StatusRow
-                  label="Email"
-                  verified={Boolean(user?.emailVerified)}
-                />
+                <StatusRow label="Email" verified={Boolean(user?.emailVerified)} />
                 {!user?.emailVerified && (
                   <Button
                     type="button"
@@ -416,17 +462,13 @@ export function ProfilePage(): React.JSX.Element {
                     disabled={resendVerificationMutation.isPending}
                     onClick={() => resendVerificationMutation.mutate()}
                   >
-                    {resendVerificationMutation.isPending ? 'Sending...' : 'Resend verification email'}
+                    {resendVerificationMutation.isPending
+                      ? 'Sending...'
+                      : 'Resend verification email'}
                   </Button>
                 )}
-                <StatusRow
-                  label="Skills"
-                  verified={Boolean(user?.skillsVerified)}
-                />
-                <StatusRow
-                  label="Resume"
-                  verified={user?.resumeStatus === 'VERIFIED'}
-                />
+                <StatusRow label="Skills" verified={Boolean(user?.skillsVerified)} />
+                <StatusRow label="Resume" verified={user?.resumeStatus === 'VERIFIED'} />
               </div>
             </Card>
           </div>
@@ -436,12 +478,22 @@ export function ProfilePage(): React.JSX.Element {
   );
 }
 
-function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value?: string | null }) {
+function InfoRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value?: string | null;
+}) {
   return (
     <div className="flex items-center gap-2 text-sm">
       <span className="text-text-secondary">{icon}</span>
       <span className="text-text-secondary">{label}:</span>
-      <span className={`font-medium ${value && value !== 'Not set' ? 'text-text-primary' : 'text-text-secondary'}`}>
+      <span
+        className={`font-medium ${value && value !== 'Not set' ? 'text-text-primary' : 'text-text-secondary'}`}
+      >
         {value || 'Not set'}
       </span>
     </div>
@@ -463,9 +515,11 @@ function StatusRow({ label, verified }: { label: string; verified?: boolean }) {
   );
 }
 
-function calculateProfileCompletion(user: ReturnType<typeof useAuthStore.getState>['user']): number {
+function calculateProfileCompletion(
+  user: ReturnType<typeof useAuthStore.getState>['user'],
+): number {
   if (!user) return 0;
-  
+
   const fields = [
     user.name,
     user.title,
@@ -477,7 +531,7 @@ function calculateProfileCompletion(user: ReturnType<typeof useAuthStore.getStat
     user.education?.length,
     user.resumeUrl,
   ];
-  
+
   const completed = fields.filter(Boolean).length;
   return Math.round((completed / fields.length) * 100);
 }

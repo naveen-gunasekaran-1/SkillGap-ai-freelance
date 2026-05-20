@@ -9,7 +9,10 @@ interface OpenAiMessage {
 /**
  * Optionally enrich a baseline gap report using OpenAI (safe merge; failures are swallowed).
  */
-export async function enrichGapReportWithOpenAI(base: GapReport, context: { jobTitle: string }): Promise<GapReport> {
+export async function enrichGapReportWithOpenAI(
+  base: GapReport,
+  context: { jobTitle: string },
+): Promise<GapReport> {
   const key = env.OPENAI_API_KEY;
   if (!key) return base;
 

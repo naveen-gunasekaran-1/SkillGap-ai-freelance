@@ -52,8 +52,12 @@ export async function persistRejectionExplanation(input: {
   missingSkills?: string[];
   evidenceNotes?: string;
 }): Promise<AiExplanation> {
-  const categoryText = input.categories?.length ? ` Categories: ${input.categories.join(', ')}.` : '';
-  const skillText = input.missingSkills?.length ? ` Missing evidence: ${input.missingSkills.join(', ')}.` : '';
+  const categoryText = input.categories?.length
+    ? ` Categories: ${input.categories.join(', ')}.`
+    : '';
+  const skillText = input.missingSkills?.length
+    ? ` Missing evidence: ${input.missingSkills.join(', ')}.`
+    : '';
   const summary = `The company rejected this application with structured reasoning.${categoryText}${skillText} Explanation: ${input.rejectionReason}`;
   const existing = await prisma.aiExplanation.findFirst({
     where: { applicationId: input.applicationId, type: 'REJECTION_REASON' },

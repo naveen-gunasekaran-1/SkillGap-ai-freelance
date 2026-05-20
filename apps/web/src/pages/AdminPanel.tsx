@@ -17,7 +17,13 @@ import { Badge, Button, Card, Textarea } from '@skillgap/ui';
 import { Navbar } from '../components/Navbar';
 import { api } from '../lib/api';
 
-type VerificationStatus = 'IN_PROGRESS' | 'SUBMITTED' | 'UNDER_REVIEW' | 'VERIFIED' | 'REJECTED' | 'SUSPENDED';
+type VerificationStatus =
+  | 'IN_PROGRESS'
+  | 'SUBMITTED'
+  | 'UNDER_REVIEW'
+  | 'VERIFIED'
+  | 'REJECTED'
+  | 'SUSPENDED';
 type AdminTab = 'verifications' | 'audit' | 'fraud';
 
 interface AdminCompany {
@@ -108,8 +114,10 @@ const tabs: Array<{ id: AdminTab; label: string }> = [
 
 function statusBadge(status: string): React.JSX.Element {
   if (status === 'VERIFIED') return <Badge variant="success">Approved</Badge>;
-  if (status === 'REJECTED' || status === 'SUSPENDED') return <Badge variant="error">{status}</Badge>;
-  if (status === 'SUBMITTED' || status === 'UNDER_REVIEW') return <Badge variant="warning">{status.replace('_', ' ')}</Badge>;
+  if (status === 'REJECTED' || status === 'SUSPENDED')
+    return <Badge variant="error">{status}</Badge>;
+  if (status === 'SUBMITTED' || status === 'UNDER_REVIEW')
+    return <Badge variant="warning">{status.replace('_', ' ')}</Badge>;
   return <Badge variant="neutral">{status}</Badge>;
 }
 
@@ -130,7 +138,8 @@ export function AdminPanel(): React.JSX.Element {
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const currentTab = searchParams.get('tab');
-  const tab: AdminTab = currentTab === 'audit' || currentTab === 'fraud' ? currentTab : 'verifications';
+  const tab: AdminTab =
+    currentTab === 'audit' || currentTab === 'fraud' ? currentTab : 'verifications';
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [reviewNotes, setReviewNotes] = useState('');
   const [rejectionReason, setRejectionReason] = useState('');
@@ -147,7 +156,9 @@ export function AdminPanel(): React.JSX.Element {
     queryKey: ['admin', 'verification', selectedId],
     enabled: Boolean(selectedId),
     queryFn: async (): Promise<CompanyVerification> => {
-      const res = await api.get<{ verification: CompanyVerification }>(`/admin/verifications/${selectedId}`);
+      const res = await api.get<{ verification: CompanyVerification }>(
+        `/admin/verifications/${selectedId}`,
+      );
       return res.data.verification;
     },
   });
@@ -180,10 +191,15 @@ export function AdminPanel(): React.JSX.Element {
 
   const verifications = verificationsQuery.data ?? [];
   const selectedVerification =
-    selectedVerificationQuery.data ?? verifications.find((item) => item.id === selectedId) ?? verifications[0] ?? null;
+    selectedVerificationQuery.data ??
+    verifications.find((item) => item.id === selectedId) ??
+    verifications[0] ??
+    null;
 
   const stats = useMemo(() => {
-    const pending = verifications.filter((item) => item.status === 'SUBMITTED' || item.status === 'UNDER_REVIEW').length;
+    const pending = verifications.filter(
+      (item) => item.status === 'SUBMITTED' || item.status === 'UNDER_REVIEW',
+    ).length;
     const approved = verifications.filter((item) => item.status === 'VERIFIED').length;
     const rejected = verifications.filter((item) => item.status === 'REJECTED').length;
     const docs = verifications.reduce((sum, item) => sum + item.documents.length, 0);
@@ -216,7 +232,8 @@ export function AdminPanel(): React.JSX.Element {
         typeof err === 'object' &&
         err !== null &&
         'response' in err &&
-        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message ===
+          'string'
           ? (err as { response: { data: { message: string } } }).response.data.message
           : 'Review decision failed';
       toast.error(message);
@@ -225,14 +242,17 @@ export function AdminPanel(): React.JSX.Element {
 
   const openDocument = async (documentId: string): Promise<void> => {
     try {
-      const res = await api.get<{ url: string }>(`/admin/verification-documents/${documentId}/read-url`);
+      const res = await api.get<{ url: string }>(
+        `/admin/verification-documents/${documentId}/read-url`,
+      );
       window.open(res.data.url, '_blank', 'noopener,noreferrer');
     } catch (err: unknown) {
       const message =
         typeof err === 'object' &&
         err !== null &&
         'response' in err &&
-        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message ===
+          'string'
           ? (err as { response: { data: { message: string } } }).response.data.message
           : 'Could not open document';
       toast.error(message);
@@ -250,11 +270,15 @@ export function AdminPanel(): React.JSX.Element {
       <main className="mx-auto max-w-7xl px-4 py-8 lg:px-6 lg:py-10">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-primary">Admin operations</p>
-            <h1 className="mt-1 text-2xl font-bold text-text-primary md:text-3xl">Trust & Verification Console</h1>
+            <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+              Admin operations
+            </p>
+            <h1 className="mt-1 text-2xl font-bold text-text-primary md:text-3xl">
+              Trust & Verification Console
+            </h1>
             <p className="mt-2 max-w-3xl text-text-secondary">
-              Review company verification submissions, inspect document metadata, monitor fraud flags, and keep an
-              auditable trail of recruiter trust decisions.
+              Review company verification submissions, inspect document metadata, monitor fraud
+              flags, and keep an auditable trail of recruiter trust decisions.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -263,7 +287,9 @@ export function AdminPanel(): React.JSX.Element {
                 key={item.id}
                 onClick={() => setSearchParams(item.id === 'verifications' ? {} : { tab: item.id })}
                 className={`rounded-card px-4 py-2 text-sm font-medium transition-colors ${
-                  tab === item.id ? 'bg-primary text-white shadow-card' : 'border border-border bg-white text-text-secondary hover:text-text-primary'
+                  tab === item.id
+                    ? 'bg-primary text-white shadow-card'
+                    : 'border border-border bg-white text-text-secondary hover:text-text-primary'
                 }`}
               >
                 {item.label}
@@ -273,10 +299,29 @@ export function AdminPanel(): React.JSX.Element {
         </div>
 
         <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <MetricCard icon={<Clock className="h-5 w-5" />} label="Pending review" value={stats.pending} />
-          <MetricCard icon={<CheckCircle className="h-5 w-5" />} label="Approved" value={stats.approved} tone="success" />
-          <MetricCard icon={<XCircle className="h-5 w-5" />} label="Rejected" value={stats.rejected} tone="error" />
-          <MetricCard icon={<FileText className="h-5 w-5" />} label="Documents" value={stats.docs} tone="ai" />
+          <MetricCard
+            icon={<Clock className="h-5 w-5" />}
+            label="Pending review"
+            value={stats.pending}
+          />
+          <MetricCard
+            icon={<CheckCircle className="h-5 w-5" />}
+            label="Approved"
+            value={stats.approved}
+            tone="success"
+          />
+          <MetricCard
+            icon={<XCircle className="h-5 w-5" />}
+            label="Rejected"
+            value={stats.rejected}
+            tone="error"
+          />
+          <MetricCard
+            icon={<FileText className="h-5 w-5" />}
+            label="Documents"
+            value={stats.docs}
+            tone="ai"
+          />
         </div>
 
         <Card className="mt-6 p-5">
@@ -288,12 +333,17 @@ export function AdminPanel(): React.JSX.Element {
               <div>
                 <h2 className="font-semibold text-text-primary">Storage configuration</h2>
                 <p className="mt-1 text-sm text-text-secondary">
-                  Cloudflare R2 or S3-compatible storage is required for verification document uploads.
+                  Cloudflare R2 or S3-compatible storage is required for verification document
+                  uploads.
                 </p>
               </div>
             </div>
             <Badge variant={storageQuery.data?.configured ? 'success' : 'warning'}>
-              {storageQuery.isLoading ? 'Checking' : storageQuery.data?.configured ? 'Configured' : 'Needs setup'}
+              {storageQuery.isLoading
+                ? 'Checking'
+                : storageQuery.data?.configured
+                  ? 'Configured'
+                  : 'Needs setup'}
             </Badge>
           </div>
         </Card>
@@ -306,9 +356,13 @@ export function AdminPanel(): React.JSX.Element {
                 <p className="mt-1 text-sm text-text-secondary">Newest submissions appear first.</p>
               </div>
               <div className="max-h-[680px] overflow-y-auto divide-y divide-border">
-                {verificationsQuery.isLoading && <div className="p-5 text-sm text-text-secondary">Loading queue...</div>}
+                {verificationsQuery.isLoading && (
+                  <div className="p-5 text-sm text-text-secondary">Loading queue...</div>
+                )}
                 {!verificationsQuery.isLoading && verifications.length === 0 && (
-                  <div className="p-5 text-sm text-text-secondary">No verification submissions yet.</div>
+                  <div className="p-5 text-sm text-text-secondary">
+                    No verification submissions yet.
+                  </div>
                 )}
                 {verifications.map((verification) => (
                   <button
@@ -323,13 +377,18 @@ export function AdminPanel(): React.JSX.Element {
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-3">
-                        <p className="truncate font-semibold text-text-primary">{verification.company.name}</p>
+                        <p className="truncate font-semibold text-text-primary">
+                          {verification.company.name}
+                        </p>
                         {statusBadge(verification.status)}
                       </div>
                       <p className="mt-1 text-sm text-text-secondary">
-                        {verification.region} · {verification.countryCode} · {verification.documents.length} documents
+                        {verification.region} · {verification.countryCode} ·{' '}
+                        {verification.documents.length} documents
                       </p>
-                      <p className="mt-1 text-xs text-text-secondary">Created {formatDate(verification.createdAt)}</p>
+                      <p className="mt-1 text-xs text-text-secondary">
+                        Created {formatDate(verification.createdAt)}
+                      </p>
                     </div>
                   </button>
                 ))}
@@ -355,23 +414,31 @@ export function AdminPanel(): React.JSX.Element {
           <Card className="mt-8 overflow-hidden">
             <div className="border-b border-border p-5">
               <h2 className="font-semibold text-text-primary">Audit trail</h2>
-              <p className="mt-1 text-sm text-text-secondary">Most recent sensitive platform actions.</p>
+              <p className="mt-1 text-sm text-text-secondary">
+                Most recent sensitive platform actions.
+              </p>
             </div>
             <div className="divide-y divide-border">
               {(auditQuery.data ?? []).map((log) => (
-                <div key={log.id} className="grid gap-3 p-4 md:grid-cols-[1fr_180px_140px] md:items-center">
+                <div
+                  key={log.id}
+                  className="grid gap-3 p-4 md:grid-cols-[1fr_180px_140px] md:items-center"
+                >
                   <div>
                     <p className="font-medium text-text-primary">{log.action}</p>
                     <p className="text-sm text-text-secondary">
                       {log.entityType}
-                      {log.entityId ? ` · ${log.entityId}` : ''} · {log.actor?.email ?? log.actorRole ?? 'System'}
+                      {log.entityId ? ` · ${log.entityId}` : ''} ·{' '}
+                      {log.actor?.email ?? log.actorRole ?? 'System'}
                     </p>
                   </div>
                   <p className="text-sm text-text-secondary">{log.ipAddress ?? 'IP unavailable'}</p>
                   <p className="text-sm text-text-secondary">{formatDate(log.createdAt)}</p>
                 </div>
               ))}
-              {auditQuery.isLoading && <div className="p-5 text-sm text-text-secondary">Loading audit logs...</div>}
+              {auditQuery.isLoading && (
+                <div className="p-5 text-sm text-text-secondary">Loading audit logs...</div>
+              )}
               {!auditQuery.isLoading && (auditQuery.data ?? []).length === 0 && (
                 <div className="p-5 text-sm text-text-secondary">No audit logs yet.</div>
               )}
@@ -383,25 +450,38 @@ export function AdminPanel(): React.JSX.Element {
           <Card className="mt-8 overflow-hidden">
             <div className="border-b border-border p-5">
               <h2 className="font-semibold text-text-primary">Fraud flags</h2>
-              <p className="mt-1 text-sm text-text-secondary">Signals requiring admin investigation.</p>
+              <p className="mt-1 text-sm text-text-secondary">
+                Signals requiring admin investigation.
+              </p>
             </div>
             <div className="divide-y divide-border">
               {(fraudQuery.data ?? []).map((flag) => (
-                <div key={flag.id} className="grid gap-3 p-4 md:grid-cols-[1fr_120px_140px] md:items-center">
+                <div
+                  key={flag.id}
+                  className="grid gap-3 p-4 md:grid-cols-[1fr_120px_140px] md:items-center"
+                >
                   <div className="flex items-start gap-3">
                     <AlertTriangle className="mt-0.5 h-5 w-5 text-warning" />
                     <div>
                       <p className="font-medium text-text-primary">{flag.reason}</p>
-                      <p className="text-sm text-text-secondary">{flag.company?.name ?? 'Unknown company'}</p>
+                      <p className="text-sm text-text-secondary">
+                        {flag.company?.name ?? 'Unknown company'}
+                      </p>
                     </div>
                   </div>
-                  <Badge variant={flag.severity === 'HIGH' ? 'error' : 'warning'}>{flag.severity}</Badge>
+                  <Badge variant={flag.severity === 'HIGH' ? 'error' : 'warning'}>
+                    {flag.severity}
+                  </Badge>
                   <p className="text-sm text-text-secondary">{formatDate(flag.createdAt)}</p>
                 </div>
               ))}
-              {fraudQuery.isLoading && <div className="p-5 text-sm text-text-secondary">Loading fraud flags...</div>}
+              {fraudQuery.isLoading && (
+                <div className="p-5 text-sm text-text-secondary">Loading fraud flags...</div>
+              )}
               {!fraudQuery.isLoading && (fraudQuery.data ?? []).length === 0 && (
-                <div className="p-5 text-sm text-text-secondary">No fraud flags currently open.</div>
+                <div className="p-5 text-sm text-text-secondary">
+                  No fraud flags currently open.
+                </div>
               )}
             </div>
           </Card>
@@ -435,7 +515,9 @@ function MetricCard({
           <p className="text-sm text-text-secondary">{label}</p>
           <p className="mt-2 text-2xl font-bold text-text-primary">{value}</p>
         </div>
-        <div className={`flex h-11 w-11 items-center justify-center rounded-card ${tones[tone]}`}>{icon}</div>
+        <div className={`flex h-11 w-11 items-center justify-center rounded-card ${tones[tone]}`}>
+          {icon}
+        </div>
       </div>
     </Card>
   );
@@ -470,7 +552,9 @@ function VerificationDetail({
         <div>
           <ShieldCheck className="mx-auto h-10 w-10 text-text-secondary" />
           <h2 className="mt-4 font-semibold text-text-primary">No verification selected</h2>
-          <p className="mt-2 text-sm text-text-secondary">Select a company submission to review documents.</p>
+          <p className="mt-2 text-sm text-text-secondary">
+            Select a company submission to review documents.
+          </p>
         </div>
       </Card>
     );

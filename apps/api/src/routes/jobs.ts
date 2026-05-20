@@ -6,12 +6,18 @@ import { asyncHandler } from '../lib/asyncHandler';
 import { HttpError } from '../lib/httpError';
 import { toJobDto } from '../lib/serializers';
 import { computeMatchScore } from '../lib/matching';
-import { optionalAuth, requireAuth, requireRoles, requireVerifiedCompany } from '../middleware/auth';
+import {
+  optionalAuth,
+  requireAuth,
+  requireRoles,
+  requireVerifiedCompany,
+} from '../middleware/auth';
 import { AUDIT_ACTION, JOB_TYPE, ROLE, type JobType } from '../lib/constants';
 import { stringifyStringArray } from '../lib/jsonFields';
 import { writeAuditLog } from '../lib/audit';
+import { paginationMeta, paginationSchema } from '../lib/pagination';
 
-const listQuerySchema = z.object({
+const listQuerySchema = paginationSchema.extend({
   search: z.string().optional(),
   type: z.string().optional(),
   verified: z.enum(['true', 'false']).optional(),
@@ -69,15 +75,21 @@ router.get(
     }
 
     const where: Prisma.JobWhereInput = clauses.length > 0 ? { AND: clauses } : {};
+    const skip = (q.page - 1) * q.limit;
 
-    const jobs = await prisma.job.findMany({
-      where,
-      orderBy: { postedAt: 'desc' },
-      include: {
-        company: true,
-        skills: { include: { skill: true } },
-      },
-    });
+    const [jobs, total] = await prisma.$transaction([
+      prisma.job.findMany({
+        where,
+        orderBy: { postedAt: 'desc' },
+        skip,
+        take: q.limit,
+        include: {
+          company: true,
+          skills: { include: { skill: true } },
+        },
+      }),
+      prisma.job.count({ where }),
+    ]);
 
     const candidateSkills =
       req.auth?.role === ROLE.CANDIDATE || req.auth?.role === ROLE.ADMIN ? req.auth.skills : [];
@@ -91,7 +103,10 @@ router.get(
       return toJobDto(job, matchScore);
     });
 
-    res.json({ jobs: payload });
+    res.json({
+      jobs: payload,
+      pagination: paginationMeta({ page: q.page, limit: q.limit, total }),
+    });
   }),
 );
 
@@ -100,19 +115,31 @@ router.get(
   requireAuth(),
   requireRoles(ROLE.COMPANY, ROLE.ADMIN),
   asyncHandler(async (req, res) => {
+    const q = paginationSchema.parse(req.query);
     if (!req.auth!.companyId) {
       throw new HttpError(400, 'Company profile is not linked');
     }
-    const jobs = await prisma.job.findMany({
-      where: { companyId: req.auth!.companyId },
-      orderBy: { postedAt: 'desc' },
-      include: { company: true, skills: { include: { skill: true } }, _count: { select: { applications: true } } },
-    });
+    const where = { companyId: req.auth!.companyId };
+    const [jobs, total] = await prisma.$transaction([
+      prisma.job.findMany({
+        where,
+        orderBy: { postedAt: 'desc' },
+        skip: (q.page - 1) * q.limit,
+        take: q.limit,
+        include: {
+          company: true,
+          skills: { include: { skill: true } },
+          _count: { select: { applications: true } },
+        },
+      }),
+      prisma.job.count({ where }),
+    ]);
     res.json({
       jobs: jobs.map((job) => ({
         ...toJobDto(job),
         applicantCount: job._count.applications,
       })),
+      pagination: paginationMeta({ page: q.page, limit: q.limit, total }),
     });
   }),
 );
@@ -176,7 +203,10 @@ router.put(
     if (!existing) {
       throw new HttpError(404, 'Job not found');
     }
-    if (req.auth!.role === ROLE.COMPANY && (!req.auth!.companyId || existing.companyId !== req.auth!.companyId)) {
+    if (
+      req.auth!.role === ROLE.COMPANY &&
+      (!req.auth!.companyId || existing.companyId !== req.auth!.companyId)
+    ) {
       throw new HttpError(403, 'Forbidden');
     }
     await prisma.jobSkill.deleteMany({ where: { jobId: id } });

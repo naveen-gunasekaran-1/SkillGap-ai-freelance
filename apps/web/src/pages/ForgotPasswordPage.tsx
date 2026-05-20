@@ -43,7 +43,8 @@ export function ForgotPasswordPage(): React.JSX.Element {
 
           {sent ? (
             <div className="mt-6 rounded-card border border-success/20 bg-success/5 p-4 text-sm text-text-secondary">
-              Check your inbox for a password reset link. For security, the link expires in 30 minutes.
+              Check your inbox for a password reset link. For security, the link expires in 30
+              minutes.
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="mt-6 space-y-4">
@@ -62,7 +63,10 @@ export function ForgotPasswordPage(): React.JSX.Element {
 
           <p className="mt-6 text-center text-sm text-text-secondary">
             Remembered your password?{' '}
-            <Link to="/login" className="font-semibold text-primary hover:text-primary-dark transition-colors">
+            <Link
+              to="/login"
+              className="font-semibold text-primary hover:text-primary-dark transition-colors"
+            >
               Back to sign in
             </Link>
           </p>

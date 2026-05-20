@@ -7,13 +7,16 @@ import { ACCOUNT_TOKEN_TYPE, type AccountTokenType } from './constants';
 
 const PASSWORD_RESET_TTL_MS = 1000 * 60 * 30;
 const EMAIL_VERIFICATION_TTL_MS = 1000 * 60 * 60 * 24;
+const OAUTH_LOGIN_TTL_MS = 1000 * 60 * 5;
 
 function createRawToken(): string {
   return randomBytes(32).toString('base64url');
 }
 
 function tokenTtl(type: AccountTokenType): number {
-  return type === ACCOUNT_TOKEN_TYPE.PASSWORD_RESET ? PASSWORD_RESET_TTL_MS : EMAIL_VERIFICATION_TTL_MS;
+  if (type === ACCOUNT_TOKEN_TYPE.PASSWORD_RESET) return PASSWORD_RESET_TTL_MS;
+  if (type === ACCOUNT_TOKEN_TYPE.OAUTH_LOGIN) return OAUTH_LOGIN_TTL_MS;
+  return EMAIL_VERIFICATION_TTL_MS;
 }
 
 export async function createAccountToken(input: {
@@ -47,7 +50,12 @@ export async function consumeAccountToken(input: {
 }): Promise<{ userId: string; tokenId: string }> {
   const tokenHash = hashToken(input.token);
   const existing = await prisma.accountToken.findUnique({ where: { tokenHash } });
-  if (!existing || existing.type !== input.type || existing.usedAt || existing.expiresAt < new Date()) {
+  if (
+    !existing ||
+    existing.type !== input.type ||
+    existing.usedAt ||
+    existing.expiresAt < new Date()
+  ) {
     throw new Error('INVALID_ACCOUNT_TOKEN');
   }
 
@@ -59,7 +67,11 @@ export async function consumeAccountToken(input: {
   return { userId: existing.userId, tokenId: existing.id };
 }
 
-export async function sendPasswordResetEmail(input: { email: string; name: string; token: string }): Promise<void> {
+export async function sendPasswordResetEmail(input: {
+  email: string;
+  name: string;
+  token: string;
+}): Promise<void> {
   const url = `${env.APP_URL.replace(/\/$/, '')}/reset-password?token=${encodeURIComponent(input.token)}`;
   await sendEmail({
     to: input.email,
@@ -74,7 +86,11 @@ export async function sendPasswordResetEmail(input: { email: string; name: strin
   });
 }
 
-export async function sendEmailVerificationEmail(input: { email: string; name: string; token: string }): Promise<void> {
+export async function sendEmailVerificationEmail(input: {
+  email: string;
+  name: string;
+  token: string;
+}): Promise<void> {
   const url = `${env.APP_URL.replace(/\/$/, '')}/verify-email?token=${encodeURIComponent(input.token)}`;
   await sendEmail({
     to: input.email,

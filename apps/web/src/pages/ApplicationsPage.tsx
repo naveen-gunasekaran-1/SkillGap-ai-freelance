@@ -63,7 +63,9 @@ export function ApplicationsPage(): React.JSX.Element {
         {/* Header */}
         <div className="animate-fade-in-up">
           <h1 className="text-2xl font-bold text-text-primary md:text-3xl">Your Applications</h1>
-          <p className="mt-2 text-text-secondary">Track your job applications, interviews, and outcomes</p>
+          <p className="mt-2 text-text-secondary">
+            Track your job applications, interviews, and outcomes
+          </p>
         </div>
 
         {appsQuery.isError && (
@@ -79,7 +81,9 @@ export function ApplicationsPage(): React.JSX.Element {
                 type="button"
                 onClick={() => setFilter(s)}
                 className={`whitespace-nowrap rounded-lg px-4 py-2 text-sm font-medium transition-all duration-150 ${
-                  filter === s ? 'bg-primary text-white shadow-card' : 'text-text-secondary hover:bg-background hover:text-text-primary'
+                  filter === s
+                    ? 'bg-primary text-white shadow-card'
+                    : 'text-text-secondary hover:bg-background hover:text-text-primary'
                 }`}
               >
                 {s}
@@ -101,7 +105,9 @@ export function ApplicationsPage(): React.JSX.Element {
 
         {/* Results count */}
         <p className="mt-4 text-sm text-text-secondary animate-fade-in-up delay-150">
-          {appsQuery.isLoading ? 'Loading...' : `${filtered.length} ${filtered.length === 1 ? 'application' : 'applications'}`}
+          {appsQuery.isLoading
+            ? 'Loading...'
+            : `${filtered.length} ${filtered.length === 1 ? 'application' : 'applications'}`}
         </p>
 
         {/* Applications List */}
@@ -153,7 +159,9 @@ export function ApplicationsPage(): React.JSX.Element {
             <div className="py-20 text-center">
               <ClipboardList className="h-12 w-12 text-text-secondary mx-auto mb-4" />
               <p className="text-lg font-medium text-text-primary">No applications found</p>
-              <p className="mt-2 text-sm text-text-secondary">Try changing the filter or apply to more jobs</p>
+              <p className="mt-2 text-sm text-text-secondary">
+                Try changing the filter or apply to more jobs
+              </p>
               <Link to="/jobs">
                 <Button variant="ai-gradient" className="mt-6">
                   Browse jobs

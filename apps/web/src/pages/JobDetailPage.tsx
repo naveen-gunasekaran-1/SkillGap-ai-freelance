@@ -4,14 +4,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Button, Badge, Card, ProgressBar, MatchScore, Avatar } from '@skillgap/ui';
 import type { GapReport, Job } from '@skillgap/types';
-import { 
-  ArrowLeft, 
-  Bookmark, 
-  Building2, 
-  MapPin, 
-  Clock, 
-  CheckCircle2, 
-  ExternalLink, 
+import {
+  ArrowLeft,
+  Bookmark,
+  Building2,
+  MapPin,
+  Clock,
+  CheckCircle2,
+  ExternalLink,
   Sparkles,
   X,
   FileText,
@@ -70,7 +70,10 @@ export function JobDetailPage(): React.JSX.Element {
     onError: (err: unknown) => {
       const msg =
         err && typeof err === 'object' && 'response' in err
-          ? String((err as { response?: { data?: { message?: string } } }).response?.data?.message ?? 'Apply failed')
+          ? String(
+              (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
+                'Apply failed',
+            )
           : 'Apply failed';
       toast.error(msg);
     },
@@ -194,7 +197,9 @@ export function JobDetailPage(): React.JSX.Element {
                 type="button"
                 onClick={() => setActiveTab(tab)}
                 className={`whitespace-nowrap px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
-                  activeTab === tab ? 'border-primary text-primary' : 'border-transparent text-text-secondary hover:text-text-primary'
+                  activeTab === tab
+                    ? 'border-primary text-primary'
+                    : 'border-transparent text-text-secondary hover:text-text-primary'
                 }`}
               >
                 {tab === 'Gap Analysis' && <Sparkles className="h-4 w-4 inline mr-1" />}
@@ -210,13 +215,20 @@ export function JobDetailPage(): React.JSX.Element {
             {activeTab === 'Overview' && (
               <Card className="p-6 md:p-8">
                 <h2 className="text-lg font-semibold text-text-primary">About the role</h2>
-                <p className="mt-3 text-text-secondary leading-relaxed whitespace-pre-wrap">{job.description}</p>
+                <p className="mt-3 text-text-secondary leading-relaxed whitespace-pre-wrap">
+                  {job.description}
+                </p>
                 {responsibilities.length > 0 && (
                   <>
-                    <h3 className="mt-8 text-base font-semibold text-text-primary">Responsibilities</h3>
+                    <h3 className="mt-8 text-base font-semibold text-text-primary">
+                      Responsibilities
+                    </h3>
                     <ul className="mt-3 space-y-2.5">
                       {responsibilities.map((r) => (
-                        <li key={r} className="flex items-start gap-2.5 text-sm text-text-secondary">
+                        <li
+                          key={r}
+                          className="flex items-start gap-2.5 text-sm text-text-secondary"
+                        >
                           <span className="mt-1 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-primary" />
                           {r}
                         </li>
@@ -251,10 +263,10 @@ export function JobDetailPage(): React.JSX.Element {
                   </div>
                 </div>
                 {job.company.website && (
-                  <a 
-                    href={job.company.website} 
-                    className="mt-4 inline-flex items-center gap-1 text-sm text-primary hover:underline" 
-                    target="_blank" 
+                  <a
+                    href={job.company.website}
+                    className="mt-4 inline-flex items-center gap-1 text-sm text-primary hover:underline"
+                    target="_blank"
                     rel="noreferrer"
                   >
                     <ExternalLink className="h-4 w-4" />
@@ -265,7 +277,10 @@ export function JobDetailPage(): React.JSX.Element {
                   {[
                     { label: 'Industry', value: job.company.industry },
                     { label: 'Company size', value: job.company.size },
-                    { label: 'Verification', value: job.company.isVerified ? 'Verified employer' : 'Unverified' },
+                    {
+                      label: 'Verification',
+                      value: job.company.isVerified ? 'Verified employer' : 'Unverified',
+                    },
                   ].map((d) => (
                     <div key={d.label} className="rounded-card border border-border p-3">
                       <p className="text-xs text-text-secondary">{d.label}</p>
@@ -284,9 +299,13 @@ export function JobDetailPage(): React.JSX.Element {
                   </Badge>
                   <h2 className="text-lg font-semibold text-text-primary">Your Skill Match</h2>
                 </div>
-                {gapQuery.isLoading && <p className="text-sm text-text-secondary">Generating preview...</p>}
+                {gapQuery.isLoading && (
+                  <p className="text-sm text-text-secondary">Generating preview...</p>
+                )}
                 {gapQuery.isError && (
-                  <p className="text-sm text-error">Could not load gap preview. Try signing in for personalized results.</p>
+                  <p className="text-sm text-error">
+                    Could not load gap preview. Try signing in for personalized results.
+                  </p>
                 )}
                 {!gapQuery.isLoading && gapBars.length > 0 && (
                   <div className="space-y-4">
@@ -307,7 +326,10 @@ export function JobDetailPage(): React.JSX.Element {
                 )}
                 {!gapQuery.isLoading && gapReport && (
                   <p className="mt-4 text-sm text-text-secondary">
-                    Overall alignment: <span className="font-semibold text-text-primary">{gapReport.overallMatchPercent}%</span>
+                    Overall alignment:{' '}
+                    <span className="font-semibold text-text-primary">
+                      {gapReport.overallMatchPercent}%
+                    </span>
                   </p>
                 )}
               </Card>
@@ -322,7 +344,8 @@ export function JobDetailPage(): React.JSX.Element {
                 <MatchScore value={match} size={100} />
               </div>
               <p className="mt-3 text-sm text-text-secondary">
-                You match about <span className="font-semibold text-text-primary">{match}%</span> of listed skills
+                You match about <span className="font-semibold text-text-primary">{match}%</span> of
+                listed skills
               </p>
               <Button className="mt-6 w-full" type="button" onClick={openApply}>
                 Apply Now
@@ -371,10 +394,15 @@ export function JobDetailPage(): React.JSX.Element {
                 <div className="rounded-card border-2 border-dashed border-border p-8 text-center">
                   <FileText className="h-8 w-8 text-text-secondary mx-auto mb-2" />
                   <p className="text-sm font-medium text-text-primary">Resume</p>
-                  <p className="mt-1 text-xs text-text-secondary">Resume upload is coming soon - your profile skills are used for matching today.</p>
+                  <p className="mt-1 text-xs text-text-secondary">
+                    Resume upload is coming soon - your profile skills are used for matching today.
+                  </p>
                 </div>
                 <div>
-                  <label className="mb-1.5 block text-sm font-medium text-text-primary" htmlFor="cover">
+                  <label
+                    className="mb-1.5 block text-sm font-medium text-text-primary"
+                    htmlFor="cover"
+                  >
                     Cover note (optional)
                   </label>
                   <textarea

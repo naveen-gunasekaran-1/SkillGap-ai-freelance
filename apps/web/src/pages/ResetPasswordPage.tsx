@@ -38,7 +38,10 @@ export function ResetPasswordPage(): React.JSX.Element {
     } catch (err: unknown) {
       const message =
         err && typeof err === 'object' && 'response' in err
-          ? String((err as { response?: { data?: { message?: string } } }).response?.data?.message ?? 'Could not reset password')
+          ? String(
+              (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
+                'Could not reset password',
+            )
           : 'Could not reset password';
       toast.error(message);
     } finally {
@@ -89,7 +92,10 @@ export function ResetPasswordPage(): React.JSX.Element {
           )}
 
           <p className="mt-6 text-center text-sm text-text-secondary">
-            <Link to="/login" className="font-semibold text-primary hover:text-primary-dark transition-colors">
+            <Link
+              to="/login"
+              className="font-semibold text-primary hover:text-primary-dark transition-colors"
+            >
               Back to sign in
             </Link>
           </p>

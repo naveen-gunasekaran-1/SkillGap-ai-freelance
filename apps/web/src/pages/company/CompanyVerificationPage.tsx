@@ -6,7 +6,14 @@ import { Badge, Button, Card } from '@skillgap/ui';
 import { AppShell } from '../../components/AppShell';
 import { api } from '../../lib/api';
 
-type VerificationStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED' | 'UNDER_REVIEW' | 'VERIFIED' | 'REJECTED' | 'SUSPENDED';
+type VerificationStatus =
+  | 'NOT_STARTED'
+  | 'IN_PROGRESS'
+  | 'SUBMITTED'
+  | 'UNDER_REVIEW'
+  | 'VERIFIED'
+  | 'REJECTED'
+  | 'SUSPENDED';
 
 interface VerificationDocument {
   id: string;
@@ -63,7 +70,8 @@ export function CompanyVerificationPage(): React.JSX.Element {
   const verification = verificationQuery.data?.verification ?? null;
   const requiredDocuments = verificationQuery.data?.requiredDocuments ?? [];
   const uploadedTypes = new Set(verification?.documents.map((doc) => doc.type) ?? []);
-  const status = verification?.status ?? verificationQuery.data?.company.verificationStatus ?? 'NOT_STARTED';
+  const status =
+    verification?.status ?? verificationQuery.data?.company.verificationStatus ?? 'NOT_STARTED';
 
   const createMutation = useMutation({
     mutationFn: async () => {
@@ -98,7 +106,8 @@ export function CompanyVerificationPage(): React.JSX.Element {
         typeof err === 'object' &&
         err !== null &&
         'response' in err &&
-        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message ===
+          'string'
           ? (err as { response: { data: { message: string } } }).response.data.message
           : 'Document upload failed';
       toast.error(message);
@@ -108,7 +117,9 @@ export function CompanyVerificationPage(): React.JSX.Element {
   const submitMutation = useMutation({
     mutationFn: async () => {
       if (!verification) throw new Error('Start verification first');
-      const res = await api.post('/companies/me/verification/submit', { verificationId: verification.id });
+      const res = await api.post('/companies/me/verification/submit', {
+        verificationId: verification.id,
+      });
       return res.data;
     },
     onSuccess: () => {
@@ -120,7 +131,8 @@ export function CompanyVerificationPage(): React.JSX.Element {
         typeof err === 'object' &&
         err !== null &&
         'response' in err &&
-        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message === 'string'
+        typeof (err as { response?: { data?: { message?: string } } }).response?.data?.message ===
+          'string'
           ? (err as { response: { data: { message: string } } }).response.data.message
           : 'Submission failed';
       toast.error(message);
@@ -132,14 +144,22 @@ export function CompanyVerificationPage(): React.JSX.Element {
       <main className="mx-auto max-w-6xl p-4 lg:p-8">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-primary">Enterprise trust</p>
-            <h1 className="mt-1 text-2xl font-bold text-text-primary md:text-3xl">Company Verification</h1>
+            <p className="text-sm font-semibold uppercase tracking-wide text-primary">
+              Enterprise trust
+            </p>
+            <h1 className="mt-1 text-2xl font-bold text-text-primary md:text-3xl">
+              Company Verification
+            </h1>
             <p className="mt-2 max-w-2xl text-text-secondary">
-              Verified companies can post jobs, access candidate data, and use hiring analytics. Documents are stored as
-              private verification records for admin review.
+              Verified companies can post jobs, access candidate data, and use hiring analytics.
+              Documents are stored as private verification records for admin review.
             </p>
           </div>
-          <Badge variant={status === 'VERIFIED' ? 'success' : status === 'REJECTED' ? 'error' : 'warning'}>
+          <Badge
+            variant={
+              status === 'VERIFIED' ? 'success' : status === 'REJECTED' ? 'error' : 'warning'
+            }
+          >
             {status.replaceAll('_', ' ')}
           </Badge>
         </div>
@@ -152,7 +172,9 @@ export function CompanyVerificationPage(): React.JSX.Element {
               </div>
               <div>
                 <h2 className="font-semibold text-text-primary">Verification setup</h2>
-                <p className="text-sm text-text-secondary">Choose the required document checklist.</p>
+                <p className="text-sm text-text-secondary">
+                  Choose the required document checklist.
+                </p>
               </div>
             </div>
 
@@ -198,7 +220,9 @@ export function CompanyVerificationPage(): React.JSX.Element {
             <div className="flex items-center justify-between gap-4">
               <div>
                 <h2 className="font-semibold text-text-primary">Required documents</h2>
-                <p className="mt-1 text-sm text-text-secondary">Upload every required item before submitting.</p>
+                <p className="mt-1 text-sm text-text-secondary">
+                  Upload every required item before submitting.
+                </p>
               </div>
               {status === 'VERIFIED' && <CheckCircle className="h-6 w-6 text-success" />}
             </div>
@@ -210,11 +234,19 @@ export function CompanyVerificationPage(): React.JSX.Element {
                   <div key={type} className="rounded-card border border-border bg-background p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-start gap-3">
-                        <FileText className={uploaded ? 'mt-0.5 h-5 w-5 text-success' : 'mt-0.5 h-5 w-5 text-text-secondary'} />
+                        <FileText
+                          className={
+                            uploaded
+                              ? 'mt-0.5 h-5 w-5 text-success'
+                              : 'mt-0.5 h-5 w-5 text-text-secondary'
+                          }
+                        />
                         <div>
                           <p className="font-medium text-text-primary">{labels[type] ?? type}</p>
                           <p className="text-sm text-text-secondary">
-                            {uploaded ? 'Uploaded and waiting for admin review.' : 'PDF, JPG, or PNG up to 6MB.'}
+                            {uploaded
+                              ? 'Uploaded and waiting for admin review.'
+                              : 'PDF, JPG, or PNG up to 6MB.'}
                           </p>
                         </div>
                       </div>
@@ -222,14 +254,26 @@ export function CompanyVerificationPage(): React.JSX.Element {
                         <input
                           type="file"
                           accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png"
-                          disabled={!verification || status === 'SUBMITTED' || status === 'VERIFIED'}
-                          onChange={(event) => setFiles((current) => ({ ...current, [type]: event.target.files?.[0] ?? null }))}
+                          disabled={
+                            !verification || status === 'SUBMITTED' || status === 'VERIFIED'
+                          }
+                          onChange={(event) =>
+                            setFiles((current) => ({
+                              ...current,
+                              [type]: event.target.files?.[0] ?? null,
+                            }))
+                          }
                           className="text-sm text-text-secondary file:mr-3 file:rounded-card file:border-0 file:bg-white file:px-3 file:py-2 file:text-sm file:font-medium file:text-text-primary"
                         />
                         <Button
                           size="sm"
                           variant={uploaded ? 'secondary' : 'primary'}
-                          disabled={!verification || !files[type] || status === 'SUBMITTED' || status === 'VERIFIED'}
+                          disabled={
+                            !verification ||
+                            !files[type] ||
+                            status === 'SUBMITTED' ||
+                            status === 'VERIFIED'
+                          }
                           loading={uploadMutation.isPending}
                           onClick={() => {
                             const file = files[type];

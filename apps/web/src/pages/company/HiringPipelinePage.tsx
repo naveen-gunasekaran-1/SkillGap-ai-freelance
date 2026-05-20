@@ -16,7 +16,9 @@ const stageConfig: Array<{ name: string; statuses: ApplicationStatus[] }> = [
 
 export function HiringPipelinePage(): React.JSX.Element {
   const companyQuery = useCompanyTrust();
-  const isVerified = Boolean(companyQuery.data?.isVerified && companyQuery.data.verificationStatus === 'VERIFIED');
+  const isVerified = Boolean(
+    companyQuery.data?.isVerified && companyQuery.data.verificationStatus === 'VERIFIED',
+  );
   const applicationsQuery = useQuery({
     queryKey: ['company', 'applications'],
     enabled: isVerified,
@@ -45,38 +47,53 @@ export function HiringPipelinePage(): React.JSX.Element {
           </div>
         )}
 
-        {isVerified && <div className="mt-6 grid gap-4 lg:grid-cols-4">
-          {stages.map((stage) => (
-            <section key={stage.name} className="rounded-card border border-border bg-background/70 p-3">
-              <div className="mb-3 flex items-center justify-between px-1">
-                <h2 className="font-semibold text-text-primary">{stage.name}</h2>
-                <Badge variant="neutral">{stage.candidates.length}</Badge>
-              </div>
-              <div className="space-y-3">
-                {stage.candidates.map((application) => (
-                  <Card key={application.id} className="p-4">
-                    <div className="flex items-center gap-3">
-                      <Avatar name={application.candidate?.name ?? 'Candidate'} size="sm" />
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-text-primary">{application.candidate?.name ?? 'Candidate'}</p>
-                        <p className="truncate text-xs text-text-secondary">{application.job?.title ?? 'Applicant'}</p>
+        {isVerified && (
+          <div className="mt-6 grid gap-4 lg:grid-cols-4">
+            {stages.map((stage) => (
+              <section
+                key={stage.name}
+                className="rounded-card border border-border bg-background/70 p-3"
+              >
+                <div className="mb-3 flex items-center justify-between px-1">
+                  <h2 className="font-semibold text-text-primary">{stage.name}</h2>
+                  <Badge variant="neutral">{stage.candidates.length}</Badge>
+                </div>
+                <div className="space-y-3">
+                  {stage.candidates.map((application) => (
+                    <Card key={application.id} className="p-4">
+                      <div className="flex items-center gap-3">
+                        <Avatar
+                          name={application.candidate?.name ?? 'Candidate'}
+                          src={application.candidate?.avatar}
+                          size="sm"
+                        />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-text-primary">
+                            {application.candidate?.name ?? 'Candidate'}
+                          </p>
+                          <p className="truncate text-xs text-text-secondary">
+                            {application.job?.title ?? 'Applicant'}
+                          </p>
+                        </div>
                       </div>
+                      <div className="mt-3 flex items-center justify-between text-xs">
+                        <span className="text-text-secondary">Match score</span>
+                        <span className="font-semibold text-primary">
+                          {application.matchScore}%
+                        </span>
+                      </div>
+                    </Card>
+                  ))}
+                  {stage.candidates.length === 0 && (
+                    <div className="rounded-card border border-dashed border-border p-6 text-center text-sm text-text-secondary">
+                      No candidates
                     </div>
-                    <div className="mt-3 flex items-center justify-between text-xs">
-                      <span className="text-text-secondary">Match score</span>
-                      <span className="font-semibold text-primary">{application.matchScore}%</span>
-                    </div>
-                  </Card>
-                ))}
-                {stage.candidates.length === 0 && (
-                  <div className="rounded-card border border-dashed border-border p-6 text-center text-sm text-text-secondary">
-                    No candidates
-                  </div>
-                )}
-              </div>
-            </section>
-          ))}
-        </div>}
+                  )}
+                </div>
+              </section>
+            ))}
+          </div>
+        )}
       </div>
     </AppShell>
   );

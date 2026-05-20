@@ -36,7 +36,8 @@ export function ProtectedRoute({
   }
 
   if (roles && !roles.includes(user.role)) {
-    const target = user.role === 'ADMIN' ? '/admin' : user.role === 'COMPANY' ? '/company' : '/dashboard';
+    const target =
+      user.role === 'ADMIN' ? '/admin' : user.role === 'COMPANY' ? '/company' : '/dashboard';
     return <Navigate to={target} replace />;
   }
 

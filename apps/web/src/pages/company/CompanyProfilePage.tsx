@@ -37,7 +37,7 @@ interface CompanyFormData {
  */
 export function CompanyProfilePage(): React.JSX.Element {
   const queryClient = useQueryClient();
-  
+
   const [isEditing, setIsEditing] = useState(false);
 
   const companyQuery = useQuery({
@@ -59,7 +59,12 @@ export function CompanyProfilePage(): React.JSX.Element {
   const company = companyQuery.data;
   const isVerified = Boolean(company?.isVerified && company.verificationStatus === 'VERIFIED');
 
-  const { register, handleSubmit, reset, formState: { isDirty } } = useForm<CompanyFormData>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { isDirty },
+  } = useForm<CompanyFormData>({
     defaultValues: {
       name: '',
       industry: '',
@@ -140,15 +145,13 @@ export function CompanyProfilePage(): React.JSX.Element {
                   <Building2 className="h-5 w-5 text-text-secondary" />
                   <h2 className="font-semibold text-text-primary">Company Information</h2>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setIsEditing(!isEditing)}
-                >
+                <Button variant="ghost" size="sm" onClick={() => setIsEditing(!isEditing)}>
                   {isEditing ? (
                     <>Cancel</>
                   ) : (
-                    <><Edit3 className="h-4 w-4 mr-1" /> Edit</>
+                    <>
+                      <Edit3 className="h-4 w-4 mr-1" /> Edit
+                    </>
                   )}
                 </Button>
               </div>
@@ -168,10 +171,10 @@ export function CompanyProfilePage(): React.JSX.Element {
                       <Input label="Careers Email" {...register('email')} type="email" />
                     </div>
                     <Input label="Phone" {...register('phone')} type="tel" />
-                    <Textarea 
-                      label="Company Description" 
-                      {...register('description')} 
-                      rows={4} 
+                    <Textarea
+                      label="Company Description"
+                      {...register('description')}
+                      rows={4}
                       placeholder="Tell candidates about your company culture, mission, and values..."
                     />
                     <div className="flex justify-end gap-2">
@@ -191,7 +194,9 @@ export function CompanyProfilePage(): React.JSX.Element {
                       <Avatar name={company.name} size="lg" />
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="text-xl font-semibold text-text-primary">{company.name}</h3>
+                          <h3 className="text-xl font-semibold text-text-primary">
+                            {company.name}
+                          </h3>
                           {isVerified && (
                             <Badge variant="success">
                               <CheckCircle className="h-3 w-3 mr-1" />
@@ -205,31 +210,47 @@ export function CompanyProfilePage(): React.JSX.Element {
 
                     {/* Info Grid */}
                     <div className="grid gap-4 sm:grid-cols-2 pt-4 border-t border-border">
-                      <InfoRow icon={<Users className="h-4 w-4" />} label="Size" value={company.size} />
-                      <InfoRow icon={<MapPin className="h-4 w-4" />} label="Location" value="Not set" />
-                      <InfoRow icon={<Mail className="h-4 w-4" />} label="Email" value="Use account email" />
+                      <InfoRow
+                        icon={<Users className="h-4 w-4" />}
+                        label="Size"
+                        value={company.size}
+                      />
+                      <InfoRow
+                        icon={<MapPin className="h-4 w-4" />}
+                        label="Location"
+                        value="Not set"
+                      />
+                      <InfoRow
+                        icon={<Mail className="h-4 w-4" />}
+                        label="Email"
+                        value="Use account email"
+                      />
                       <InfoRow icon={<Phone className="h-4 w-4" />} label="Phone" value="Not set" />
-                      <InfoRow 
-                        icon={<Globe className="h-4 w-4" />} 
-                        label="Website" 
+                      <InfoRow
+                        icon={<Globe className="h-4 w-4" />}
+                        label="Website"
                         value={
-                          <a 
-                            href={company.website ?? '#'} 
-                            target="_blank" 
+                          <a
+                            href={company.website ?? '#'}
+                            target="_blank"
                             rel="noopener noreferrer"
                             className="text-primary hover:underline inline-flex items-center gap-1"
                           >
                             {company.website ?? 'Not set'}
                             <ExternalLink className="h-3 w-3" />
                           </a>
-                        } 
+                        }
                       />
                     </div>
 
                     {/* Description */}
                     <div className="pt-4 border-t border-border">
-                      <h4 className="text-sm font-medium text-text-primary mb-2">About the Company</h4>
-                      <p className="text-sm text-text-secondary leading-relaxed">{company.description}</p>
+                      <h4 className="text-sm font-medium text-text-primary mb-2">
+                        About the Company
+                      </h4>
+                      <p className="text-sm text-text-secondary leading-relaxed">
+                        {company.description}
+                      </p>
                     </div>
                   </div>
                 )}
@@ -270,9 +291,19 @@ export function CompanyProfilePage(): React.JSX.Element {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-text-secondary">Company</span>
-                  <Badge variant={isVerified ? 'success' : company.verificationStatus === 'REJECTED' ? 'error' : 'warning'}>
+                  <Badge
+                    variant={
+                      isVerified
+                        ? 'success'
+                        : company.verificationStatus === 'REJECTED'
+                          ? 'error'
+                          : 'warning'
+                    }
+                  >
                     <CheckCircle className="h-3 w-3 mr-1" />
-                    {isVerified ? 'Verified' : company.verificationStatus?.replaceAll('_', ' ') ?? 'NOT STARTED'}
+                    {isVerified
+                      ? 'Verified'
+                      : (company.verificationStatus?.replaceAll('_', ' ') ?? 'NOT STARTED')}
                   </Badge>
                 </div>
                 <div className="flex items-center justify-between">
@@ -281,7 +312,8 @@ export function CompanyProfilePage(): React.JSX.Element {
                 </div>
               </div>
               <p className="mt-4 text-xs text-text-secondary">
-                Verification must be admin-approved before job posting, applicant review, and hiring analytics unlock.
+                Verification must be admin-approved before job posting, applicant review, and hiring
+                analytics unlock.
               </p>
             </Card>
 
@@ -291,7 +323,9 @@ export function CompanyProfilePage(): React.JSX.Element {
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-text-secondary">Open Positions</span>
-                  <span className="text-sm font-semibold text-text-primary">{jobsQuery.data?.length ?? 0}</span>
+                  <span className="text-sm font-semibold text-text-primary">
+                    {jobsQuery.data?.length ?? 0}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-text-secondary">Founded</span>
@@ -299,7 +333,9 @@ export function CompanyProfilePage(): React.JSX.Element {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-text-secondary">Industry</span>
-                  <span className="text-sm font-semibold text-text-primary">{company.industry}</span>
+                  <span className="text-sm font-semibold text-text-primary">
+                    {company.industry}
+                  </span>
                 </div>
               </div>
             </Card>
@@ -324,7 +360,15 @@ export function CompanyProfilePage(): React.JSX.Element {
   );
 }
 
-function InfoRow({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) {
+function InfoRow({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: React.ReactNode;
+}) {
   return (
     <div className="flex items-start gap-2 text-sm">
       <span className="text-text-secondary mt-0.5">{icon}</span>

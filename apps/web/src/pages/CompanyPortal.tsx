@@ -1,7 +1,15 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Button, Card, Badge, Avatar } from '@skillgap/ui';
-import { BarChart3, BriefcaseBusiness, ClipboardList, Menu, Settings, Target, Zap } from 'lucide-react';
+import {
+  BarChart3,
+  BriefcaseBusiness,
+  ClipboardList,
+  Menu,
+  Settings,
+  Target,
+  Zap,
+} from 'lucide-react';
 import { Navbar } from '../components/Navbar';
 
 const sidebarLinks = [
@@ -35,15 +43,21 @@ export function CompanyPortal(): React.JSX.Element {
                 <Avatar name="Acme Inc" size="md" />
                 <div>
                   <p className="font-semibold text-text-primary text-sm">Acme Inc</p>
-                  <Badge variant="success" className="mt-0.5">Verified</Badge>
+                  <Badge variant="success" className="mt-0.5">
+                    Verified
+                  </Badge>
                 </div>
               </div>
               <nav className="space-y-1">
                 {sidebarLinks.map((link) => {
                   const Icon = link.icon;
                   return (
-                    <button key={link.label} className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${link.active ? 'bg-primary-light/60 text-primary' : 'text-text-secondary hover:bg-background hover:text-text-primary'}`}>
-                      <Icon className="h-4 w-4" />{link.label}
+                    <button
+                      key={link.label}
+                      className={`w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${link.active ? 'bg-primary-light/60 text-primary' : 'text-text-secondary hover:bg-background hover:text-text-primary'}`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {link.label}
                     </button>
                   );
                 })}
@@ -53,7 +67,10 @@ export function CompanyPortal(): React.JSX.Element {
 
           {/* Mobile nav toggle */}
           <div className="lg:hidden">
-            <button onClick={() => setMobileNav(!mobileNav)} className="flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors">
+            <button
+              onClick={() => setMobileNav(!mobileNav)}
+              className="flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-text-primary transition-colors"
+            >
               <Menu className="h-4 w-4" /> Menu
             </button>
             {mobileNav && (
@@ -62,8 +79,12 @@ export function CompanyPortal(): React.JSX.Element {
                   {sidebarLinks.map((link) => {
                     const Icon = link.icon;
                     return (
-                      <button key={link.label} className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${link.active ? 'bg-primary-light/60 text-primary' : 'text-text-secondary'}`}>
-                        <Icon className="h-4 w-4" />{link.label}
+                      <button
+                        key={link.label}
+                        className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium ${link.active ? 'bg-primary-light/60 text-primary' : 'text-text-secondary'}`}
+                      >
+                        <Icon className="h-4 w-4" />
+                        {link.label}
                       </button>
                     );
                   })}
@@ -80,7 +101,13 @@ export function CompanyPortal(): React.JSX.Element {
                 <p className="mt-1 text-text-secondary">Manage job postings and find top talent</p>
               </div>
               <Badge variant="success" className="hidden sm:flex items-center gap-1.5 px-3 py-1.5">
-                <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M16.403 12.652a3 3 0 0 0 0-5.304 3 3 0 0 0-3.75-3.751 3 3 0 0 0-5.305 0 3 3 0 0 0-3.751 3.75 3 3 0 0 0 0 5.305 3 3 0 0 0 3.75 3.751 3 3 0 0 0 5.305 0 3 3 0 0 0 3.751-3.75Zm-2.546-4.46a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z" clipRule="evenodd" /></svg>
+                <svg className="h-3 w-3" fill="currentColor" viewBox="0 0 20 20">
+                  <path
+                    fillRule="evenodd"
+                    d="M16.403 12.652a3 3 0 0 0 0-5.304 3 3 0 0 0-3.75-3.751 3 3 0 0 0-5.305 0 3 3 0 0 0-3.751 3.75 3 3 0 0 0 0 5.305 3 3 0 0 0 3.75 3.751 3 3 0 0 0 5.305 0 3 3 0 0 0 3.751-3.75Zm-2.546-4.46a.75.75 0 0 0-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 1 0-1.06 1.061l2.5 2.5a.75.75 0 0 0 1.137-.089l4-5.5Z"
+                    clipRule="evenodd"
+                  />
+                </svg>
                 Verified Company
               </Badge>
             </div>
@@ -88,22 +115,46 @@ export function CompanyPortal(): React.JSX.Element {
             {/* Stats */}
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 animate-fade-in-up delay-100">
               {[
-                { label: 'Active Jobs', value: '5', icon: BriefcaseBusiness, trend: '+2 this month', color: 'text-primary' },
-                { label: 'Applications', value: '42', icon: ClipboardList, trend: '+12 this week', color: 'text-ai-purple' },
-                { label: 'Interviews', value: '8', icon: Target, trend: '3 scheduled', color: 'text-success' },
-                { label: 'Response Rate', value: '94%', icon: Zap, trend: 'Above average', color: 'text-warning' },
+                {
+                  label: 'Active Jobs',
+                  value: '5',
+                  icon: BriefcaseBusiness,
+                  trend: '+2 this month',
+                  color: 'text-primary',
+                },
+                {
+                  label: 'Applications',
+                  value: '42',
+                  icon: ClipboardList,
+                  trend: '+12 this week',
+                  color: 'text-ai-purple',
+                },
+                {
+                  label: 'Interviews',
+                  value: '8',
+                  icon: Target,
+                  trend: '3 scheduled',
+                  color: 'text-success',
+                },
+                {
+                  label: 'Response Rate',
+                  value: '94%',
+                  icon: Zap,
+                  trend: 'Above average',
+                  color: 'text-warning',
+                },
               ].map((stat) => {
                 const Icon = stat.icon;
                 return (
-                <Card key={stat.label} hover className="p-5">
-                  <div className="flex items-center justify-between">
-                    <Icon className={`h-5 w-5 ${stat.color}`} />
-                    <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
-                  </div>
-                  <p className="mt-2 text-sm font-medium text-text-primary">{stat.label}</p>
-                  <p className="mt-0.5 text-xs text-text-secondary">{stat.trend}</p>
-                </Card>
-              );
+                  <Card key={stat.label} hover className="p-5">
+                    <div className="flex items-center justify-between">
+                      <Icon className={`h-5 w-5 ${stat.color}`} />
+                      <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
+                    </div>
+                    <p className="mt-2 text-sm font-medium text-text-primary">{stat.label}</p>
+                    <p className="mt-0.5 text-xs text-text-secondary">{stat.trend}</p>
+                  </Card>
+                );
               })}
             </div>
 
@@ -111,11 +162,16 @@ export function CompanyPortal(): React.JSX.Element {
             <Card className="mt-8 overflow-hidden animate-fade-in-up delay-200">
               <div className="flex items-center justify-between border-b border-border p-6">
                 <h2 className="text-lg font-semibold text-text-primary">Recent Applicants</h2>
-                <Button variant="ghost" size="sm">View all →</Button>
+                <Button variant="ghost" size="sm">
+                  View all →
+                </Button>
               </div>
               <div className="divide-y divide-border">
                 {recentApplicants.map((a) => (
-                  <div key={a.name} className="flex items-center gap-4 px-6 py-4 hover:bg-background/50 transition-colors">
+                  <div
+                    key={a.name}
+                    className="flex items-center gap-4 px-6 py-4 hover:bg-background/50 transition-colors"
+                  >
                     <Avatar name={a.name} size="md" />
                     <div className="flex-1">
                       <p className="font-medium text-text-primary">{a.name}</p>
@@ -132,8 +188,13 @@ export function CompanyPortal(): React.JSX.Element {
             <div className="mt-8 relative overflow-hidden rounded-2xl bg-gradient-to-r from-ai-purple to-ai-cyan p-8 text-white shadow-card animate-fade-in-up delay-300">
               <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-white/10 blur-2xl" />
               <h2 className="text-xl font-bold">Post a New Job</h2>
-              <p className="mt-2 text-white/80">Reach qualified candidates with AI-powered matching</p>
-              <Button variant="secondary" className="mt-4 bg-white text-ai-purple hover:bg-white/90 border-0">
+              <p className="mt-2 text-white/80">
+                Reach qualified candidates with AI-powered matching
+              </p>
+              <Button
+                variant="secondary"
+                className="mt-4 bg-white text-ai-purple hover:bg-white/90 border-0"
+              >
                 Create Job Posting →
               </Button>
             </div>

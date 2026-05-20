@@ -11,6 +11,7 @@ import { requireAuth, requireRoles, requireVerifiedCompany } from '../middleware
 import { APPLICATION_STATUS, AUDIT_ACTION, ROLE } from '../lib/constants';
 import { parseStringArray } from '../lib/jsonFields';
 import { writeAuditLog } from '../lib/audit';
+import { paginationMeta, paginationSchema } from '../lib/pagination';
 
 const createSchema = z.object({
   jobId: z.string().min(1),
@@ -129,23 +130,41 @@ router.get(
   '/',
   requireAuth(),
   asyncHandler(async (req, res) => {
+    const q = paginationSchema.parse(req.query);
+    const skip = (q.page - 1) * q.limit;
     if (req.auth!.role === ROLE.ADMIN) {
-      const apps = await prisma.application.findMany({
-        orderBy: { appliedAt: 'desc' },
-        take: 200,
-        include: applicationDtoInclude,
+      const [apps, total] = await prisma.$transaction([
+        prisma.application.findMany({
+          orderBy: { appliedAt: 'desc' },
+          skip,
+          take: q.limit,
+          include: applicationDtoInclude,
+        }),
+        prisma.application.count(),
+      ]);
+      res.json({
+        applications: apps.map((a) => toApplicationDto(a)),
+        pagination: paginationMeta({ page: q.page, limit: q.limit, total }),
       });
-      res.json({ applications: apps.map((a) => toApplicationDto(a)) });
       return;
     }
 
     if (req.auth!.role === ROLE.CANDIDATE) {
-      const apps = await prisma.application.findMany({
-        where: { candidateId: req.auth!.id },
-        orderBy: { appliedAt: 'desc' },
-        include: applicationDtoInclude,
+      const where = { candidateId: req.auth!.id };
+      const [apps, total] = await prisma.$transaction([
+        prisma.application.findMany({
+          where,
+          orderBy: { appliedAt: 'desc' },
+          skip,
+          take: q.limit,
+          include: applicationDtoInclude,
+        }),
+        prisma.application.count({ where }),
+      ]);
+      res.json({
+        applications: apps.map((a) => toApplicationDto(a)),
+        pagination: paginationMeta({ page: q.page, limit: q.limit, total }),
       });
-      res.json({ applications: apps.map((a) => toApplicationDto(a)) });
       return;
     }
 
@@ -159,12 +178,21 @@ router.get(
       if (!req.auth!.companyId) {
         throw new HttpError(400, 'Company profile is not linked');
       }
-      const apps = await prisma.application.findMany({
-        where: { job: { companyId: req.auth!.companyId } },
-        orderBy: { appliedAt: 'desc' },
-        include: applicationDtoInclude,
+      const where = { job: { companyId: req.auth!.companyId } };
+      const [apps, total] = await prisma.$transaction([
+        prisma.application.findMany({
+          where,
+          orderBy: { appliedAt: 'desc' },
+          skip,
+          take: q.limit,
+          include: applicationDtoInclude,
+        }),
+        prisma.application.count({ where }),
+      ]);
+      res.json({
+        applications: apps.map((a) => toApplicationDto(a)),
+        pagination: paginationMeta({ page: q.page, limit: q.limit, total }),
       });
-      res.json({ applications: apps.map((a) => toApplicationDto(a)) });
       return;
     }
 
@@ -193,7 +221,11 @@ router.get(
       res.json({ application: toApplicationDto(app) });
       return;
     }
-    if (req.auth!.role === ROLE.COMPANY && req.auth!.companyId && app.job.companyId === req.auth!.companyId) {
+    if (
+      req.auth!.role === ROLE.COMPANY &&
+      req.auth!.companyId &&
+      app.job.companyId === req.auth!.companyId
+    ) {
       await new Promise<void>((resolve, reject) => {
         requireVerifiedCompany()(req, res, (err?: unknown) => {
           if (err) reject(err);

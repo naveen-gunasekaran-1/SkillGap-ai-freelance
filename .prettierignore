@@ -1,0 +1,16 @@
+node_modules
+dist
+build
+coverage
+.turbo
+.expo
+.expo-shared
+web-build
+storybook-static
+
+.env
+.env.*
+
+apps/**/dist
+apps/**/build
+packages/**/dist

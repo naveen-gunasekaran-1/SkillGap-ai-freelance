@@ -36,7 +36,11 @@ const updateCompanySchema = z.object({
 
 const verificationSchema = z.object({
   region: z.enum(['INDIA', 'GLOBAL']),
-  countryCode: z.string().min(2).max(2).transform((v) => v.toUpperCase()),
+  countryCode: z
+    .string()
+    .min(2)
+    .max(2)
+    .transform((v) => v.toUpperCase()),
   metadata: z.record(z.unknown()).optional(),
 });
 
@@ -137,7 +141,9 @@ router.get(
     res.json({
       company: toCompanyDto(company),
       verification,
-      requiredDocuments: requiredDocumentTypes(verification?.region === 'INDIA' ? 'INDIA' : 'GLOBAL'),
+      requiredDocuments: requiredDocumentTypes(
+        verification?.region === 'INDIA' ? 'INDIA' : 'GLOBAL',
+      ),
     });
   }),
 );
@@ -162,7 +168,11 @@ router.post(
     });
     await prisma.company.update({
       where: { id: companyId },
-      data: { verificationStatus: COMPANY_VERIFICATION_STATUS.IN_PROGRESS, isVerified: false, verificationBadge: null },
+      data: {
+        verificationStatus: COMPANY_VERIFICATION_STATUS.IN_PROGRESS,
+        isVerified: false,
+        verificationBadge: null,
+      },
     });
     await writeAuditLog({
       req,
@@ -194,7 +204,10 @@ router.post(
 
     const verification = verificationId
       ? await prisma.companyVerification.findFirst({ where: { id: verificationId, companyId } })
-      : await prisma.companyVerification.findFirst({ where: { companyId }, orderBy: { createdAt: 'desc' } });
+      : await prisma.companyVerification.findFirst({
+          where: { companyId },
+          orderBy: { createdAt: 'desc' },
+        });
     if (!verification) {
       throw new HttpError(400, 'Create a company verification before uploading documents');
     }

@@ -48,7 +48,7 @@ export default {
     //   favicon: './assets/favicon.png', // Add this when you create favicon asset
     // },
     extra: {
-      apiUrl: process.env.EXPO_PUBLIC_API_URL,
+      apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'https://skillgap-ai-freelance.onrender.com/api',
     },
   },
 };

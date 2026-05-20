@@ -11,7 +11,9 @@ export interface AccessPayload {
  * Sign a short-lived access token (JWT).
  */
 export function signAccessToken(payload: AccessPayload): string {
-  const options: SignOptions = { expiresIn: env.JWT_ACCESS_EXPIRES as NonNullable<SignOptions['expiresIn']> };
+  const options: SignOptions = {
+    expiresIn: env.JWT_ACCESS_EXPIRES as NonNullable<SignOptions['expiresIn']>,
+  };
   return jwt.sign(payload, env.JWT_ACCESS_SECRET, options);
 }
 
@@ -19,7 +21,9 @@ export function signAccessToken(payload: AccessPayload): string {
  * Sign a long-lived refresh token (opaque to client, verified via DB hash).
  */
 export function signRefreshToken(): string {
-  const options: SignOptions = { expiresIn: env.JWT_REFRESH_EXPIRES as NonNullable<SignOptions['expiresIn']> };
+  const options: SignOptions = {
+    expiresIn: env.JWT_REFRESH_EXPIRES as NonNullable<SignOptions['expiresIn']>,
+  };
   return jwt.sign({ typ: 'refresh', jti: randomUUID() }, env.JWT_REFRESH_SECRET, options);
 }
 
@@ -28,7 +32,12 @@ export function signRefreshToken(): string {
  */
 export function verifyAccessToken(token: string): AccessPayload {
   const decoded = jwt.verify(token, env.JWT_ACCESS_SECRET);
-  if (typeof decoded !== 'object' || decoded === null || !('sub' in decoded) || !('role' in decoded)) {
+  if (
+    typeof decoded !== 'object' ||
+    decoded === null ||
+    !('sub' in decoded) ||
+    !('role' in decoded)
+  ) {
     throw new Error('Invalid access token payload');
   }
   return { sub: String(decoded.sub), role: String(decoded.role) };

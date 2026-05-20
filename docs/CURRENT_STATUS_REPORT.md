@@ -49,7 +49,7 @@ https://skillgap-ai-freelance.onrender.com/health
 Expected health response:
 
 ```json
-{"status":"ok"}
+{ "status": "ok" }
 ```
 
 ## 3. Backend API Status
@@ -256,10 +256,11 @@ Mobile role behavior now implemented:
 - Company profile screen shows company/profile/applicant/job context.
 - Candidate profile screen shows candidate skills, applications, and match data.
 
-Current mobile limitations:
+Current mobile company management status:
 
-- Mobile company job creation/editing is not yet a dedicated full screen.
-- Web is currently the stronger company management surface.
+- Mobile company users can create jobs from the Jobs tab.
+- Mobile company users can open an existing job, edit the posting, and review applicants.
+- Web remains the richer company management surface for verification/admin-heavy workflows.
 - Release APK should be rebuilt after this latest role/API integration before testing on a physical device.
 
 ## 8. Current Local Runtime Status
@@ -274,7 +275,7 @@ API: http://localhost:3001
 Local API health check returned:
 
 ```json
-{"status":"ok"}
+{ "status": "ok" }
 ```
 
 For physical-device local testing on the same Wi-Fi, the phone must use the PC LAN IP instead of `localhost`. For deployed testing, use the Render API URL.
@@ -319,7 +320,7 @@ Mobile TypeScript check completed successfully.
 Remaining risks and limitations:
 
 - Some documentation files still contain older local-network or SQLite references and should be cleaned up.
-- Mobile company management is role-aware but not yet feature-complete for creating/editing jobs from mobile.
+- Mobile company management supports job creation/editing and applicant review, but the web app remains stronger for deep admin and verification workflows.
 - Render free-tier services may sleep, causing slow first requests.
 - Render free PostgreSQL is suitable for testing, not long-term production reliability.
 - Old APKs may still point to an old API URL. Uninstall old APKs before testing a rebuilt release.
@@ -368,8 +369,7 @@ docs/DEPLOYMENT.md
 
 Recommended product work:
 
-- Add mobile company job create/edit screens.
 - Add full company profile schema fields if phone/location/founded year are required.
-- Add password reset API and email flow.
+- Add stronger transactional email delivery and reset-link monitoring for password recovery.
 - Add admin review tools for users, companies, jobs, and applications.
 - Add end-to-end tests for candidate and company flows.

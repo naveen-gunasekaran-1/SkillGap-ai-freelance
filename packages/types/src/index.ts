@@ -74,7 +74,14 @@ export interface Company {
   name: string;
   logo?: string;
   isVerified: boolean;
-  verificationStatus?: 'NOT_STARTED' | 'IN_PROGRESS' | 'SUBMITTED' | 'UNDER_REVIEW' | 'VERIFIED' | 'REJECTED' | 'SUSPENDED';
+  verificationStatus?:
+    | 'NOT_STARTED'
+    | 'IN_PROGRESS'
+    | 'SUBMITTED'
+    | 'UNDER_REVIEW'
+    | 'VERIFIED'
+    | 'REJECTED'
+    | 'SUSPENDED';
   verificationBadge?: 'GSTIN' | 'MCA' | 'MANUAL';
   industry: string;
   size: string;

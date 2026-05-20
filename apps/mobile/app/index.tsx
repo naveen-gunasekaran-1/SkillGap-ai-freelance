@@ -1,5 +1,6 @@
 import { Link } from 'expo-router';
-import { Pressable, ScrollView, Text, View, Platform, SafeAreaView } from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../src/theme';
 
@@ -21,13 +22,19 @@ export default function HomeScreen(): React.JSX.Element {
     <SafeAreaView style={{ flex: 1, backgroundColor: t.colors.background }}>
       <ScrollView
         style={{ flex: 1 }}
-        contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: t.spacing.lg, paddingVertical: t.spacing.xl }}
+        contentContainerStyle={{
+          flexGrow: 1,
+          justifyContent: 'center',
+          paddingHorizontal: t.spacing.lg,
+          paddingVertical: t.spacing.xl,
+        }}
         showsVerticalScrollIndicator={false}
       >
         <View style={{ width: '100%', maxWidth: 420, alignSelf: 'center', alignItems: 'center' }}>
-          
           {/* Hero Section */}
-          <View style={{ alignItems: 'center', marginBottom: t.spacing.xl, marginTop: t.spacing.md }}>
+          <View
+            style={{ alignItems: 'center', marginBottom: t.spacing.xl, marginTop: t.spacing.md }}
+          >
             <View
               style={{
                 width: 80,
@@ -43,10 +50,24 @@ export default function HomeScreen(): React.JSX.Element {
               <Ionicons name="sparkles" size={40} color="#FFFFFF" />
             </View>
 
-            <Text style={{ ...t.typography.h1, color: t.colors.textPrimary, textAlign: 'center', marginBottom: t.spacing.xs }}>
+            <Text
+              style={{
+                ...t.typography.h1,
+                color: t.colors.textPrimary,
+                textAlign: 'center',
+                marginBottom: t.spacing.xs,
+              }}
+            >
               SkillGap AI
             </Text>
-            <Text style={{ ...t.typography.body, color: t.colors.textSecondary, textAlign: 'center', paddingHorizontal: t.spacing.sm }}>
+            <Text
+              style={{
+                ...t.typography.body,
+                color: t.colors.textSecondary,
+                textAlign: 'center',
+                paddingHorizontal: t.spacing.sm,
+              }}
+            >
               AI-powered gap analysis, job matching, and learning paths to accelerate your career.
             </Text>
           </View>
@@ -81,8 +102,19 @@ export default function HomeScreen(): React.JSX.Element {
                   <Ionicons name={f.icon as any} size={24} color={t.colors.primaryDark} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={{ ...t.typography.body, fontWeight: '600', color: t.colors.textPrimary, marginBottom: 2 }}>{f.title}</Text>
-                  <Text style={{ ...t.typography.caption, color: t.colors.textSecondary }}>{f.desc}</Text>
+                  <Text
+                    style={{
+                      ...t.typography.body,
+                      fontWeight: '600',
+                      color: t.colors.textPrimary,
+                      marginBottom: 2,
+                    }}
+                  >
+                    {f.title}
+                  </Text>
+                  <Text style={{ ...t.typography.caption, color: t.colors.textSecondary }}>
+                    {f.desc}
+                  </Text>
                 </View>
               </View>
             ))}
@@ -107,11 +139,13 @@ export default function HomeScreen(): React.JSX.Element {
                   ...t.shadows.card,
                 })}
               >
-                <Text style={{ color: '#FFFFFF', ...t.typography.body, fontWeight: '700' }}>Get Started</Text>
+                <Text style={{ color: '#FFFFFF', ...t.typography.body, fontWeight: '700' }}>
+                  Get Started
+                </Text>
                 <Ionicons name="arrow-forward" size={20} color="#FFFFFF" />
               </Pressable>
             </Link>
-            
+
             <Link href="/(auth)/login" asChild>
               <Pressable
                 style={({ pressed }) => ({
@@ -125,28 +159,42 @@ export default function HomeScreen(): React.JSX.Element {
                   opacity: pressed ? 0.7 : 1,
                 })}
               >
-                <Text style={{ color: t.colors.textPrimary, ...t.typography.body, fontWeight: '600' }}>I already have an account</Text>
+                <Text
+                  style={{ color: t.colors.textPrimary, ...t.typography.body, fontWeight: '600' }}
+                >
+                  I already have an account
+                </Text>
               </Pressable>
             </Link>
-            
-            {/* Demo/Test button */}
-            <Link href="/(tabs)" asChild>
+
+            <Link href="/contact" asChild>
               <Pressable
                 style={({ pressed }) => ({
                   width: '100%',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginTop: t.spacing.lg,
+                  flexDirection: 'row',
+                  gap: t.spacing.xs,
                   opacity: pressed ? 0.5 : 1,
                 })}
               >
-                <Text style={{ color: t.colors.textSecondary, ...t.typography.caption, textDecorationLine: 'underline' }}>
-                  Skip to Dashboard (Demo)
+                <Ionicons
+                  name="chatbubble-ellipses-outline"
+                  size={17}
+                  color={t.colors.textSecondary}
+                />
+                <Text
+                  style={{
+                    color: t.colors.textSecondary,
+                    ...t.typography.caption,
+                    fontWeight: '700',
+                  }}
+                >
+                  Contact support
                 </Text>
               </Pressable>
             </Link>
           </View>
-          
         </View>
       </ScrollView>
     </SafeAreaView>

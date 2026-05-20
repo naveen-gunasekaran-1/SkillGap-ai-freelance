@@ -59,7 +59,11 @@ export default function TabsLayout(): React.JSX.Element {
         options={{
           tabBarLabel: isAdmin ? 'Audit' : isCompany ? 'Applicants' : 'Applied',
           tabBarIcon: ({ focused, color }) => (
-            <Ionicons name={focused ? 'document-text' : 'document-text-outline'} size={24} color={color} />
+            <Ionicons
+              name={focused ? 'document-text' : 'document-text-outline'}
+              size={24}
+              color={color}
+            />
           ),
         }}
       />

@@ -1,6 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import path from 'node:path';
-import { GetObjectCommand, PutObjectCommand, S3Client, type S3ClientConfig } from '@aws-sdk/client-s3';
+import {
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client,
+  type S3ClientConfig,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { env } from './env';
 import { HttpError } from './httpError';
@@ -81,7 +86,6 @@ export async function uploadResume(params: {
       Key: key,
       Body: params.buffer,
       ContentType: params.contentType,
-      ACL: 'public-read',
     }),
   );
 
@@ -132,7 +136,9 @@ export async function createPrivateObjectReadUrl(params: {
     Bucket: env.S3_BUCKET,
     Key: params.storageKey,
     ...(params.downloadName
-      ? { ResponseContentDisposition: `inline; filename="${params.downloadName.replace(/"/g, '')}"` }
+      ? {
+          ResponseContentDisposition: `inline; filename="${params.downloadName.replace(/"/g, '')}"`,
+        }
       : {}),
   });
   return getSignedUrl(getS3Client(), command, {

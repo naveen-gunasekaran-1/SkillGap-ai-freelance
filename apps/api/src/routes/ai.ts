@@ -33,7 +33,9 @@ router.post(
 
     let skills =
       body.candidateSkills ??
-      (req.auth?.role === ROLE.CANDIDATE || req.auth?.role === ROLE.ADMIN ? req.auth.skills : undefined);
+      (req.auth?.role === ROLE.CANDIDATE || req.auth?.role === ROLE.ADMIN
+        ? req.auth.skills
+        : undefined);
 
     if (!skills || skills.length === 0) {
       skills = ['React', 'TypeScript', 'JavaScript', 'Git'];

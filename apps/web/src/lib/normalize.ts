@@ -1,4 +1,12 @@
-import type { AiExplanation, Application, Company, GapReport, Job, Skill, User } from '@skillgap/types';
+import type {
+  AiExplanation,
+  Application,
+  Company,
+  GapReport,
+  Job,
+  Skill,
+  User,
+} from '@skillgap/types';
 
 function parseCompany(raw: unknown): Company {
   const c = raw as Record<string, unknown>;
@@ -29,7 +37,11 @@ function parseCompany(raw: unknown): Company {
   ) {
     out.verificationStatus = c.verificationStatus;
   }
-  if (c.verificationBadge === 'GSTIN' || c.verificationBadge === 'MCA' || c.verificationBadge === 'MANUAL') {
+  if (
+    c.verificationBadge === 'GSTIN' ||
+    c.verificationBadge === 'MCA' ||
+    c.verificationBadge === 'MANUAL'
+  ) {
     out.verificationBadge = c.verificationBadge;
   }
   return out;
@@ -41,7 +53,9 @@ export function parseSkill(raw: unknown): Skill {
     id: String(s.id),
     name: String(s.name),
     category: String(s.category ?? 'General'),
-    aliases: Array.isArray(s.aliases) ? s.aliases.filter((x): x is string => typeof x === 'string') : [],
+    aliases: Array.isArray(s.aliases)
+      ? s.aliases.filter((x): x is string => typeof x === 'string')
+      : [],
     marketDemandScore: Number(s.marketDemandScore ?? 0),
   };
 }
@@ -81,9 +95,15 @@ export function parseGapReport(raw: unknown): GapReport {
     id: String(g.id),
     applicationId: String(g.applicationId),
     overallMatchPercent: Number(g.overallMatchPercent ?? 0),
-    criticalGaps: Array.isArray(g.criticalGaps) ? (g.criticalGaps as GapReport['criticalGaps']) : [],
-    partialMatches: Array.isArray(g.partialMatches) ? (g.partialMatches as GapReport['partialMatches']) : [],
-    strengths: Array.isArray(g.strengths) ? g.strengths.filter((x): x is string => typeof x === 'string') : [],
+    criticalGaps: Array.isArray(g.criticalGaps)
+      ? (g.criticalGaps as GapReport['criticalGaps'])
+      : [],
+    partialMatches: Array.isArray(g.partialMatches)
+      ? (g.partialMatches as GapReport['partialMatches'])
+      : [],
+    strengths: Array.isArray(g.strengths)
+      ? g.strengths.filter((x): x is string => typeof x === 'string')
+      : [],
     recommendations: Array.isArray(g.recommendations)
       ? (g.recommendations as GapReport['recommendations'])
       : [],
@@ -101,9 +121,15 @@ export function parseAiExplanation(raw: unknown): AiExplanation {
     promptVersion: String(e.promptVersion ?? 'unknown'),
     confidence: Number(e.confidence ?? 0),
     summary: String(e.summary ?? ''),
-    missingSkills: Array.isArray(e.missingSkills) ? (e.missingSkills as AiExplanation['missingSkills']) : [],
-    weakEvidence: Array.isArray(e.weakEvidence) ? (e.weakEvidence as AiExplanation['weakEvidence']) : [],
-    strengths: Array.isArray(e.strengths) ? e.strengths.filter((x): x is string => typeof x === 'string') : [],
+    missingSkills: Array.isArray(e.missingSkills)
+      ? (e.missingSkills as AiExplanation['missingSkills'])
+      : [],
+    weakEvidence: Array.isArray(e.weakEvidence)
+      ? (e.weakEvidence as AiExplanation['weakEvidence'])
+      : [],
+    strengths: Array.isArray(e.strengths)
+      ? e.strengths.filter((x): x is string => typeof x === 'string')
+      : [],
     recommendations: Array.isArray(e.recommendations)
       ? (e.recommendations as AiExplanation['recommendations'])
       : [],
@@ -115,7 +141,9 @@ export function parseAiExplanation(raw: unknown): AiExplanation {
 export function parseApplication(raw: unknown): Application {
   const a = raw as Record<string, unknown>;
   const gapReport = a.gapReport ? parseGapReport(a.gapReport) : undefined;
-  const aiExplanations = Array.isArray(a.aiExplanations) ? a.aiExplanations.map(parseAiExplanation) : [];
+  const aiExplanations = Array.isArray(a.aiExplanations)
+    ? a.aiExplanations.map(parseAiExplanation)
+    : [];
   return {
     id: String(a.id),
     candidateId: String(a.candidateId),
@@ -151,11 +179,21 @@ export function parseUser(raw: unknown): User {
     summary: String(u.summary ?? ''),
     phone: u.phone == null ? null : String(u.phone),
     ...(u.avatar ? { avatar: String(u.avatar) } : {}),
-    ...(Array.isArray(u.skills) ? { skills: u.skills.filter((x): x is string => typeof x === 'string') } : {}),
-    ...(Array.isArray(u.skillLevels) ? { skillLevels: u.skillLevels as NonNullable<User['skillLevels']> } : {}),
-    ...(Array.isArray(u.education) ? { education: u.education as NonNullable<User['education']> } : {}),
-    ...(Array.isArray(u.experience) ? { experience: u.experience as NonNullable<User['experience']> } : {}),
-    ...(Array.isArray(u.internships) ? { internships: u.internships as NonNullable<User['internships']> } : {}),
+    ...(Array.isArray(u.skills)
+      ? { skills: u.skills.filter((x): x is string => typeof x === 'string') }
+      : {}),
+    ...(Array.isArray(u.skillLevels)
+      ? { skillLevels: u.skillLevels as NonNullable<User['skillLevels']> }
+      : {}),
+    ...(Array.isArray(u.education)
+      ? { education: u.education as NonNullable<User['education']> }
+      : {}),
+    ...(Array.isArray(u.experience)
+      ? { experience: u.experience as NonNullable<User['experience']> }
+      : {}),
+    ...(Array.isArray(u.internships)
+      ? { internships: u.internships as NonNullable<User['internships']> }
+      : {}),
     ...(Array.isArray(u.projects) ? { projects: u.projects as NonNullable<User['projects']> } : {}),
     ...(Array.isArray(u.links) ? { links: u.links as NonNullable<User['links']> } : {}),
     ...(u.resumeUrl ? { resumeUrl: String(u.resumeUrl) } : {}),

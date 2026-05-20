@@ -1,30 +1,26 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Button } from '@skillgap/ui';
+import { Avatar, Button } from '@skillgap/ui';
 import { hasAccessToken, revokeRefreshToken } from '../lib/api';
 import { useAuthStore } from '../stores/authStore';
 
 const candidateLinks = [
-  { to: '/jobs', label: 'Jobs' },
-  { to: '/applications', label: 'Applications' },
   { to: '/dashboard', label: 'Dashboard' },
+  { to: '/jobs', label: 'Jobs' },
   { to: '/profile', label: 'Profile' },
 ];
 
 const companyLinks = [
   { to: '/company', label: 'Dashboard' },
-  { to: '/company/jobs', label: 'Manage Jobs' },
+  { to: '/company/jobs', label: 'Jobs' },
   { to: '/company/candidates', label: 'Applicants' },
-  { to: '/company/pipeline', label: 'Pipeline' },
-  { to: '/company/verification', label: 'Verification' },
-  { to: '/company/profile', label: 'Company Profile' },
+  { to: '/company/profile', label: 'Profile' },
 ];
 
 const adminLinks = [
-  { to: '/admin', label: 'Admin Dashboard' },
-  { to: '/admin?tab=verifications', label: 'Verification Queue' },
-  { to: '/admin?tab=audit', label: 'Audit Logs' },
-  { to: '/admin?tab=fraud', label: 'Fraud Flags' },
+  { to: '/admin', label: 'Admin' },
+  { to: '/admin?tab=verifications', label: 'Verifications' },
+  { to: '/admin?tab=audit', label: 'Audit' },
 ];
 
 const publicLinks: { to: string; label: string }[] = [
@@ -33,6 +29,7 @@ const publicLinks: { to: string; label: string }[] = [
   { to: '/for-companies', label: 'For Companies' },
   { to: '/#pricing', label: 'Pricing' },
   { to: '/#security', label: 'Security' },
+  { to: '/contact', label: 'Contact' },
 ];
 
 /**
@@ -48,11 +45,7 @@ export function Navbar(): React.JSX.Element {
   const logout = useAuthStore((s) => s.logout);
   const authed = hasAccessToken();
   const navLinks =
-    user?.role === 'ADMIN'
-      ? adminLinks
-      : user?.role === 'COMPANY'
-        ? companyLinks
-        : candidateLinks;
+    user?.role === 'ADMIN' ? adminLinks : user?.role === 'COMPANY' ? companyLinks : candidateLinks;
 
   const handleSignOut = () => {
     void revokeRefreshToken().finally(() => {
@@ -60,6 +53,9 @@ export function Navbar(): React.JSX.Element {
       navigate('/');
     });
   };
+
+  const accountHome =
+    user?.role === 'ADMIN' ? '/admin' : user?.role === 'COMPANY' ? '/company' : '/dashboard';
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 8);
@@ -104,11 +100,13 @@ export function Navbar(): React.JSX.Element {
             : 'border-border/40 bg-white/70 backdrop-blur-md'
         }`}
       >
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-3.5">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-6">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 group" aria-label="SkillGap AI Home">
             <div className="relative h-9 w-9 rounded-xl bg-gradient-to-br from-primary via-ai-purple to-ai-cyan shadow-card transition-transform duration-200 group-hover:scale-105">
-              <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white">S</span>
+              <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white">
+                S
+              </span>
             </div>
             <span className="text-lg font-semibold tracking-tight text-text-primary">
               SkillGap <span className="text-ai-gradient">AI</span>
@@ -117,7 +115,7 @@ export function Navbar(): React.JSX.Element {
 
           {/* Desktop nav links */}
           {authed && (
-            <div className="hidden items-center gap-1 md:flex">
+            <div className="hidden min-w-0 flex-1 items-center justify-center gap-1 md:flex">
               {navLinks.map((link) => (
                 <Link
                   key={link.to}
@@ -137,7 +135,7 @@ export function Navbar(): React.JSX.Element {
             </div>
           )}
           {!authed && (
-            <div className="hidden items-center gap-1 md:flex">
+            <div className="hidden min-w-0 flex-1 items-center justify-center gap-1 md:flex">
               {publicLinks.map((link) => (
                 <Link
                   key={link.to}
@@ -155,12 +153,21 @@ export function Navbar(): React.JSX.Element {
           )}
 
           {/* Desktop CTA buttons */}
-          <div className="hidden gap-2.5 md:flex">
+          <div className="hidden shrink-0 items-center gap-2.5 md:flex">
             {authed ? (
               <>
-                <span className="mr-1 max-w-[160px] truncate text-sm text-text-secondary" title={user?.email}>
-                  {user?.name ?? 'Account'}
-                </span>
+                <Link
+                  to={accountHome}
+                  className="flex min-w-0 items-center gap-2 rounded-full border border-border bg-white px-2.5 py-1.5 shadow-card transition-colors hover:bg-background"
+                >
+                  <Avatar name={user?.name ?? 'Account'} src={user?.avatar} size="sm" />
+                  <span
+                    className="max-w-[140px] truncate text-sm font-medium text-text-primary"
+                    title={user?.email}
+                  >
+                    {user?.name ?? 'Account'}
+                  </span>
+                </Link>
                 <Button variant="ghost" size="sm" type="button" onClick={handleSignOut}>
                   Sign out
                 </Button>
@@ -168,10 +175,14 @@ export function Navbar(): React.JSX.Element {
             ) : (
               <>
                 <Link to="/login">
-                  <Button variant="ghost" size="sm">Sign in</Button>
+                  <Button variant="ghost" size="sm">
+                    Sign in
+                  </Button>
                 </Link>
                 <Link to="/register">
-                  <Button variant="ai-gradient" size="sm">Get started</Button>
+                  <Button variant="ai-gradient" size="sm">
+                    Get started
+                  </Button>
                 </Link>
               </>
             )}
@@ -267,10 +278,14 @@ export function Navbar(): React.JSX.Element {
             ) : (
               <>
                 <Link to="/login">
-                  <Button variant="secondary" className="w-full">Sign in</Button>
+                  <Button variant="secondary" className="w-full">
+                    Sign in
+                  </Button>
                 </Link>
                 <Link to="/register">
-                  <Button variant="ai-gradient" className="w-full">Get started</Button>
+                  <Button variant="ai-gradient" className="w-full">
+                    Get started
+                  </Button>
                 </Link>
               </>
             )}

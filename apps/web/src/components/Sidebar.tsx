@@ -39,7 +39,11 @@ const companyNav: NavItem[] = [
 
 const adminNav: NavItem[] = [
   { to: '/admin', label: 'Admin Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-  { to: '/admin?tab=verifications', label: 'Verification Queue', icon: <ShieldCheck className="h-5 w-5" /> },
+  {
+    to: '/admin?tab=verifications',
+    label: 'Verification Queue',
+    icon: <ShieldCheck className="h-5 w-5" />,
+  },
   { to: '/admin?tab=audit', label: 'Audit Logs', icon: <ScrollText className="h-5 w-5" /> },
   { to: '/admin?tab=fraud', label: 'Fraud Flags', icon: <ShieldAlert className="h-5 w-5" /> },
 ];
@@ -52,9 +56,11 @@ interface SidebarProps {
 export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps): React.JSX.Element {
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
-  const activeRole = user?.role === 'ADMIN' ? 'admin' : user?.role === 'COMPANY' ? 'company' : 'candidate';
+  const activeRole =
+    user?.role === 'ADMIN' ? 'admin' : user?.role === 'COMPANY' ? 'company' : 'candidate';
 
-  const navItems = activeRole === 'admin' ? adminNav : activeRole === 'company' ? companyNav : candidateNav;
+  const navItems =
+    activeRole === 'admin' ? adminNav : activeRole === 'company' ? companyNav : candidateNav;
 
   const isActive = (path: string) => {
     const [pathname, search] = path.split('?');
@@ -73,10 +79,14 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps): 
       }`}
     >
       {/* Logo */}
-      <div className={`flex items-center h-16 border-b border-border px-4 ${collapsed ? 'justify-center' : 'gap-3'}`}>
+      <div
+        className={`flex items-center h-16 border-b border-border px-4 ${collapsed ? 'justify-center' : 'gap-3'}`}
+      >
         <Link to="/" className="flex items-center gap-2.5 group" aria-label="SkillGap AI Home">
           <div className="relative h-9 w-9 rounded-xl bg-gradient-to-br from-primary via-ai-purple to-ai-cyan shadow-card transition-transform duration-200 group-hover:scale-105 flex-shrink-0">
-            <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white">S</span>
+            <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white">
+              S
+            </span>
           </div>
           {!collapsed && (
             <span className="text-lg font-semibold tracking-tight text-text-primary">
@@ -89,7 +99,11 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps): 
       {!collapsed && user && (
         <div className="border-b border-border p-4">
           <div className="rounded-xl bg-background px-3 py-2 text-sm font-medium text-text-secondary">
-            {activeRole === 'admin' ? 'Admin workspace' : activeRole === 'company' ? 'Company workspace' : 'Candidate workspace'}
+            {activeRole === 'admin'
+              ? 'Admin workspace'
+              : activeRole === 'company'
+                ? 'Company workspace'
+                : 'Candidate workspace'}
           </div>
         </div>
       )}
@@ -130,7 +144,11 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps): 
               stroke="currentColor"
               strokeWidth={2}
             >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M11 19l-7-7 7-7m8 14l-7-7 7-7"
+              />
             </svg>
             {!collapsed && <span>Collapse</span>}
           </button>

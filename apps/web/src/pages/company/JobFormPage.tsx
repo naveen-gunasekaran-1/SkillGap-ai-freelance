@@ -146,7 +146,9 @@ export function JobFormPage() {
             {isEdit ? 'Edit Job Posting' : 'Create New Job'}
           </h1>
           <p className="mt-2 text-text-secondary">
-            {isEdit ? 'Update job details and requirements' : 'Fill in the details to post a new job opening'}
+            {isEdit
+              ? 'Update job details and requirements'
+              : 'Fill in the details to post a new job opening'}
           </p>
         </div>
 
@@ -156,7 +158,10 @@ export function JobFormPage() {
             <h2 className="text-lg font-semibold text-text-primary mb-6">Basic Information</h2>
             <div className="space-y-5">
               <div>
-                <label className="block text-sm font-medium text-text-primary mb-1.5" htmlFor="title">
+                <label
+                  className="block text-sm font-medium text-text-primary mb-1.5"
+                  htmlFor="title"
+                >
                   Job Title <span className="text-error">*</span>
                 </label>
                 <Input
@@ -170,7 +175,10 @@ export function JobFormPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-text-primary mb-1.5" htmlFor="description">
+                <label
+                  className="block text-sm font-medium text-text-primary mb-1.5"
+                  htmlFor="description"
+                >
                   Job Description <span className="text-error">*</span>
                 </label>
                 <textarea
@@ -185,7 +193,10 @@ export function JobFormPage() {
 
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1.5" htmlFor="location">
+                  <label
+                    className="block text-sm font-medium text-text-primary mb-1.5"
+                    htmlFor="location"
+                  >
                     Location <span className="text-error">*</span>
                   </label>
                   <Input
@@ -199,7 +210,10 @@ export function JobFormPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1.5" htmlFor="type">
+                  <label
+                    className="block text-sm font-medium text-text-primary mb-1.5"
+                    htmlFor="type"
+                  >
                     Employment Type
                   </label>
                   <select
@@ -219,7 +233,10 @@ export function JobFormPage() {
 
               <div className="grid gap-5 sm:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1.5" htmlFor="salaryMin">
+                  <label
+                    className="block text-sm font-medium text-text-primary mb-1.5"
+                    htmlFor="salaryMin"
+                  >
                     Minimum Salary (USD)
                   </label>
                   <Input
@@ -231,7 +248,10 @@ export function JobFormPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-text-primary mb-1.5" htmlFor="salaryMax">
+                  <label
+                    className="block text-sm font-medium text-text-primary mb-1.5"
+                    htmlFor="salaryMax"
+                  >
                     Maximum Salary (USD)
                   </label>
                   <Input

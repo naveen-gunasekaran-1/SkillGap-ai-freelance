@@ -18,6 +18,7 @@ const envSchema = z.object({
   OPENAI_MODEL: z.string().optional().default('gpt-4o-mini'),
   APP_URL: z.string().url().optional().default('http://localhost:5173'),
   API_URL: z.string().url().optional().default('http://localhost:3001'),
+  MOBILE_APP_URL: z.string().url().optional().default('skillgapai://oauth/callback'),
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().optional().default('SkillGap AI <no-reply@skillgap.ai>'),
   SMTP_HOST: z.string().optional(),
@@ -30,6 +31,10 @@ const envSchema = z.object({
   S3_ACCESS_KEY: z.string().optional(),
   S3_SECRET_KEY: z.string().optional(),
   S3_PUBLIC_URL: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().optional(),
+  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  LINKEDIN_CLIENT_ID: z.string().optional(),
+  LINKEDIN_CLIENT_SECRET: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

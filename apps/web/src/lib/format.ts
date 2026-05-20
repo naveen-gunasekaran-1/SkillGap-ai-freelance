@@ -37,7 +37,10 @@ export function applicationStatusPresentation(status: ApplicationStatus): {
   label: string;
   variant: 'warning' | 'success' | 'error' | 'info' | 'neutral';
 } {
-  const map: Record<ApplicationStatus, { label: string; variant: 'warning' | 'success' | 'error' | 'info' | 'neutral' }> = {
+  const map: Record<
+    ApplicationStatus,
+    { label: string; variant: 'warning' | 'success' | 'error' | 'info' | 'neutral' }
+  > = {
     APPLIED: { label: 'Applied', variant: 'info' },
     UNDER_REVIEW: { label: 'Under Review', variant: 'warning' },
     SHORTLISTED: { label: 'Shortlisted', variant: 'info' },

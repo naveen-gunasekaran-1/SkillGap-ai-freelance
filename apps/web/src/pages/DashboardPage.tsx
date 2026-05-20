@@ -2,7 +2,15 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { MatchScore, ProgressBar, Card, Badge, Button, Avatar } from '@skillgap/ui';
 import type { Application } from '@skillgap/types';
-import { TrendingUp, Target, BookOpen, Briefcase, ArrowRight, Sparkles, CheckCircle2 } from 'lucide-react';
+import {
+  TrendingUp,
+  Target,
+  BookOpen,
+  Briefcase,
+  ArrowRight,
+  Sparkles,
+  CheckCircle2,
+} from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { api } from '../lib/api';
 import { parseApplication } from '../lib/normalize';
@@ -10,9 +18,27 @@ import { applicationStatusPresentation } from '../lib/format';
 import { useAuthStore } from '../stores/authStore';
 
 const quickActions = [
-  { icon: <Briefcase className="h-5 w-5 text-primary" />, title: 'Browse Jobs', desc: 'Find new opportunities', to: '/jobs', color: 'bg-primary-light' },
-  { icon: <Target className="h-5 w-5 text-success" />, title: 'Your Profile', desc: 'Update skills & details', to: '/profile', color: 'bg-success/10' },
-  { icon: <TrendingUp className="h-5 w-5 text-ai-purple" />, title: 'View Reports', desc: 'Gap analysis results', to: '/applications', color: 'bg-ai-purple/10' },
+  {
+    icon: <Briefcase className="h-5 w-5 text-primary" />,
+    title: 'Browse Jobs',
+    desc: 'Find new opportunities',
+    to: '/jobs',
+    color: 'bg-primary-light',
+  },
+  {
+    icon: <Target className="h-5 w-5 text-success" />,
+    title: 'Your Profile',
+    desc: 'Update skills & details',
+    to: '/profile',
+    color: 'bg-success/10',
+  },
+  {
+    icon: <TrendingUp className="h-5 w-5 text-ai-purple" />,
+    title: 'View Reports',
+    desc: 'Gap analysis results',
+    to: '/applications',
+    color: 'bg-ai-purple/10',
+  },
 ];
 
 /**
@@ -61,8 +87,12 @@ export function DashboardPage(): React.JSX.Element {
           <div className="flex items-center gap-4">
             <Avatar name={displayName} size="lg" />
             <div>
-              <h1 className="text-2xl font-bold text-text-primary md:text-3xl">Welcome back, {displayName}</h1>
-              <p className="mt-1 text-text-secondary">Here&apos;s your career progress at a glance.</p>
+              <h1 className="text-2xl font-bold text-text-primary md:text-3xl">
+                Welcome back, {displayName}
+              </h1>
+              <p className="mt-1 text-text-secondary">
+                Here&apos;s your career progress at a glance.
+              </p>
             </div>
           </div>
           <div className="flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm text-text-secondary shadow-card">
@@ -76,7 +106,11 @@ export function DashboardPage(): React.JSX.Element {
           {quickActions.map((a) => (
             <Link key={a.title} to={a.to}>
               <Card hover className="flex items-center gap-4 p-5">
-                <span className={`flex h-12 w-12 items-center justify-center rounded-xl ${a.color}`}>{a.icon}</span>
+                <span
+                  className={`flex h-12 w-12 items-center justify-center rounded-xl ${a.color}`}
+                >
+                  {a.icon}
+                </span>
                 <div>
                   <p className="font-semibold text-text-primary">{a.title}</p>
                   <p className="text-sm text-text-secondary">{a.desc}</p>
@@ -87,7 +121,9 @@ export function DashboardPage(): React.JSX.Element {
         </div>
 
         {appsQuery.isError && (
-          <p className="mt-6 text-sm text-error">Could not load your applications. Try refreshing.</p>
+          <p className="mt-6 text-sm text-error">
+            Could not load your applications. Try refreshing.
+          </p>
         )}
 
         {/* Stats Row */}
@@ -102,7 +138,9 @@ export function DashboardPage(): React.JSX.Element {
               <MatchScore value={avgMatch} size={120} />
             </div>
             <p className="mt-4 text-center text-sm text-text-secondary">
-              Avg match across <span className="font-semibold text-text-primary">{apps.length}</span> tracked applications
+              Avg match across{' '}
+              <span className="font-semibold text-text-primary">{apps.length}</span> tracked
+              applications
             </p>
           </Card>
 
@@ -110,18 +148,20 @@ export function DashboardPage(): React.JSX.Element {
           <Card className="p-6">
             <h2 className="text-sm font-medium text-text-secondary">Skills Progress</h2>
             <div className="mt-5 space-y-4">
-              {(user?.skills?.length ? user.skills : ['React', 'TypeScript', 'Node.js', 'CSS']).slice(0, 4).map((skill, idx) => {
-                const val = [92, 78, 65, 85][idx] ?? 70;
-                return (
-                  <div key={skill}>
-                    <div className="flex justify-between text-sm">
-                      <span className="font-medium text-text-primary">{skill}</span>
-                      <span className="text-text-secondary">{val}%</span>
+              {(user?.skills?.length ? user.skills : ['React', 'TypeScript', 'Node.js', 'CSS'])
+                .slice(0, 4)
+                .map((skill, idx) => {
+                  const val = [92, 78, 65, 85][idx] ?? 70;
+                  return (
+                    <div key={skill}>
+                      <div className="flex justify-between text-sm">
+                        <span className="font-medium text-text-primary">{skill}</span>
+                        <span className="text-text-secondary">{val}%</span>
+                      </div>
+                      <ProgressBar value={val} showPercent={false} />
                     </div>
-                    <ProgressBar value={val} showPercent={false} />
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
           </Card>
 
@@ -132,7 +172,9 @@ export function DashboardPage(): React.JSX.Element {
               <Sparkles className="h-5 w-5 text-ai-purple" />
               <h2 className="text-sm font-semibold text-ai-gradient">AI Insights</h2>
             </div>
-            <p className="text-sm font-medium text-text-primary">Based on your latest application analysis:</p>
+            <p className="text-sm font-medium text-text-primary">
+              Based on your latest application analysis:
+            </p>
             <ul className="mt-3 space-y-2.5 text-sm text-text-secondary">
               {primaryGapReport?.strengths?.slice(0, 3).map((s) => (
                 <li key={s} className="flex items-start gap-2">
@@ -148,7 +190,11 @@ export function DashboardPage(): React.JSX.Element {
               )}
             </ul>
             <Link to="/applications">
-              <Button variant="ghost" size="sm" className="mt-4 text-ai-purple hover:bg-ai-purple/10">
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-4 text-ai-purple hover:bg-ai-purple/10"
+              >
                 View full report <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             </Link>
@@ -224,7 +270,11 @@ export function DashboardPage(): React.JSX.Element {
                   <div className="flex items-center gap-3">
                     <div
                       className={`h-2 w-2 rounded-full ${
-                        g.severity === 'CRITICAL' ? 'bg-error' : g.severity === 'MODERATE' ? 'bg-warning' : 'bg-primary'
+                        g.severity === 'CRITICAL'
+                          ? 'bg-error'
+                          : g.severity === 'MODERATE'
+                            ? 'bg-warning'
+                            : 'bg-primary'
                       }`}
                     />
                     <div>
@@ -232,12 +282,24 @@ export function DashboardPage(): React.JSX.Element {
                       <p className="text-xs text-text-secondary">Impacts multiple target roles</p>
                     </div>
                   </div>
-                  <Badge variant={g.severity === 'CRITICAL' ? 'error' : g.severity === 'MODERATE' ? 'warning' : 'info'}>
+                  <Badge
+                    variant={
+                      g.severity === 'CRITICAL'
+                        ? 'error'
+                        : g.severity === 'MODERATE'
+                          ? 'warning'
+                          : 'info'
+                    }
+                  >
                     {g.priority}
                   </Badge>
                 </div>
               ))}
-              {gaps.length === 0 && <p className="text-sm text-text-secondary">Gap highlights appear after you apply.</p>}
+              {gaps.length === 0 && (
+                <p className="text-sm text-text-secondary">
+                  Gap highlights appear after you apply.
+                </p>
+              )}
             </div>
           </Card>
 
@@ -268,7 +330,9 @@ export function DashboardPage(): React.JSX.Element {
                 </div>
               ))}
               {recommendations.length === 0 && (
-                <p className="text-sm text-text-secondary">Recommendations appear in your application gap reports.</p>
+                <p className="text-sm text-text-secondary">
+                  Recommendations appear in your application gap reports.
+                </p>
               )}
             </div>
           </Card>

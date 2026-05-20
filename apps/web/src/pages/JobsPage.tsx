@@ -3,7 +3,16 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { MatchScore, Badge, Button, Input, Skeleton, Avatar, Card } from '@skillgap/ui';
 import type { Job } from '@skillgap/types';
-import { Search, SlidersHorizontal, MapPin, Building2, Clock, CheckCircle2, X, Bookmark } from 'lucide-react';
+import {
+  Search,
+  SlidersHorizontal,
+  MapPin,
+  Building2,
+  Clock,
+  CheckCircle2,
+  X,
+  Bookmark,
+} from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { api } from '../lib/api';
 import { parseJob } from '../lib/normalize';
@@ -54,7 +63,9 @@ export function JobsPage(): React.JSX.Element {
   const companiesQuery = useQuery({
     queryKey: ['companies', 'featured'],
     queryFn: async () => {
-      const res = await api.get<{ companies: { name: string; openJobs: number }[] }>('/companies/featured');
+      const res = await api.get<{ companies: { name: string; openJobs: number }[] }>(
+        '/companies/featured',
+      );
       return res.data.companies;
     },
   });
@@ -140,7 +151,11 @@ export function JobsPage(): React.JSX.Element {
               className="pl-10"
             />
           </div>
-          <Button variant="secondary" className="lg:hidden" onClick={() => setShowFilters(!showFilters)}>
+          <Button
+            variant="secondary"
+            className="lg:hidden"
+            onClick={() => setShowFilters(!showFilters)}
+          >
             <SlidersHorizontal className="h-4 w-4 mr-2" />
             Filters
           </Button>
@@ -151,7 +166,10 @@ export function JobsPage(): React.JSX.Element {
           <div className="mt-4 rounded-card border border-border bg-white p-6 shadow-card lg:hidden animate-slide-down">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold text-text-primary">Filters</h3>
-              <button onClick={() => setShowFilters(false)} className="text-text-secondary hover:text-text-primary">
+              <button
+                onClick={() => setShowFilters(false)}
+                className="text-text-secondary hover:text-text-primary"
+              >
                 <X className="h-5 w-5" />
               </button>
             </div>
@@ -165,7 +183,9 @@ export function JobsPage(): React.JSX.Element {
 
         {/* Results count */}
         <p className="mt-4 text-sm text-text-secondary animate-fade-in-up delay-200">
-          {isLoading ? 'Loading jobs...' : `${jobs.length} ${jobs.length === 1 ? 'job' : 'jobs'} found`}
+          {isLoading
+            ? 'Loading jobs...'
+            : `${jobs.length} ${jobs.length === 1 ? 'job' : 'jobs'} found`}
         </p>
 
         {/* Main Grid */}
@@ -210,7 +230,9 @@ export function JobsPage(): React.JSX.Element {
                         <Avatar name={job.company.name} size="md" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 flex-wrap">
-                            <h2 className="text-base font-semibold text-text-primary">{job.title}</h2>
+                            <h2 className="text-base font-semibold text-text-primary">
+                              {job.title}
+                            </h2>
                             {job.isVerified && (
                               <span className="inline-flex items-center gap-1 rounded-full bg-primary-light px-2 py-0.5 text-xs font-medium text-primary">
                                 <CheckCircle2 className="h-3 w-3" />
@@ -233,7 +255,9 @@ export function JobsPage(): React.JSX.Element {
                             </span>
                           </div>
                           <div className="mt-3 flex flex-wrap gap-1.5">
-                            <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${typeColors[job.type]}`}>
+                            <span
+                              className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${typeColors[job.type]}`}
+                            >
                               {jobTypeLabel(job.type)}
                             </span>
                             {skillNames.slice(0, 4).map((s) => (
@@ -241,9 +265,13 @@ export function JobsPage(): React.JSX.Element {
                                 {s}
                               </Badge>
                             ))}
-                            {skillNames.length > 4 && <Badge variant="neutral">+{skillNames.length - 4} more</Badge>}
+                            {skillNames.length > 4 && (
+                              <Badge variant="neutral">+{skillNames.length - 4} more</Badge>
+                            )}
                           </div>
-                          <p className="mt-2.5 text-sm font-semibold text-primary">{formatJobSalary(job)}</p>
+                          <p className="mt-2.5 text-sm font-semibold text-primary">
+                            {formatJobSalary(job)}
+                          </p>
                         </div>
                         <div className="flex flex-col items-end gap-2">
                           <div className="hidden sm:block">
@@ -270,7 +298,9 @@ export function JobsPage(): React.JSX.Element {
               <div className="py-20 text-center">
                 <Search className="h-12 w-12 text-text-secondary mx-auto mb-4" />
                 <p className="text-lg font-medium text-text-primary">No jobs found</p>
-                <p className="mt-2 text-sm text-text-secondary">Try adjusting your filters or search query</p>
+                <p className="mt-2 text-sm text-text-secondary">
+                  Try adjusting your filters or search query
+                </p>
               </div>
             )}
           </div>

@@ -1,4 +1,11 @@
-import type { AiExplanation as PrismaAiExplanation, Application, Company, Job, Skill, User } from '@prisma/client';
+import type {
+  AiExplanation as PrismaAiExplanation,
+  Application,
+  Company,
+  Job,
+  Skill,
+  User,
+} from '@prisma/client';
 import { parseJsonArray, parseStringArray } from './jsonFields';
 import { toAiExplanationDto } from './aiExplanations';
 
@@ -28,9 +35,29 @@ export function toUserDto(user: User): {
   avatar?: string;
   skills: string[];
   skillLevels: Array<{ name: string; level: string }>;
-  education: Array<{ school: string; degree: string; field?: string; startYear: number; endYear?: number; gpa?: string }>;
-  experience: Array<{ company: string; role: string; startDate: string; endDate?: string; summary?: string; bullets?: string[] }>;
-  internships: Array<{ company: string; role: string; startDate: string; endDate?: string; summary?: string }>;
+  education: Array<{
+    school: string;
+    degree: string;
+    field?: string;
+    startYear: number;
+    endYear?: number;
+    gpa?: string;
+  }>;
+  experience: Array<{
+    company: string;
+    role: string;
+    startDate: string;
+    endDate?: string;
+    summary?: string;
+    bullets?: string[];
+  }>;
+  internships: Array<{
+    company: string;
+    role: string;
+    startDate: string;
+    endDate?: string;
+    summary?: string;
+  }>;
   projects: Array<{ name: string; stack: string[]; link?: string; summary?: string }>;
   links: Array<{ label: string; url: string }>;
   resumeUrl?: string | null;

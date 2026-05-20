@@ -1,15 +1,27 @@
 import { Router } from 'express';
+import { randomBytes } from 'node:crypto';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 import { hashPassword, verifyPassword } from '../lib/password';
-import { signAccessToken, signRefreshToken, verifyAccessToken, verifyRefreshToken } from '../lib/jwt';
+import {
+  signAccessToken,
+  signRefreshToken,
+  verifyAccessToken,
+  verifyRefreshToken,
+} from '../lib/jwt';
 import { hashToken } from '../lib/tokenHash';
 import { HttpError } from '../lib/httpError';
 import { asyncHandler } from '../lib/asyncHandler';
 import { toUserDto } from '../lib/serializers';
 import { requireAuth } from '../middleware/auth';
 import { authRateLimiter } from '../middleware/rateLimit';
-import { ACCOUNT_TOKEN_TYPE, AUDIT_ACTION, COMPANY_VERIFICATION_STATUS, ROLE, type Role } from '../lib/constants';
+import {
+  ACCOUNT_TOKEN_TYPE,
+  AUDIT_ACTION,
+  COMPANY_VERIFICATION_STATUS,
+  ROLE,
+  type Role,
+} from '../lib/constants';
 import { stringifyJson, stringifyStringArray } from '../lib/jsonFields';
 import { writeAuditLog } from '../lib/audit';
 import {
@@ -18,6 +30,14 @@ import {
   sendEmailVerificationEmail,
   sendPasswordResetEmail,
 } from '../lib/accountTokens';
+import {
+  createOAuthAuthorizationUrl,
+  exchangeOAuthCode,
+  parseOAuthProvider,
+  verifyOAuthState,
+  type OAuthProfile,
+} from '../lib/oauth';
+import { env } from '../lib/env';
 
 const skillLevelSchema = z.object({
   name: z.string().min(1).max(64),
@@ -115,15 +135,29 @@ const tokenSchema = z.object({
   token: z.string().min(32),
 });
 
+const oauthSessionSchema = z.object({
+  code: z.string().min(32),
+  rememberMe: z.boolean().optional().default(true),
+});
+
 const router = Router();
 
 router.use(authRateLimiter);
 
-async function issueTokens(userId: string, role: Role, rememberMe = true): Promise<{ accessToken: string; refreshToken: string }> {
+const MAX_FAILED_LOGIN_ATTEMPTS = 5;
+const LOGIN_LOCKOUT_MS = 15 * 60 * 1000;
+
+async function issueTokens(
+  userId: string,
+  role: Role,
+  rememberMe = true,
+): Promise<{ accessToken: string; refreshToken: string }> {
   const accessToken = signAccessToken({ sub: userId, role });
   const refreshToken = signRefreshToken();
   const tokenHash = hashToken(refreshToken);
-  const expiresAt = new Date(Date.now() + (rememberMe ? 1000 * 60 * 60 * 24 * 30 : 1000 * 60 * 60 * 12));
+  const expiresAt = new Date(
+    Date.now() + (rememberMe ? 1000 * 60 * 60 * 24 * 30 : 1000 * 60 * 60 * 12),
+  );
   await prisma.refreshToken.create({
     data: { tokenHash, userId, expiresAt },
   });
@@ -133,6 +167,229 @@ async function issueTokens(userId: string, role: Role, rememberMe = true): Promi
 function uniqueSkills(skills: string[]): string[] {
   return Array.from(new Set(skills.map((skill) => skill.trim()).filter(Boolean))).slice(0, 40);
 }
+
+function safeReturnTo(value?: string): string {
+  if (!value || !value.startsWith('/') || value.startsWith('//')) return '/dashboard';
+  return value;
+}
+
+function oauthCallbackUrl(client: 'web' | 'mobile' | undefined): URL {
+  const base =
+    client === 'mobile' ? env.MOBILE_APP_URL : `${env.APP_URL.replace(/\/$/, '')}/oauth/callback`;
+  return new URL(base);
+}
+
+function secondsUntil(date: Date): number {
+  return Math.max(1, Math.ceil((date.getTime() - Date.now()) / 1000));
+}
+
+async function recordFailedLogin(user: { id: string; failedLoginCount: number }): Promise<{
+  failedLoginCount: number;
+  lockedUntil: Date | null;
+}> {
+  const nextCount = user.failedLoginCount + 1;
+  const shouldLock = nextCount >= MAX_FAILED_LOGIN_ATTEMPTS;
+  return prisma.user.update({
+    where: { id: user.id },
+    data: {
+      failedLoginCount: nextCount,
+      ...(shouldLock ? { lockedUntil: new Date(Date.now() + LOGIN_LOCKOUT_MS) } : {}),
+    },
+    select: { failedLoginCount: true, lockedUntil: true },
+  });
+}
+
+async function recordSuccessfulLogin(userId: string): Promise<void> {
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      failedLoginCount: 0,
+      lockedUntil: null,
+      lastLoginAt: new Date(),
+    },
+  });
+}
+
+async function findOrCreateOAuthUser(
+  profile: OAuthProfile,
+  role: Role,
+): Promise<{
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+}> {
+  const linked = await prisma.oAuthAccount.findUnique({
+    where: {
+      provider_providerAccountId: {
+        provider: profile.provider,
+        providerAccountId: profile.providerAccountId,
+      },
+    },
+    include: { user: true },
+  });
+  if (linked) {
+    if (profile.avatar && profile.avatar !== linked.user.avatar) {
+      return prisma.user.update({
+        where: { id: linked.user.id },
+        data: { avatar: profile.avatar },
+      });
+    }
+    return linked.user;
+  }
+
+  const existing = await prisma.user.findUnique({ where: { email: profile.email } });
+  if (existing) {
+    await prisma.oAuthAccount.create({
+      data: {
+        provider: profile.provider,
+        providerAccountId: profile.providerAccountId,
+        email: profile.email,
+        userId: existing.id,
+      },
+    });
+    const data: { emailVerified?: boolean; avatar?: string } = {};
+    if (profile.emailVerified && !existing.emailVerified) {
+      data.emailVerified = true;
+    }
+    if (profile.avatar && profile.avatar !== existing.avatar) {
+      data.avatar = profile.avatar;
+    }
+    if (Object.keys(data).length > 0) {
+      return prisma.user.update({ where: { id: existing.id }, data });
+    }
+    return existing;
+  }
+
+  const passwordHash = await hashPassword(randomBytes(32).toString('base64url'));
+  const company =
+    role === ROLE.COMPANY
+      ? await prisma.company.create({
+          data: {
+            name: `${profile.name}'s Company`,
+            industry: 'Technology',
+            size: '1-50',
+            isVerified: false,
+            verificationStatus: COMPANY_VERIFICATION_STATUS.NOT_STARTED,
+          },
+        })
+      : null;
+  const user = await prisma.user.create({
+    data: {
+      email: profile.email,
+      passwordHash,
+      name: profile.name,
+      role,
+      title: role === ROLE.COMPANY ? 'Company recruiter' : 'Candidate',
+      ...(company ? { companyId: company.id } : {}),
+      location: '',
+      summary: '',
+      ...(profile.avatar ? { avatar: profile.avatar } : {}),
+      skillsJson: stringifyStringArray([]),
+      emailVerified: profile.emailVerified,
+      skillsVerified: false,
+      oauthAccounts: {
+        create: {
+          provider: profile.provider,
+          providerAccountId: profile.providerAccountId,
+          email: profile.email,
+        },
+      },
+    },
+  });
+  return user;
+}
+
+router.get(
+  '/oauth/:provider/start',
+  asyncHandler(async (req, res) => {
+    const provider = parseOAuthProvider(String(req.params.provider));
+    const query = z
+      .object({
+        returnTo: z.string().optional(),
+        role: z.enum([ROLE.CANDIDATE, ROLE.COMPANY]).optional(),
+        client: z.enum(['web', 'mobile']).optional().default('web'),
+      })
+      .parse(req.query);
+    const authorizationUrl = createOAuthAuthorizationUrl({
+      provider,
+      returnTo: safeReturnTo(query.returnTo),
+      ...(query.role ? { role: query.role } : {}),
+      client: query.client,
+    });
+    res.redirect(authorizationUrl);
+  }),
+);
+
+router.get(
+  '/oauth/:provider/callback',
+  asyncHandler(async (req, res) => {
+    const provider = parseOAuthProvider(String(req.params.provider));
+    const query = z
+      .object({
+        code: z.string().min(1).optional(),
+        state: z.string().min(1).optional(),
+        error: z.string().optional(),
+      })
+      .parse(req.query);
+
+    let state: ReturnType<typeof verifyOAuthState> | null = null;
+    if (query.state) {
+      state = verifyOAuthState(query.state, provider);
+    }
+
+    if (query.error || !query.code || !state) {
+      const redirect = oauthCallbackUrl(state?.client);
+      redirect.searchParams.set('error', query.error ?? 'oauth_failed');
+      res.redirect(redirect.toString());
+      return;
+    }
+
+    const profile = await exchangeOAuthCode(provider, query.code);
+    const user = await findOrCreateOAuthUser(profile, state.role ?? ROLE.CANDIDATE);
+    await recordSuccessfulLogin(user.id);
+    const loginCode = await createAccountToken({
+      userId: user.id,
+      type: ACCOUNT_TOKEN_TYPE.OAUTH_LOGIN,
+    });
+    await writeAuditLog({
+      req,
+      actorId: user.id,
+      actorRole: user.role,
+      action: AUDIT_ACTION.AUTH_OAUTH_LOGIN_SUCCESS,
+      entityType: 'User',
+      entityId: user.id,
+      metadata: { provider },
+    });
+    const redirect = oauthCallbackUrl(state.client);
+    redirect.searchParams.set('code', loginCode);
+    redirect.searchParams.set('returnTo', safeReturnTo(state.returnTo));
+    res.redirect(redirect.toString());
+  }),
+);
+
+router.post(
+  '/oauth/session',
+  asyncHandler(async (req, res) => {
+    const body = oauthSessionSchema.parse(req.body);
+    let consumed: { userId: string; tokenId: string };
+    try {
+      consumed = await consumeAccountToken({
+        token: body.code,
+        type: ACCOUNT_TOKEN_TYPE.OAUTH_LOGIN,
+      });
+    } catch {
+      throw new HttpError(400, 'Invalid or expired OAuth login code');
+    }
+    const user = await prisma.user.findUnique({ where: { id: consumed.userId } });
+    if (!user) {
+      throw new HttpError(401, 'User not found');
+    }
+    await recordSuccessfulLogin(user.id);
+    const tokens = await issueTokens(user.id, user.role as Role, body.rememberMe);
+    res.json({ user: toUserDto(user), ...tokens });
+  }),
+);
 
 router.post(
   '/register',
@@ -175,7 +432,11 @@ router.post(
         userId: user.id,
         type: ACCOUNT_TOKEN_TYPE.EMAIL_VERIFICATION,
       });
-      await sendEmailVerificationEmail({ email: user.email, name: user.name, token: verificationToken });
+      await sendEmailVerificationEmail({
+        email: user.email,
+        name: user.name,
+        token: verificationToken,
+      });
       await writeAuditLog({
         req,
         actorId: user.id,
@@ -194,7 +455,8 @@ router.post(
 
     const skills = uniqueSkills(body.profile?.skillLevels.map((s) => s.name) ?? body.skills ?? []);
     const skillLevels =
-      body.profile?.skillLevels ?? skills.map((skill) => ({ name: skill, level: 'INTERMEDIATE' as const }));
+      body.profile?.skillLevels ??
+      skills.map((skill) => ({ name: skill, level: 'INTERMEDIATE' as const }));
     const education = body.profile?.education ?? [];
     const internships = body.profile?.internships ?? [];
     const links = body.profile?.links ?? [];
@@ -228,7 +490,11 @@ router.post(
       userId: user.id,
       type: ACCOUNT_TOKEN_TYPE.EMAIL_VERIFICATION,
     });
-    await sendEmailVerificationEmail({ email: user.email, name: user.name, token: verificationToken });
+    await sendEmailVerificationEmail({
+      email: user.email,
+      name: user.name,
+      token: verificationToken,
+    });
     await writeAuditLog({
       req,
       actorId: user.id,
@@ -255,17 +521,49 @@ router.post(
       });
       throw new HttpError(401, 'Invalid email or password');
     }
-    const ok = await verifyPassword(body.password, user.passwordHash);
-    if (!ok) {
+    if (user.lockedUntil && user.lockedUntil > new Date()) {
       await writeAuditLog({
         req,
         action: AUDIT_ACTION.AUTH_LOGIN_FAILED,
         entityType: 'User',
         entityId: user.id,
-        metadata: { email: user.email, reason: 'BAD_PASSWORD' },
+        metadata: {
+          email: user.email,
+          reason: 'ACCOUNT_LOCKED',
+          retryAfterSeconds: secondsUntil(user.lockedUntil),
+        },
       });
+      throw new HttpError(
+        423,
+        `Account is temporarily locked. Try again in ${secondsUntil(user.lockedUntil)} seconds.`,
+        'ACCOUNT_LOCKED',
+      );
+    }
+    const ok = await verifyPassword(body.password, user.passwordHash);
+    if (!ok) {
+      const updated = await recordFailedLogin(user);
+      await writeAuditLog({
+        req,
+        action: AUDIT_ACTION.AUTH_LOGIN_FAILED,
+        entityType: 'User',
+        entityId: user.id,
+        metadata: {
+          email: user.email,
+          reason: 'BAD_PASSWORD',
+          failedLoginCount: updated.failedLoginCount,
+          lockedUntil: updated.lockedUntil?.toISOString(),
+        },
+      });
+      if (updated.lockedUntil && updated.lockedUntil > new Date()) {
+        throw new HttpError(
+          423,
+          `Too many failed login attempts. Try again in ${secondsUntil(updated.lockedUntil)} seconds.`,
+          'ACCOUNT_LOCKED',
+        );
+      }
       throw new HttpError(401, 'Invalid email or password');
     }
+    await recordSuccessfulLogin(user.id);
     const tokens = await issueTokens(user.id, user.role as Role, body.rememberMe);
     await writeAuditLog({
       req,
@@ -274,7 +572,7 @@ router.post(
       action: AUDIT_ACTION.AUTH_LOGIN_SUCCESS,
       entityType: 'User',
       entityId: user.id,
-      metadata: { rememberMe: body.rememberMe },
+      metadata: { rememberMe: body.rememberMe, loginMethod: 'password' },
     });
     res.json({ user: toUserDto(user), ...tokens });
   }),
@@ -286,7 +584,10 @@ router.post(
     const body = forgotPasswordSchema.parse(req.body);
     const user = await prisma.user.findUnique({ where: { email: body.email.toLowerCase() } });
     if (user) {
-      const token = await createAccountToken({ userId: user.id, type: ACCOUNT_TOKEN_TYPE.PASSWORD_RESET });
+      const token = await createAccountToken({
+        userId: user.id,
+        type: ACCOUNT_TOKEN_TYPE.PASSWORD_RESET,
+      });
       await sendPasswordResetEmail({ email: user.email, name: user.name, token });
       await writeAuditLog({
         req,
@@ -314,7 +615,10 @@ router.post(
     const body = resetPasswordSchema.parse(req.body);
     let consumed: { userId: string; tokenId: string };
     try {
-      consumed = await consumeAccountToken({ token: body.token, type: ACCOUNT_TOKEN_TYPE.PASSWORD_RESET });
+      consumed = await consumeAccountToken({
+        token: body.token,
+        type: ACCOUNT_TOKEN_TYPE.PASSWORD_RESET,
+      });
     } catch {
       throw new HttpError(400, 'Invalid or expired password reset link');
     }
@@ -350,7 +654,10 @@ router.post(
       res.json({ ok: true, alreadyVerified: true });
       return;
     }
-    const token = await createAccountToken({ userId: user.id, type: ACCOUNT_TOKEN_TYPE.EMAIL_VERIFICATION });
+    const token = await createAccountToken({
+      userId: user.id,
+      type: ACCOUNT_TOKEN_TYPE.EMAIL_VERIFICATION,
+    });
     await sendEmailVerificationEmail({ email: user.email, name: user.name, token });
     await writeAuditLog({
       req,
@@ -370,7 +677,10 @@ router.post(
     const body = tokenSchema.parse(req.body);
     let consumed: { userId: string; tokenId: string };
     try {
-      consumed = await consumeAccountToken({ token: body.token, type: ACCOUNT_TOKEN_TYPE.EMAIL_VERIFICATION });
+      consumed = await consumeAccountToken({
+        token: body.token,
+        type: ACCOUNT_TOKEN_TYPE.EMAIL_VERIFICATION,
+      });
     } catch {
       throw new HttpError(400, 'Invalid or expired email verification link');
     }

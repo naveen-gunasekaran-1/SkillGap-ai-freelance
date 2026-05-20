@@ -26,6 +26,6 @@ export const useRoleStore = create<RoleState>()(
     }),
     {
       name: 'skillgap-active-role',
-    }
-  )
+    },
+  ),
 );

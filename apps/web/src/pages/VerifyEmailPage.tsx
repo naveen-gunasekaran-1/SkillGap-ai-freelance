@@ -25,7 +25,9 @@ export function VerifyEmailPage(): React.JSX.Element {
         return;
       }
       try {
-        const res = await api.post<{ user: unknown }>('/auth/email-verification/confirm', { token });
+        const res = await api.post<{ user: unknown }>('/auth/email-verification/confirm', {
+          token,
+        });
         if (cancelled) return;
         setUser(parseUser(res.data.user));
         setState('success');
@@ -34,7 +36,10 @@ export function VerifyEmailPage(): React.JSX.Element {
         if (cancelled) return;
         const errorMessage =
           err && typeof err === 'object' && 'response' in err
-            ? String((err as { response?: { data?: { message?: string } } }).response?.data?.message ?? 'Verification failed')
+            ? String(
+                (err as { response?: { data?: { message?: string } } }).response?.data?.message ??
+                  'Verification failed',
+              )
             : 'Verification failed';
         setState('error');
         setMessage(errorMessage);
@@ -52,10 +57,18 @@ export function VerifyEmailPage(): React.JSX.Element {
       <main className="mx-auto flex min-h-[calc(100vh-64px)] max-w-5xl items-center px-6 py-12">
         <Card className="mx-auto w-full max-w-lg p-8 text-center">
           <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-light text-primary">
-            {state === 'error' ? <XCircle className="h-7 w-7 text-error" /> : <CheckCircle2 className="h-7 w-7" />}
+            {state === 'error' ? (
+              <XCircle className="h-7 w-7 text-error" />
+            ) : (
+              <CheckCircle2 className="h-7 w-7" />
+            )}
           </div>
           <h1 className="mt-5 text-2xl font-bold text-text-primary">
-            {state === 'checking' ? 'Checking email' : state === 'success' ? 'Email verified' : 'Verification failed'}
+            {state === 'checking'
+              ? 'Checking email'
+              : state === 'success'
+                ? 'Email verified'
+                : 'Verification failed'}
           </h1>
           <p className="mt-2 text-sm text-text-secondary">{message}</p>
           <div className="mt-6 flex justify-center">

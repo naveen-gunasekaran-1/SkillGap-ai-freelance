@@ -19,6 +19,7 @@ export const useMobileAuthStore = create<MobileAuthState>((set) => ({
   role: null,
   setAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
   setUserName: (userName) => set({ userName }),
-  setSession: (userName, role) => set({ isAuthenticated: true, userName, ...(role ? { role } : {}) }),
+  setSession: (userName, role) =>
+    set({ isAuthenticated: true, userName, ...(role ? { role } : {}) }),
   clear: () => set({ isAuthenticated: false, userName: null, role: null }),
 }));

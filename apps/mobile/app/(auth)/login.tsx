@@ -1,10 +1,21 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useRouter } from 'expo-router';
-import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, Text, TextInput, View, SafeAreaView } from 'react-native';
-import axios from 'axios';
+import {
+  Alert,
+  KeyboardAvoidingView,
+  Linking,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../src/theme';
-import { mobileApi, setMobileAuthTokens } from '../../src/lib/http';
+import { getMobileApiErrorMessage, mobileApi, setMobileAuthTokens } from '../../src/lib/http';
+import { getApiUrl } from '../../src/lib/api';
 import { useMobileAuthStore } from '../../src/stores/authStore';
 
 const t = theme;
@@ -17,8 +28,18 @@ export default function LoginScreen(): React.JSX.Element {
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [slowRequest, setSlowRequest] = useState(false);
   const router = useRouter();
   const setSession = useMobileAuthStore((s) => s.setSession);
+
+  useEffect(() => {
+    if (!loading) {
+      setSlowRequest(false);
+      return undefined;
+    }
+    const id = setTimeout(() => setSlowRequest(true), 8000);
+    return () => clearTimeout(id);
+  }, [loading]);
 
   const handleLogin = async () => {
     if (!email.trim() || !password) {
@@ -27,25 +48,34 @@ export default function LoginScreen(): React.JSX.Element {
     }
     setLoading(true);
     try {
-      const res = await mobileApi.post<{ user: { name: string; role: 'CANDIDATE' | 'COMPANY' | 'ADMIN' }; accessToken: string; refreshToken: string }>(
-        '/auth/login',
-        {
-          email: email.trim().toLowerCase(),
-          password,
-          rememberMe: true,
-        },
-      );
+      const res = await mobileApi.post<{
+        user: { name: string; role: 'CANDIDATE' | 'COMPANY' | 'ADMIN' };
+        accessToken: string;
+        refreshToken: string;
+      }>('/auth/login', {
+        email: email.trim().toLowerCase(),
+        password,
+        rememberMe: true,
+      });
       await setMobileAuthTokens(res.data.accessToken, res.data.refreshToken);
       setSession(res.data.user.name, res.data.user.role);
       router.replace('/(tabs)');
     } catch (error) {
-      const message = axios.isAxiosError(error)
-        ? error.response?.data?.message ?? error.message
-        : 'Check your credentials and API URL (EXPO_PUBLIC_API_URL).';
+      const message = getMobileApiErrorMessage(error);
       Alert.alert('Sign in failed', message);
     } finally {
       setLoading(false);
     }
+  };
+
+  const startOAuthLogin = async (provider: 'google' | 'linkedin') => {
+    const url = `${getApiUrl()}/auth/oauth/${provider}/start?client=mobile&returnTo=${encodeURIComponent('/dashboard')}`;
+    const canOpen = await Linking.canOpenURL(url);
+    if (!canOpen) {
+      Alert.alert('Sign in unavailable', 'Could not open the secure browser sign in flow.');
+      return;
+    }
+    await Linking.openURL(url);
   };
 
   return (
@@ -55,24 +85,69 @@ export default function LoginScreen(): React.JSX.Element {
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
         <ScrollView
-          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', paddingHorizontal: t.spacing.lg, paddingVertical: t.spacing.xxl }}
+          contentContainerStyle={{
+            flexGrow: 1,
+            justifyContent: 'center',
+            paddingHorizontal: t.spacing.lg,
+            paddingVertical: t.spacing.xxl,
+          }}
           keyboardShouldPersistTaps="handled"
           showsVerticalScrollIndicator={false}
         >
           <View style={{ width: '100%', maxWidth: 420, alignSelf: 'center' }}>
             <View style={{ marginBottom: t.spacing.xl, alignItems: 'center' }}>
-              <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: t.colors.primaryLight, alignItems: 'center', justifyContent: 'center', marginBottom: t.spacing.md }}>
+              <View
+                style={{
+                  width: 64,
+                  height: 64,
+                  borderRadius: 20,
+                  backgroundColor: t.colors.primaryLight,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: t.spacing.md,
+                }}
+              >
                 <Ionicons name="log-in-outline" size={32} color={t.colors.primaryDark} />
               </View>
-              <Text style={{ ...t.typography.h1, color: t.colors.textPrimary, textAlign: 'center' }}>Welcome Back</Text>
-              <Text style={{ ...t.typography.body, color: t.colors.textSecondary, marginTop: t.spacing.xs, textAlign: 'center' }}>
+              <Text
+                style={{ ...t.typography.h1, color: t.colors.textPrimary, textAlign: 'center' }}
+              >
+                Welcome Back
+              </Text>
+              <Text
+                style={{
+                  ...t.typography.body,
+                  color: t.colors.textSecondary,
+                  marginTop: t.spacing.xs,
+                  textAlign: 'center',
+                }}
+              >
                 Sign in to SkillGap AI
               </Text>
             </View>
 
             <View style={{ marginBottom: t.spacing.md }}>
-              <Text style={{ ...t.typography.caption, fontWeight: '600', color: t.colors.textPrimary, marginBottom: 8 }}>Email address</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: t.colors.surface, borderRadius: t.borderRadius.card, borderWidth: 1, borderColor: t.colors.border, paddingHorizontal: t.spacing.md }}>
+              <Text
+                style={{
+                  ...t.typography.caption,
+                  fontWeight: '600',
+                  color: t.colors.textPrimary,
+                  marginBottom: 8,
+                }}
+              >
+                Email address
+              </Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: t.colors.surface,
+                  borderRadius: t.borderRadius.card,
+                  borderWidth: 1,
+                  borderColor: t.colors.border,
+                  paddingHorizontal: t.spacing.md,
+                }}
+              >
                 <Ionicons name="mail-outline" size={20} color={t.colors.textSecondary} />
                 <TextInput
                   value={email}
@@ -95,8 +170,27 @@ export default function LoginScreen(): React.JSX.Element {
             </View>
 
             <View style={{ marginBottom: t.spacing.md }}>
-              <Text style={{ ...t.typography.caption, fontWeight: '600', color: t.colors.textPrimary, marginBottom: 8 }}>Password</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: t.colors.surface, borderRadius: t.borderRadius.card, borderWidth: 1, borderColor: t.colors.border, paddingHorizontal: t.spacing.md }}>
+              <Text
+                style={{
+                  ...t.typography.caption,
+                  fontWeight: '600',
+                  color: t.colors.textPrimary,
+                  marginBottom: 8,
+                }}
+              >
+                Password
+              </Text>
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  backgroundColor: t.colors.surface,
+                  borderRadius: t.borderRadius.card,
+                  borderWidth: 1,
+                  borderColor: t.colors.border,
+                  paddingHorizontal: t.spacing.md,
+                }}
+              >
                 <Ionicons name="lock-closed-outline" size={20} color={t.colors.textSecondary} />
                 <TextInput
                   value={password}
@@ -114,9 +208,61 @@ export default function LoginScreen(): React.JSX.Element {
                     minHeight: t.minTouchTarget,
                   }}
                 />
-                <Pressable onPress={() => setShowPw(!showPw)} style={{ padding: t.spacing.xs }} hitSlop={8}>
-                  <Ionicons name={showPw ? 'eye-off-outline' : 'eye-outline'} size={20} color={t.colors.textSecondary} />
+                <Pressable
+                  onPress={() => setShowPw(!showPw)}
+                  style={{ padding: t.spacing.xs }}
+                  hitSlop={8}
+                >
+                  <Ionicons
+                    name={showPw ? 'eye-off-outline' : 'eye-outline'}
+                    size={20}
+                    color={t.colors.textSecondary}
+                  />
                 </Pressable>
+              </View>
+            </View>
+
+            <View style={{ alignItems: 'flex-end', marginBottom: t.spacing.sm }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing.md }}>
+                <Link href="/network" asChild>
+                  <Pressable hitSlop={8}>
+                    <Text
+                      style={{
+                        ...t.typography.caption,
+                        fontWeight: '700',
+                        color: t.colors.textSecondary,
+                      }}
+                    >
+                      Network check
+                    </Text>
+                  </Pressable>
+                </Link>
+                <Link href="/contact" asChild>
+                  <Pressable hitSlop={8}>
+                    <Text
+                      style={{
+                        ...t.typography.caption,
+                        fontWeight: '700',
+                        color: t.colors.textSecondary,
+                      }}
+                    >
+                      Contact
+                    </Text>
+                  </Pressable>
+                </Link>
+                <Link href="/(auth)/forgot-password" asChild>
+                  <Pressable hitSlop={8}>
+                    <Text
+                      style={{
+                        ...t.typography.caption,
+                        fontWeight: '700',
+                        color: t.colors.primary,
+                      }}
+                    >
+                      Forgot password?
+                    </Text>
+                  </Pressable>
+                </Link>
               </View>
             </View>
 
@@ -137,18 +283,134 @@ export default function LoginScreen(): React.JSX.Element {
                 ...t.shadows.card,
               })}
             >
-              <Text style={{ color: '#FFFFFF', ...t.typography.body, fontWeight: '700' }}>{loading ? 'Signing in…' : 'Sign in'}</Text>
+              <Text style={{ color: '#FFFFFF', ...t.typography.body, fontWeight: '700' }}>
+                {loading ? (slowRequest ? 'Waking secure server…' : 'Signing in…') : 'Sign in'}
+              </Text>
             </Pressable>
 
-            <Text style={{ ...t.typography.small, color: t.colors.textSecondary, textAlign: 'center', marginTop: t.spacing.md }}>
+            <View
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: t.spacing.sm,
+                marginVertical: t.spacing.lg,
+              }}
+            >
+              <View style={{ flex: 1, height: 1, backgroundColor: t.colors.border }} />
+              <Text style={{ ...t.typography.small, color: t.colors.textSecondary }}>or</Text>
+              <View style={{ flex: 1, height: 1, backgroundColor: t.colors.border }} />
+            </View>
+
+            <View style={{ gap: t.spacing.sm }}>
+              <Pressable
+                onPress={() => void startOAuthLogin('google')}
+                disabled={loading}
+                style={({ pressed }) => ({
+                  minHeight: t.minTouchTarget,
+                  borderRadius: t.borderRadius.pill,
+                  borderWidth: 1,
+                  borderColor: t.colors.border,
+                  backgroundColor: t.colors.surface,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: t.spacing.sm,
+                  opacity: pressed ? 0.85 : 1,
+                })}
+              >
+                <Ionicons name="logo-google" size={20} color={t.colors.textPrimary} />
+                <Text
+                  style={{ ...t.typography.body, color: t.colors.textPrimary, fontWeight: '700' }}
+                >
+                  Continue with Google
+                </Text>
+              </Pressable>
+              <Pressable
+                onPress={() => void startOAuthLogin('linkedin')}
+                disabled={loading}
+                style={({ pressed }) => ({
+                  minHeight: t.minTouchTarget,
+                  borderRadius: t.borderRadius.pill,
+                  borderWidth: 1,
+                  borderColor: t.colors.border,
+                  backgroundColor: t.colors.surface,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: t.spacing.sm,
+                  opacity: pressed ? 0.85 : 1,
+                })}
+              >
+                <Ionicons name="logo-linkedin" size={20} color="#0A66C2" />
+                <Text
+                  style={{ ...t.typography.body, color: t.colors.textPrimary, fontWeight: '700' }}
+                >
+                  Continue with LinkedIn
+                </Text>
+              </Pressable>
+            </View>
+
+            <View style={{ alignItems: 'center', marginTop: t.spacing.md }}>
+              <Link href="/(auth)/register" asChild>
+                <Pressable hitSlop={8}>
+                  <Text
+                    style={{
+                      ...t.typography.caption,
+                      color: t.colors.textSecondary,
+                      textAlign: 'center',
+                    }}
+                  >
+                    Hiring with SkillGap AI?{' '}
+                    <Text style={{ fontWeight: '800', color: t.colors.primary }}>
+                      Create a company account
+                    </Text>
+                  </Text>
+                </Pressable>
+              </Link>
+            </View>
+
+            {loading && slowRequest ? (
+              <Text
+                style={{
+                  ...t.typography.small,
+                  color: t.colors.textSecondary,
+                  textAlign: 'center',
+                  marginTop: t.spacing.sm,
+                }}
+              >
+                First request can take up to a minute on Render free tier.
+              </Text>
+            ) : null}
+
+            <Text
+              style={{
+                ...t.typography.small,
+                color: t.colors.textSecondary,
+                textAlign: 'center',
+                marginTop: t.spacing.md,
+              }}
+            >
               Demo: demo@skillgap.ai / SkillGapDemo1!
             </Text>
 
-            <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: t.spacing.xl, gap: 6 }}>
-              <Text style={{ ...t.typography.caption, color: t.colors.textSecondary }}>Don&apos;t have an account?</Text>
+            <View
+              style={{
+                flexDirection: 'row',
+                justifyContent: 'center',
+                marginTop: t.spacing.xl,
+                gap: 6,
+              }}
+            >
+              <Text style={{ ...t.typography.caption, color: t.colors.textSecondary }}>
+                Don&apos;t have an account?
+              </Text>
               <Link href="/(auth)/register" asChild>
                 <Pressable hitSlop={8}>
-                  <Text style={{ ...t.typography.caption, fontWeight: '700', color: t.colors.primary }}>Create one</Text>
+                  <Text
+                    style={{ ...t.typography.caption, fontWeight: '700', color: t.colors.primary }}
+                  >
+                    Create one
+                  </Text>
                 </Pressable>
               </Link>
             </View>

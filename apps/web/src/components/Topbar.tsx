@@ -10,7 +10,10 @@ interface TopbarProps {
   onMobileMenuToggle?: () => void;
 }
 
-export function Topbar({ sidebarCollapsed = false, onMobileMenuToggle }: TopbarProps): React.JSX.Element {
+export function Topbar({
+  sidebarCollapsed = false,
+  onMobileMenuToggle,
+}: TopbarProps): React.JSX.Element {
   const [scrolled, setScrolled] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
@@ -18,7 +21,8 @@ export function Topbar({ sidebarCollapsed = false, onMobileMenuToggle }: TopbarP
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const authed = hasAccessToken();
-  const activeRole = user?.role === 'ADMIN' ? 'admin' : user?.role === 'COMPANY' ? 'company' : 'candidate';
+  const activeRole =
+    user?.role === 'ADMIN' ? 'admin' : user?.role === 'COMPANY' ? 'company' : 'candidate';
 
   const handleSignOut = () => {
     void revokeRefreshToken().finally(() => {
@@ -45,7 +49,8 @@ export function Topbar({ sidebarCollapsed = false, onMobileMenuToggle }: TopbarP
   }, []);
 
   const displayName = user?.name ?? 'User';
-  const displayRole = activeRole === 'admin' ? 'Admin' : activeRole === 'company' ? 'Company' : 'Candidate';
+  const displayRole =
+    activeRole === 'admin' ? 'Admin' : activeRole === 'company' ? 'Company' : 'Candidate';
 
   return (
     <header
@@ -144,7 +149,7 @@ export function Topbar({ sidebarCollapsed = false, onMobileMenuToggle }: TopbarP
                   onClick={() => setShowUserMenu(!showUserMenu)}
                   className="flex items-center gap-3 rounded-xl px-3 py-2 hover:bg-background transition-colors"
                 >
-                  <Avatar name={displayName} size="sm" />
+                  <Avatar name={displayName} src={user?.avatar} size="sm" />
                   <div className="hidden md:block text-left">
                     <p className="text-sm font-medium text-text-primary truncate max-w-[120px]">
                       {displayName}
@@ -198,10 +203,14 @@ export function Topbar({ sidebarCollapsed = false, onMobileMenuToggle }: TopbarP
           {!authed && (
             <div className="flex items-center gap-2">
               <Link to="/login">
-                <Button variant="ghost" size="sm">Sign in</Button>
+                <Button variant="ghost" size="sm">
+                  Sign in
+                </Button>
               </Link>
               <Link to="/register">
-                <Button variant="ai-gradient" size="sm">Get started</Button>
+                <Button variant="ai-gradient" size="sm">
+                  Get started
+                </Button>
               </Link>
             </div>
           )}
@@ -235,7 +244,9 @@ function NotificationItem({
   unread?: boolean;
 }) {
   return (
-    <button className={`w-full text-left p-4 hover:bg-background transition-colors ${unread ? 'bg-primary-light/30' : ''}`}>
+    <button
+      className={`w-full text-left p-4 hover:bg-background transition-colors ${unread ? 'bg-primary-light/30' : ''}`}
+    >
       <div className="flex items-start gap-3">
         <div
           className={`flex-shrink-0 h-2 w-2 mt-1.5 rounded-full ${unread ? 'bg-primary' : 'bg-transparent'}`}

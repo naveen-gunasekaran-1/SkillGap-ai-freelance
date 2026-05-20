@@ -90,13 +90,18 @@ router.patch(
   asyncHandler(async (req, res) => {
     const id = z.string().min(1).parse(req.params.id);
     const body = decisionSchema.parse(req.body);
-    const existing = await prisma.companyVerification.findUnique({ where: { id }, include: { company: true } });
+    const existing = await prisma.companyVerification.findUnique({
+      where: { id },
+      include: { company: true },
+    });
     if (!existing) {
       throw new HttpError(404, 'Verification not found');
     }
 
     const approved = body.decision === 'APPROVED';
-    const status = approved ? COMPANY_VERIFICATION_STATUS.VERIFIED : COMPANY_VERIFICATION_STATUS.REJECTED;
+    const status = approved
+      ? COMPANY_VERIFICATION_STATUS.VERIFIED
+      : COMPANY_VERIFICATION_STATUS.REJECTED;
     const now = new Date();
 
     const [verification] = await prisma.$transaction([
@@ -140,7 +145,9 @@ router.patch(
 
     await writeAuditLog({
       req,
-      action: approved ? AUDIT_ACTION.COMPANY_VERIFICATION_APPROVED : AUDIT_ACTION.COMPANY_VERIFICATION_REJECTED,
+      action: approved
+        ? AUDIT_ACTION.COMPANY_VERIFICATION_APPROVED
+        : AUDIT_ACTION.COMPANY_VERIFICATION_REJECTED,
       entityType: 'CompanyVerification',
       entityId: id,
       metadata: { companyId: existing.companyId, decision: body.decision },

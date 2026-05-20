@@ -50,48 +50,59 @@ export function CompanyDashboardPage(): React.JSX.Element {
 
   const jobs = jobsQuery.data ?? [];
   const applications = applicantsQuery.data ?? [];
-  const interviewCount = applications.filter((a) => a.status === 'INTERVIEW_SCHEDULED' || a.status === 'INTERVIEW_DONE').length;
+  const interviewCount = applications.filter(
+    (a) => a.status === 'INTERVIEW_SCHEDULED' || a.status === 'INTERVIEW_DONE',
+  ).length;
   const shortlistedCount = applications.filter((a) => a.status === 'SHORTLISTED').length;
-  const responseRate = applications.length > 0 ? Math.round(((applications.length - applications.filter((a) => a.status === 'APPLIED').length) / applications.length) * 100) : 0;
+  const responseRate =
+    applications.length > 0
+      ? Math.round(
+          ((applications.length - applications.filter((a) => a.status === 'APPLIED').length) /
+            applications.length) *
+            100,
+        )
+      : 0;
   const applicants = applications.slice(0, 5).map((app) => ({
     id: app.id,
     name: app.candidate?.name ?? 'Candidate',
     role: app.candidate?.title || app.job?.title || 'Applicant',
+    avatar: app.candidate?.avatar,
     matchScore: app.matchScore,
     appliedAt: app.appliedAt.toLocaleDateString(),
-    status: app.status === 'APPLIED' ? 'NEW' : app.status === 'SHORTLISTED' ? 'SHORTLISTED' : 'REVIEWED',
+    status:
+      app.status === 'APPLIED' ? 'NEW' : app.status === 'SHORTLISTED' ? 'SHORTLISTED' : 'REVIEWED',
   }));
 
   const statCards = [
-    { 
-      label: 'Active Jobs', 
-      value: jobs.length, 
-      icon: <Briefcase className="h-5 w-5" />, 
-      trend: '+2 this month', 
+    {
+      label: 'Active Jobs',
+      value: jobs.length,
+      icon: <Briefcase className="h-5 w-5" />,
+      trend: '+2 this month',
       color: 'text-primary',
       bgColor: 'bg-primary-light',
     },
-    { 
-      label: 'Applications', 
-      value: applications.length, 
-      icon: <Users className="h-5 w-5" />, 
-      trend: '+12 this week', 
+    {
+      label: 'Applications',
+      value: applications.length,
+      icon: <Users className="h-5 w-5" />,
+      trend: '+12 this week',
       color: 'text-ai-purple',
       bgColor: 'bg-ai-purple/10',
     },
-    { 
-      label: 'Interviews', 
-      value: interviewCount, 
+    {
+      label: 'Interviews',
+      value: interviewCount,
       icon: <Calendar className="h-5 w-5" />,
       trend: `${shortlistedCount} shortlisted`,
       color: 'text-success',
       bgColor: 'bg-success/10',
     },
-    { 
-      label: 'Response Rate', 
-      value: `${responseRate}%`, 
-      icon: <TrendingUp className="h-5 w-5" />, 
-      trend: 'Above average', 
+    {
+      label: 'Response Rate',
+      value: `${responseRate}%`,
+      icon: <TrendingUp className="h-5 w-5" />,
+      trend: 'Above average',
       color: 'text-warning',
       bgColor: 'bg-warning/10',
     },
@@ -107,9 +118,14 @@ export function CompanyDashboardPage(): React.JSX.Element {
             <p className="mt-1 text-text-secondary">Manage job postings and find top talent</p>
           </div>
           <div className="flex gap-3">
-            <Badge variant={isVerified ? 'success' : 'warning'} className="flex items-center gap-1.5 px-3 py-1.5">
+            <Badge
+              variant={isVerified ? 'success' : 'warning'}
+              className="flex items-center gap-1.5 px-3 py-1.5"
+            >
               <CheckCircle2 className="h-3.5 w-3.5" />
-              {isVerified ? 'Verified Company' : company?.verificationStatus?.replaceAll('_', ' ') ?? 'Unverified'}
+              {isVerified
+                ? 'Verified Company'
+                : (company?.verificationStatus?.replaceAll('_', ' ') ?? 'Unverified')}
             </Badge>
           </div>
         </div>
@@ -125,7 +141,9 @@ export function CompanyDashboardPage(): React.JSX.Element {
           {statCards.map((stat) => (
             <Card key={stat.label} hover className="p-5">
               <div className="flex items-center justify-between">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.bgColor}`}>
+                <div
+                  className={`flex h-10 w-10 items-center justify-center rounded-xl ${stat.bgColor}`}
+                >
                   <span className={stat.color}>{stat.icon}</span>
                 </div>
                 <p className={`text-2xl font-bold ${stat.color}`}>{stat.value}</p>
@@ -139,7 +157,10 @@ export function CompanyDashboardPage(): React.JSX.Element {
         {/* Quick Actions */}
         <div className="mt-8 grid gap-4 sm:grid-cols-3 animate-fade-in-up delay-200">
           <Link to="/company/jobs/new">
-            <Card hover className="p-5 flex items-center gap-4 border-primary/20 hover:border-primary/40 transition-colors">
+            <Card
+              hover
+              className="p-5 flex items-center gap-4 border-primary/20 hover:border-primary/40 transition-colors"
+            >
               <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-light">
                 <PlusCircle className="h-6 w-6 text-primary" />
               </div>
@@ -199,16 +220,26 @@ export function CompanyDashboardPage(): React.JSX.Element {
                 to={`/company/candidates/${a.id}`}
                 className="flex items-center gap-4 px-5 py-4 hover:bg-background/50 transition-colors"
               >
-                <Avatar name={a.name} size="md" />
+                <Avatar name={a.name} src={a.avatar} size="md" />
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-text-primary">{a.name}</p>
                   <p className="text-sm text-text-secondary">{a.role}</p>
                 </div>
                 <div className="hidden sm:flex items-center gap-3">
-                  <Badge 
-                    variant={a.status === 'NEW' ? 'info' : a.status === 'SHORTLISTED' ? 'success' : 'neutral'}
+                  <Badge
+                    variant={
+                      a.status === 'NEW'
+                        ? 'info'
+                        : a.status === 'SHORTLISTED'
+                          ? 'success'
+                          : 'neutral'
+                    }
                   >
-                    {a.status === 'NEW' ? 'New' : a.status === 'SHORTLISTED' ? 'Shortlisted' : 'Reviewed'}
+                    {a.status === 'NEW'
+                      ? 'New'
+                      : a.status === 'SHORTLISTED'
+                        ? 'Shortlisted'
+                        : 'Reviewed'}
                   </Badge>
                   <div className="flex items-center gap-1 text-sm text-text-secondary">
                     <Clock className="h-4 w-4" />
@@ -227,10 +258,14 @@ export function CompanyDashboardPage(): React.JSX.Element {
           <div className="relative z-10">
             <h2 className="text-xl font-bold">Find Your Next Great Hire</h2>
             <p className="mt-2 text-white/80 max-w-xl">
-              Post a job and let our AI match you with qualified candidates. Get personalized skill assessments for every applicant.
+              Post a job and let our AI match you with qualified candidates. Get personalized skill
+              assessments for every applicant.
             </p>
             <Link to="/company/jobs/new">
-              <Button variant="secondary" className="mt-6 bg-white text-ai-purple hover:bg-white/90 border-0">
+              <Button
+                variant="secondary"
+                className="mt-6 bg-white text-ai-purple hover:bg-white/90 border-0"
+              >
                 Post a Job <ArrowRight className="h-4 w-4 ml-1" />
               </Button>
             </Link>

@@ -1,0 +1,11 @@
+CREATE INDEX "User_role_idx" ON "User"("role");
+CREATE INDEX "User_createdAt_idx" ON "User"("createdAt");
+CREATE INDEX "Company_verificationStatus_idx" ON "Company"("verificationStatus");
+CREATE INDEX "Company_isVerified_idx" ON "Company"("isVerified");
+CREATE INDEX "Job_companyId_postedAt_idx" ON "Job"("companyId", "postedAt");
+CREATE INDEX "Job_postedAt_idx" ON "Job"("postedAt");
+CREATE INDEX "Job_type_idx" ON "Job"("type");
+CREATE INDEX "Job_isVerified_idx" ON "Job"("isVerified");
+CREATE INDEX "Application_status_idx" ON "Application"("status");
+CREATE INDEX "Application_appliedAt_idx" ON "Application"("appliedAt");
+CREATE INDEX "Application_jobId_status_idx" ON "Application"("jobId", "status");

@@ -30,18 +30,41 @@ model User {
   resumeVerifiedAt      DateTime?
   emailVerified         Boolean                @default(false)
   skillsVerified        Boolean                @default(false)
+  failedLoginCount      Int                    @default(0)
+  lockedUntil           DateTime?
+  lastLoginAt           DateTime?
   createdAt             DateTime               @default(now())
   companyId             String?
   company               Company?               @relation(fields: [companyId], references: [id])
   applications          Application[]          @relation("CandidateApplications")
   refreshTokens         RefreshToken[]
   accountTokens         AccountToken[]
+  oauthAccounts         OAuthAccount[]
   auditLogs             AuditLog[]             @relation("AuditActor")
   recruiterActivityLogs RecruiterActivityLog[]
   adminReviewsCreated   AdminReview[]          @relation("AdminReviewCreator")
   adminReviewsReviewed  AdminReview[]          @relation("AdminReviewReviewer")
   legalAcceptances      LegalAcceptance[]
   cookieConsents        CookieConsent[]
+
+  @@index([role])
+  @@index([createdAt])
+}
+
+model OAuthAccount {
+  id                String   @id @default(cuid())
+  provider          String
+  providerAccountId String
+  email             String?
+  userId            String
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([provider, providerAccountId])
+  @@index([userId])
+  @@index([provider])
+  @@map("oauth_accounts")
 }
 
 model RefreshToken {
@@ -91,6 +114,9 @@ model Company {
   fraudFlags              FraudFlag[]
   adminReviews            AdminReview[]
   recruiterActivityLogs   RecruiterActivityLog[]
+
+  @@index([verificationStatus])
+  @@index([isVerified])
 }
 
 model Skill {
@@ -120,6 +146,11 @@ model Job {
   expiresAt            DateTime?
   applications         Application[]
   skills               JobSkill[]
+
+  @@index([companyId, postedAt])
+  @@index([postedAt])
+  @@index([type])
+  @@index([isVerified])
 }
 
 model JobSkill {
@@ -150,6 +181,9 @@ model Application {
   @@unique([candidateId, jobId])
   @@index([candidateId])
   @@index([jobId])
+  @@index([status])
+  @@index([appliedAt])
+  @@index([jobId, status])
 }
 
 model CompanyVerification {

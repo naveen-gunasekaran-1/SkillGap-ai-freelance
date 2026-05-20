@@ -1,17 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  Pressable,
-  ScrollView,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from 'react-native';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../../src/theme';
 import { mobileApi } from '../../src/lib/http';
 import { isAxiosError } from 'axios';
+import { useMobileAuthStore } from '../../src/stores/authStore';
 
 const t = theme;
 
@@ -43,8 +37,11 @@ function formatSalary(j: JobDetail): string {
  */
 export default function JobDetailScreen(): React.JSX.Element {
   const params = useLocalSearchParams<{ id?: string | string[] }>();
-  const id = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : undefined;
+  const id =
+    typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : undefined;
   const router = useRouter();
+  const role = useMobileAuthStore((s) => s.role);
+  const canManage = role === 'COMPANY' || role === 'ADMIN';
   const [job, setJob] = useState<JobDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [applying, setApplying] = useState(false);
@@ -107,7 +104,14 @@ export default function JobDetailScreen(): React.JSX.Element {
     return (
       <>
         <Stack.Screen options={{ title: 'Job' }} />
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: t.colors.background }}>
+        <View
+          style={{
+            flex: 1,
+            justifyContent: 'center',
+            alignItems: 'center',
+            backgroundColor: t.colors.background,
+          }}
+        >
           {loading ? <ActivityIndicator size="large" color={t.colors.primary} /> : null}
         </View>
       </>
@@ -116,7 +120,13 @@ export default function JobDetailScreen(): React.JSX.Element {
 
   const score = typeof job.matchScore === 'number' ? job.matchScore : null;
   const scoreColor =
-    score == null ? t.colors.textSecondary : score < 40 ? t.colors.error : score <= 70 ? t.colors.warning : t.colors.success;
+    score == null
+      ? t.colors.textSecondary
+      : score < 40
+        ? t.colors.error
+        : score <= 70
+          ? t.colors.warning
+          : t.colors.success;
 
   return (
     <>
@@ -126,25 +136,48 @@ export default function JobDetailScreen(): React.JSX.Element {
         contentContainerStyle={{ padding: t.spacing.lg, paddingBottom: t.spacing.xxxl }}
         showsVerticalScrollIndicator={false}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: t.spacing.sm }}>
+        <View
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: t.spacing.sm }}
+        >
           <Ionicons name="business-outline" size={16} color={t.colors.textSecondary} />
-          <Text style={{ ...t.typography.body, color: t.colors.textSecondary }}>{job.company.name}</Text>
+          <Text style={{ ...t.typography.body, color: t.colors.textSecondary }}>
+            {job.company.name}
+          </Text>
           {job.company.isVerified ? (
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginLeft: 4 }}>
               <Ionicons name="checkmark-circle" size={14} color={t.colors.primaryDark} />
-              <Text style={{ ...t.typography.small, fontWeight: '700', color: t.colors.primaryDark }}>Verified</Text>
+              <Text
+                style={{ ...t.typography.small, fontWeight: '700', color: t.colors.primaryDark }}
+              >
+                Verified
+              </Text>
             </View>
           ) : null}
         </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: t.spacing.md }}>
+        <View
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: t.spacing.md }}
+        >
           <Ionicons name="location-outline" size={16} color={t.colors.textSecondary} />
-          <Text style={{ ...t.typography.caption, color: t.colors.textSecondary }}>{job.location}</Text>
+          <Text style={{ ...t.typography.caption, color: t.colors.textSecondary }}>
+            {job.location}
+          </Text>
           <Text style={{ color: t.colors.textSecondary }}>•</Text>
-          <Text style={{ ...t.typography.caption, color: t.colors.textSecondary }}>{job.type.replace(/_/g, ' ')}</Text>
+          <Text style={{ ...t.typography.caption, color: t.colors.textSecondary }}>
+            {job.type.replace(/_/g, ' ')}
+          </Text>
         </View>
 
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: t.spacing.lg }}>
-          <Text style={{ ...t.typography.h3, color: t.colors.primary, fontWeight: '800' }}>{formatSalary(job)}</Text>
+        <View
+          style={{
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginBottom: t.spacing.lg,
+          }}
+        >
+          <Text style={{ ...t.typography.h3, color: t.colors.primary, fontWeight: '800' }}>
+            {formatSalary(job)}
+          </Text>
           {score != null ? (
             <View
               style={{
@@ -158,18 +191,44 @@ export default function JobDetailScreen(): React.JSX.Element {
                 backgroundColor: t.colors.surface,
               }}
             >
-              <Text style={{ ...t.typography.caption, fontWeight: '800', color: t.colors.textPrimary }}>{score}%</Text>
+              <Text
+                style={{ ...t.typography.caption, fontWeight: '800', color: t.colors.textPrimary }}
+              >
+                {score}%
+              </Text>
             </View>
           ) : null}
         </View>
 
-        <Text style={{ ...t.typography.h3, color: t.colors.textPrimary, marginBottom: t.spacing.sm }}>About</Text>
-        <Text style={{ ...t.typography.body, color: t.colors.textSecondary, marginBottom: t.spacing.lg }}>{job.description}</Text>
+        <Text
+          style={{ ...t.typography.h3, color: t.colors.textPrimary, marginBottom: t.spacing.sm }}
+        >
+          About
+        </Text>
+        <Text
+          style={{
+            ...t.typography.body,
+            color: t.colors.textSecondary,
+            marginBottom: t.spacing.lg,
+          }}
+        >
+          {job.description}
+        </Text>
 
         {job.skillsRequired.length > 0 ? (
           <>
-            <Text style={{ ...t.typography.h3, color: t.colors.textPrimary, marginBottom: t.spacing.sm }}>Skills</Text>
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: t.spacing.lg }}>
+            <Text
+              style={{
+                ...t.typography.h3,
+                color: t.colors.textPrimary,
+                marginBottom: t.spacing.sm,
+              }}
+            >
+              Skills
+            </Text>
+            <View
+              style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: t.spacing.lg }}
+            >
               {job.skillsRequired.map((s, i) => (
                 <View
                   key={`${s.name}-${i}`}
@@ -180,7 +239,9 @@ export default function JobDetailScreen(): React.JSX.Element {
                     paddingVertical: 6,
                   }}
                 >
-                  <Text style={{ ...t.typography.small, color: t.colors.textSecondary }}>{s.name}</Text>
+                  <Text style={{ ...t.typography.small, color: t.colors.textSecondary }}>
+                    {s.name}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -189,11 +250,21 @@ export default function JobDetailScreen(): React.JSX.Element {
 
         {job.responsibilities.length > 0 ? (
           <>
-            <Text style={{ ...t.typography.h3, color: t.colors.textPrimary, marginBottom: t.spacing.sm }}>Responsibilities</Text>
+            <Text
+              style={{
+                ...t.typography.h3,
+                color: t.colors.textPrimary,
+                marginBottom: t.spacing.sm,
+              }}
+            >
+              Responsibilities
+            </Text>
             {job.responsibilities.map((line, i) => (
               <View key={`r-${i}`} style={{ flexDirection: 'row', gap: 8, marginBottom: 6 }}>
                 <Text style={{ color: t.colors.primary }}>•</Text>
-                <Text style={{ flex: 1, ...t.typography.body, color: t.colors.textSecondary }}>{line}</Text>
+                <Text style={{ flex: 1, ...t.typography.body, color: t.colors.textSecondary }}>
+                  {line}
+                </Text>
               </View>
             ))}
             <View style={{ height: t.spacing.md }} />
@@ -202,35 +273,85 @@ export default function JobDetailScreen(): React.JSX.Element {
 
         {job.requirements.length > 0 ? (
           <>
-            <Text style={{ ...t.typography.h3, color: t.colors.textPrimary, marginBottom: t.spacing.sm }}>Requirements</Text>
+            <Text
+              style={{
+                ...t.typography.h3,
+                color: t.colors.textPrimary,
+                marginBottom: t.spacing.sm,
+              }}
+            >
+              Requirements
+            </Text>
             {job.requirements.map((line, i) => (
               <View key={`q-${i}`} style={{ flexDirection: 'row', gap: 8, marginBottom: 6 }}>
                 <Text style={{ color: t.colors.primary }}>•</Text>
-                <Text style={{ flex: 1, ...t.typography.body, color: t.colors.textSecondary }}>{line}</Text>
+                <Text style={{ flex: 1, ...t.typography.body, color: t.colors.textSecondary }}>
+                  {line}
+                </Text>
               </View>
             ))}
           </>
         ) : null}
 
-        <Pressable
-          onPress={() => void onApply()}
-          disabled={applying}
-          style={({ pressed }) => ({
-            marginTop: t.spacing.xl,
-            borderRadius: t.borderRadius.pill,
-            backgroundColor: t.colors.primary,
-            paddingVertical: 16,
-            alignItems: 'center',
-            opacity: applying || pressed ? 0.85 : 1,
-            ...t.shadows.card,
-          })}
-        >
-          {applying ? (
-            <ActivityIndicator color="#FFFFFF" />
-          ) : (
-            <Text style={{ color: '#FFFFFF', ...t.typography.body, fontWeight: '700' }}>Apply now</Text>
-          )}
-        </Pressable>
+        {canManage ? (
+          <View style={{ marginTop: t.spacing.xl, gap: t.spacing.sm }}>
+            <Pressable
+              onPress={() => router.push(`/company/job-form?id=${encodeURIComponent(job.id)}`)}
+              style={({ pressed }) => ({
+                borderRadius: t.borderRadius.pill,
+                backgroundColor: t.colors.primary,
+                paddingVertical: 16,
+                alignItems: 'center',
+                opacity: pressed ? 0.85 : 1,
+                ...t.shadows.card,
+              })}
+            >
+              <Text style={{ color: '#FFFFFF', ...t.typography.body, fontWeight: '700' }}>
+                Edit job
+              </Text>
+            </Pressable>
+            <Pressable
+              onPress={() => router.push('/(tabs)/applications')}
+              style={({ pressed }) => ({
+                borderRadius: t.borderRadius.pill,
+                borderWidth: 1,
+                borderColor: t.colors.border,
+                backgroundColor: t.colors.surface,
+                paddingVertical: 16,
+                alignItems: 'center',
+                opacity: pressed ? 0.85 : 1,
+              })}
+            >
+              <Text
+                style={{ color: t.colors.textPrimary, ...t.typography.body, fontWeight: '700' }}
+              >
+                Review applicants
+              </Text>
+            </Pressable>
+          </View>
+        ) : (
+          <Pressable
+            onPress={() => void onApply()}
+            disabled={applying}
+            style={({ pressed }) => ({
+              marginTop: t.spacing.xl,
+              borderRadius: t.borderRadius.pill,
+              backgroundColor: t.colors.primary,
+              paddingVertical: 16,
+              alignItems: 'center',
+              opacity: applying || pressed ? 0.85 : 1,
+              ...t.shadows.card,
+            })}
+          >
+            {applying ? (
+              <ActivityIndicator color="#FFFFFF" />
+            ) : (
+              <Text style={{ color: '#FFFFFF', ...t.typography.body, fontWeight: '700' }}>
+                Apply now
+              </Text>
+            )}
+          </Pressable>
+        )}
       </ScrollView>
     </>
   );

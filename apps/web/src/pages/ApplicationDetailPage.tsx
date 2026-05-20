@@ -2,14 +2,14 @@ import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Button, Badge, Card, ProgressBar, MatchScore, Avatar } from '@skillgap/ui';
 import type { Application } from '@skillgap/types';
-import { 
-  ArrowLeft, 
-  CheckCircle2, 
-  Clock, 
-  Building2, 
-  MapPin, 
-  Sparkles, 
-  BookOpen, 
+import {
+  ArrowLeft,
+  CheckCircle2,
+  Clock,
+  Building2,
+  MapPin,
+  Sparkles,
+  BookOpen,
   ExternalLink,
   AlertTriangle,
   AlertCircle,
@@ -36,10 +36,18 @@ export function ApplicationDetailPage(): React.JSX.Element {
 
   const app = appQuery.data;
   const job = app?.job;
-  const { label, variant } = app ? applicationStatusPresentation(app.status) : { label: '', variant: 'neutral' as const };
+  const { label, variant } = app
+    ? applicationStatusPresentation(app.status)
+    : { label: '', variant: 'neutral' as const };
 
   const formatFull = (d: Date) =>
-    d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+    d.toLocaleString(undefined, {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
 
   if (appQuery.isError || (!appQuery.isLoading && !app)) {
     return (
@@ -47,7 +55,10 @@ export function ApplicationDetailPage(): React.JSX.Element {
         <div className="p-4 lg:p-8 max-w-4xl mx-auto">
           <div className="py-16 text-center">
             <p className="font-medium text-text-primary">Application not found</p>
-            <Link to="/applications" className="mt-4 inline-flex items-center gap-1 text-primary hover:text-primary-dark">
+            <Link
+              to="/applications"
+              className="mt-4 inline-flex items-center gap-1 text-primary hover:text-primary-dark"
+            >
               <ArrowLeft className="h-4 w-4" />
               Back to applications
             </Link>
@@ -83,7 +94,10 @@ export function ApplicationDetailPage(): React.JSX.Element {
       <div className="p-4 lg:p-8 max-w-5xl mx-auto">
         {/* Breadcrumb */}
         <nav className="flex animate-fade-in-up items-center gap-2 text-sm text-text-secondary">
-          <Link to="/applications" className="flex items-center gap-1 transition-colors hover:text-primary">
+          <Link
+            to="/applications"
+            className="flex items-center gap-1 transition-colors hover:text-primary"
+          >
             <ArrowLeft className="h-4 w-4" />
             Applications
           </Link>
@@ -118,9 +132,21 @@ export function ApplicationDetailPage(): React.JSX.Element {
 
             <div className="mt-6 grid gap-4 sm:grid-cols-4">
               {[
-                { label: 'Applied', value: formatFull(app.appliedAt), icon: <Clock className="h-4 w-4" /> },
-                { label: 'Last update', value: formatPosted(app.updatedAt), icon: <CheckCircle2 className="h-4 w-4" /> },
-                { label: 'Match score', value: `${app.matchScore}%`, icon: <Sparkles className="h-4 w-4" /> },
+                {
+                  label: 'Applied',
+                  value: formatFull(app.appliedAt),
+                  icon: <Clock className="h-4 w-4" />,
+                },
+                {
+                  label: 'Last update',
+                  value: formatPosted(app.updatedAt),
+                  icon: <CheckCircle2 className="h-4 w-4" />,
+                },
+                {
+                  label: 'Match score',
+                  value: `${app.matchScore}%`,
+                  icon: <Sparkles className="h-4 w-4" />,
+                },
                 { label: 'Status', value: label, icon: <AlertCircle className="h-4 w-4" /> },
               ].map((d) => (
                 <div key={d.label} className="rounded-xl border border-border bg-background/50 p-4">
@@ -145,10 +171,17 @@ export function ApplicationDetailPage(): React.JSX.Element {
               <div className="relative">
                 {[
                   { label: 'Application submitted', time: formatFull(app.appliedAt), done: true },
-                  { label: 'Latest update', time: formatFull(app.updatedAt), done: true, active: true },
+                  {
+                    label: 'Latest update',
+                    time: formatFull(app.updatedAt),
+                    done: true,
+                    active: true,
+                  },
                 ].map((step, i, arr) => (
                   <div key={step.label} className="relative flex gap-4 pb-8 last:pb-0">
-                    {i < arr.length - 1 && <div className="absolute left-[11px] top-6 h-full w-0.5 bg-primary" />}
+                    {i < arr.length - 1 && (
+                      <div className="absolute left-[11px] top-6 h-full w-0.5 bg-primary" />
+                    )}
                     <div
                       className={`relative z-10 mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full ${
                         step.active ? 'bg-primary' : 'bg-primary'
@@ -177,7 +210,8 @@ export function ApplicationDetailPage(): React.JSX.Element {
                   </p>
                   {rejectionExplanation && (
                     <p className="mt-3 text-xs text-text-secondary">
-                      Recorded as {rejectionExplanation.promptVersion} - {formatFull(rejectionExplanation.createdAt)}
+                      Recorded as {rejectionExplanation.promptVersion} -{' '}
+                      {formatFull(rejectionExplanation.createdAt)}
                     </p>
                   )}
                 </div>
@@ -199,7 +233,9 @@ export function ApplicationDetailPage(): React.JSX.Element {
                   <div className="mb-6 rounded-xl border border-ai-purple/20 bg-primary-light/40 p-4">
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                       <div>
-                        <p className="text-sm font-medium text-text-primary">{gapExplanation.summary}</p>
+                        <p className="text-sm font-medium text-text-primary">
+                          {gapExplanation.summary}
+                        </p>
                         <p className="mt-1 text-xs text-text-secondary">
                           Generated by {gapExplanation.generatedBy} using {gapExplanation.model}
                         </p>
@@ -213,7 +249,7 @@ export function ApplicationDetailPage(): React.JSX.Element {
                     </p>
                   </div>
                 )}
-                
+
                 {/* Strengths */}
                 {strengths.length > 0 && (
                   <div className="mb-6 rounded-xl border border-success/20 bg-success/5 p-4">
@@ -238,7 +274,11 @@ export function ApplicationDetailPage(): React.JSX.Element {
                     <div
                       key={g.skillName}
                       className={`rounded-xl border p-5 ${
-                        g.severity === 'CRITICAL' ? 'border-error/20 bg-error/5' : g.severity === 'MODERATE' ? 'border-warning/20 bg-warning/5' : 'border-border bg-background/50'
+                        g.severity === 'CRITICAL'
+                          ? 'border-error/20 bg-error/5'
+                          : g.severity === 'MODERATE'
+                            ? 'border-warning/20 bg-warning/5'
+                            : 'border-border bg-background/50'
                       }`}
                     >
                       <div className="mb-3 flex items-center justify-between">
@@ -250,7 +290,15 @@ export function ApplicationDetailPage(): React.JSX.Element {
                           )}
                           {g.skillName}
                         </h3>
-                        <Badge variant={g.severity === 'CRITICAL' ? 'error' : g.severity === 'MODERATE' ? 'warning' : 'neutral'}>
+                        <Badge
+                          variant={
+                            g.severity === 'CRITICAL'
+                              ? 'error'
+                              : g.severity === 'MODERATE'
+                                ? 'warning'
+                                : 'neutral'
+                          }
+                        >
                           {g.severity}
                         </Badge>
                       </div>
@@ -315,7 +363,9 @@ export function ApplicationDetailPage(): React.JSX.Element {
                 <MatchScore value={app.matchScore} size={100} />
               </div>
               <p className="mt-4 text-sm text-text-secondary">
-                You matched <span className="font-semibold text-text-primary">{app.matchScore}%</span> of the requirements
+                You matched{' '}
+                <span className="font-semibold text-text-primary">{app.matchScore}%</span> of the
+                requirements
               </p>
             </Card>
 

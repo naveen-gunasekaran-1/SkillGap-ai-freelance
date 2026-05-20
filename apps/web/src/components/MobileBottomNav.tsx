@@ -1,5 +1,13 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Briefcase, ClipboardList, User, Building2, Users, ShieldCheck } from 'lucide-react';
+import {
+  LayoutDashboard,
+  Briefcase,
+  ClipboardList,
+  User,
+  Building2,
+  Users,
+  ShieldCheck,
+} from 'lucide-react';
 import { useAuthStore } from '../stores/authStore';
 
 interface NavItem {
@@ -32,9 +40,11 @@ const adminNav: NavItem[] = [
 export function MobileBottomNav(): React.JSX.Element {
   const location = useLocation();
   const user = useAuthStore((s) => s.user);
-  const activeRole = user?.role === 'ADMIN' ? 'admin' : user?.role === 'COMPANY' ? 'company' : 'candidate';
+  const activeRole =
+    user?.role === 'ADMIN' ? 'admin' : user?.role === 'COMPANY' ? 'company' : 'candidate';
 
-  const navItems = activeRole === 'admin' ? adminNav : activeRole === 'company' ? companyNav : candidateNav;
+  const navItems =
+    activeRole === 'admin' ? adminNav : activeRole === 'company' ? companyNav : candidateNav;
 
   const isActive = (path: string) => {
     const [pathname, search] = path.split('?');

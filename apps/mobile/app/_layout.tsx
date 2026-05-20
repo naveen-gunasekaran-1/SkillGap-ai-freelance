@@ -1,5 +1,7 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { clearMobileAuthTokens, hasMobileAccessToken, mobileApi } from '../src/lib/http';
 import { useMobileAuthStore } from '../src/stores/authStore';
 
@@ -23,7 +25,9 @@ export default function RootLayout(): React.JSX.Element {
       setAuthenticated(ok);
       if (ok) {
         try {
-          const res = await mobileApi.get<{ user: { name: string; role: 'CANDIDATE' | 'COMPANY' | 'ADMIN' } }>('/auth/me');
+          const res = await mobileApi.get<{
+            user: { name: string; role: 'CANDIDATE' | 'COMPANY' | 'ADMIN' };
+          }>('/auth/me');
           setSession(res.data.user.name, res.data.user.role);
         } catch {
           await clearMobileAuthTokens();
@@ -37,7 +41,9 @@ export default function RootLayout(): React.JSX.Element {
   useEffect(() => {
     if (!ready) return;
     const inAuth = segments[0] === '(auth)';
-    if (!authed && !inAuth) {
+    const publicRoute =
+      segments[0] === 'verify-email' || segments[0] === 'network' || segments[0] === 'contact';
+    if (!authed && !inAuth && !publicRoute) {
       router.replace('/(auth)/login');
       return;
     }
@@ -47,11 +53,14 @@ export default function RootLayout(): React.JSX.Element {
   }, [authed, ready, router, segments]);
 
   return (
-    <Stack
-      screenOptions={{
-        headerShown: false,
-        contentStyle: { backgroundColor: '#FFFFFF' },
-      }}
-    />
+    <SafeAreaProvider>
+      <StatusBar style="dark" backgroundColor="#F9FAFB" translucent={false} />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: '#F9FAFB' },
+        }}
+      />
+    </SafeAreaProvider>
   );
 }

@@ -10,6 +10,10 @@ export const api = axios.create({
   withCredentials: true,
 });
 
+export function getApiBaseUrl(): string {
+  return String(api.defaults.baseURL ?? 'http://localhost:3001/api').replace(/\/$/, '');
+}
+
 function getAccessToken(): string | null {
   return window.sessionStorage.getItem(ACCESS_KEY) ?? window.localStorage.getItem(ACCESS_KEY);
 }
@@ -26,7 +30,11 @@ export function getAuthPersistence(): AuthPersistence | null {
   return (window.localStorage.getItem(PERSISTENCE_KEY) as AuthPersistence | null) ?? null;
 }
 
-export function setAuthTokens(accessToken: string, refreshToken: string, persistence: AuthPersistence = 'session'): void {
+export function setAuthTokens(
+  accessToken: string,
+  refreshToken: string,
+  persistence: AuthPersistence = 'session',
+): void {
   clearAuthTokens();
   const storage = persistence === 'local' ? window.localStorage : window.sessionStorage;
   storage.setItem(ACCESS_KEY, accessToken);
@@ -74,7 +82,11 @@ async function refreshAccessToken(): Promise<string | null> {
         { withCredentials: true },
       )
       .then((res) => {
-        setAuthTokens(res.data.accessToken, res.data.refreshToken, getAuthPersistence() ?? 'session');
+        setAuthTokens(
+          res.data.accessToken,
+          res.data.refreshToken,
+          getAuthPersistence() ?? 'session',
+        );
         return res.data.accessToken;
       })
       .catch(() => null)
@@ -98,7 +110,9 @@ api.interceptors.request.use((config) => {
 api.interceptors.response.use(
   (response) => response,
   async (error: AxiosError) => {
-    const original = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+    const original = error.config as
+      | (InternalAxiosRequestConfig & { _retry?: boolean })
+      | undefined;
     const status = error.response?.status;
 
     if (status === 401 && original && !original._retry) {

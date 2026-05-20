@@ -53,7 +53,10 @@ export function CompanyJobsPage(): React.JSX.Element {
         return {
           ...parseJob(raw),
           applicantCount: Number(record.applicantCount ?? 0),
-          status: record.expiresAt && new Date(String(record.expiresAt)) < new Date() ? 'CLOSED' : 'ACTIVE',
+          status:
+            record.expiresAt && new Date(String(record.expiresAt)) < new Date()
+              ? 'CLOSED'
+              : 'ACTIVE',
         };
       });
     },
@@ -62,14 +65,15 @@ export function CompanyJobsPage(): React.JSX.Element {
   const jobs = jobsQuery.data ?? [];
 
   const filteredJobs = jobs.filter((job) => {
-    const matchesSearch = job.title.toLowerCase().includes(search.toLowerCase()) ||
+    const matchesSearch =
+      job.title.toLowerCase().includes(search.toLowerCase()) ||
       job.location.toLowerCase().includes(search.toLowerCase());
     const matchesStatus = statusFilter === 'ALL' || job.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const activeCount = jobs.filter(j => j.status === 'ACTIVE').length;
-  const pausedCount = jobs.filter(j => j.status === 'PAUSED').length;
+  const activeCount = jobs.filter((j) => j.status === 'ACTIVE').length;
+  const pausedCount = jobs.filter((j) => j.status === 'PAUSED').length;
   const totalApplicants = jobs.reduce((sum, j) => sum + j.applicantCount, 0);
 
   return (
@@ -183,7 +187,9 @@ export function CompanyJobsPage(): React.JSX.Element {
                   </div>
                   <div className="hidden sm:flex items-center gap-6">
                     <div className="text-center">
-                      <p className="text-lg font-semibold text-text-primary">{job.applicantCount}</p>
+                      <p className="text-lg font-semibold text-text-primary">
+                        {job.applicantCount}
+                      </p>
                       <p className="text-xs text-text-secondary">Applicants</p>
                     </div>
                     <div className="flex items-center gap-1">
@@ -210,7 +216,9 @@ export function CompanyJobsPage(): React.JSX.Element {
               <Briefcase className="h-12 w-12 text-text-secondary mx-auto mb-4" />
               <p className="text-lg font-medium text-text-primary">No jobs found</p>
               <p className="mt-2 text-sm text-text-secondary">
-                {search || statusFilter !== 'ALL' ? 'Try adjusting your filters' : 'Post your first job to get started'}
+                {search || statusFilter !== 'ALL'
+                  ? 'Try adjusting your filters'
+                  : 'Post your first job to get started'}
               </p>
               {!search && statusFilter === 'ALL' && (
                 <Link to="/company/jobs/new">

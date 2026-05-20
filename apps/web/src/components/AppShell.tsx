@@ -1,6 +1,17 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { BarChart3, Briefcase, Building2, ClipboardList, LayoutDashboard, PlusCircle, ShieldCheck, User, Users, X } from 'lucide-react';
+import {
+  BarChart3,
+  Briefcase,
+  Building2,
+  ClipboardList,
+  LayoutDashboard,
+  PlusCircle,
+  ShieldCheck,
+  User,
+  Users,
+  X,
+} from 'lucide-react';
 import { Avatar, Button } from '@skillgap/ui';
 import { Sidebar } from './Sidebar';
 import { MobileBottomNav } from './MobileBottomNav';
@@ -26,7 +37,8 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const authed = hasAccessToken();
-  const activeRole = user?.role === 'ADMIN' ? 'admin' : user?.role === 'COMPANY' ? 'company' : 'candidate';
+  const activeRole =
+    user?.role === 'ADMIN' ? 'admin' : user?.role === 'COMPANY' ? 'company' : 'candidate';
 
   const handleSignOut = () => {
     void revokeRefreshToken().finally(() => {
@@ -60,12 +72,16 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
   }, [mobileMenuOpen]);
 
   const displayName = user?.name ?? 'User';
-  const displayRole = activeRole === 'admin' ? 'Admin' : activeRole === 'company' ? 'Company' : 'Candidate';
+  const displayRole =
+    activeRole === 'admin' ? 'Admin' : activeRole === 'company' ? 'Company' : 'Candidate';
 
   return (
     <div className="min-h-screen bg-background">
       {/* Desktop Sidebar */}
-      <Sidebar collapsed={sidebarCollapsed} onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)} />
+      <Sidebar
+        collapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
 
       {/* Main content area */}
       <div
@@ -89,7 +105,13 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
                 className="flex items-center justify-center h-10 w-10 rounded-lg text-text-secondary hover:bg-background hover:text-text-primary transition-colors"
                 aria-label="Open menu"
               >
-                <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg
+                  className="h-6 w-6"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  strokeWidth={2}
+                >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
                 </svg>
               </button>
@@ -131,7 +153,7 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
             <div className="flex items-center gap-2">
               {authed && (
                 <div className="flex items-center gap-3">
-                  <Avatar name={displayName} size="sm" />
+                  <Avatar name={displayName} src={user?.avatar} size="sm" />
                   <div className="hidden sm:block">
                     <p className="text-sm font-medium text-text-primary">{displayName}</p>
                     <p className="text-xs text-text-secondary">{displayRole}</p>
@@ -141,10 +163,14 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
               {!authed && (
                 <div className="flex items-center gap-2">
                   <Link to="/login">
-                    <Button variant="ghost" size="sm">Sign in</Button>
+                    <Button variant="ghost" size="sm">
+                      Sign in
+                    </Button>
                   </Link>
                   <Link to="/register" className="hidden sm:block">
-                    <Button variant="ai-gradient" size="sm">Get started</Button>
+                    <Button variant="ai-gradient" size="sm">
+                      Get started
+                    </Button>
                   </Link>
                 </div>
               )}
@@ -170,7 +196,11 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
             <div className="flex flex-col h-full">
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-border">
-                <Link to="/" className="flex items-center gap-2" onClick={() => setMobileMenuOpen(false)}>
+                <Link
+                  to="/"
+                  className="flex items-center gap-2"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
                   <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary via-ai-purple to-ai-cyan shadow-card flex items-center justify-center">
                     <span className="text-sm font-bold text-white">S</span>
                   </div>
@@ -199,7 +229,7 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
               {authed && (
                 <div className="p-4 border-b border-border">
                   <div className="flex items-center gap-3">
-                    <Avatar name={displayName} size="md" />
+                    <Avatar name={displayName} src={user?.avatar} size="md" />
                     <div>
                       <p className="font-medium text-text-primary">{displayName}</p>
                       <p className="text-sm text-text-secondary">{user?.email}</p>
@@ -225,10 +255,14 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
                 ) : (
                   <div className="space-y-2">
                     <Link to="/login" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="secondary" className="w-full">Sign in</Button>
+                      <Button variant="secondary" className="w-full">
+                        Sign in
+                      </Button>
                     </Link>
                     <Link to="/register" onClick={() => setMobileMenuOpen(false)}>
-                      <Button variant="ai-gradient" className="w-full">Get started</Button>
+                      <Button variant="ai-gradient" className="w-full">
+                        Get started
+                      </Button>
                     </Link>
                   </div>
                 )}
@@ -264,17 +298,26 @@ function MobileNavLinks({
     { to: '/company/candidates', label: 'Candidates', icon: <Users className="h-5 w-5" /> },
     { to: '/company/pipeline', label: 'Hiring Pipeline', icon: <BarChart3 className="h-5 w-5" /> },
     { to: '/company/profile', label: 'Company Profile', icon: <Building2 className="h-5 w-5" /> },
-    { to: '/company/verification', label: 'Verification', icon: <ShieldCheck className="h-5 w-5" /> },
+    {
+      to: '/company/verification',
+      label: 'Verification',
+      icon: <ShieldCheck className="h-5 w-5" />,
+    },
   ];
 
   const adminLinks = [
     { to: '/admin', label: 'Admin Dashboard', icon: <LayoutDashboard className="h-5 w-5" /> },
-    { to: '/admin?tab=verifications', label: 'Verification Queue', icon: <ShieldCheck className="h-5 w-5" /> },
+    {
+      to: '/admin?tab=verifications',
+      label: 'Verification Queue',
+      icon: <ShieldCheck className="h-5 w-5" />,
+    },
     { to: '/admin?tab=audit', label: 'Audit Logs', icon: <ClipboardList className="h-5 w-5" /> },
     { to: '/admin?tab=fraud', label: 'Fraud Flags', icon: <Users className="h-5 w-5" /> },
   ];
 
-  const links = activeRole === 'admin' ? adminLinks : activeRole === 'company' ? companyLinks : candidateLinks;
+  const links =
+    activeRole === 'admin' ? adminLinks : activeRole === 'company' ? companyLinks : candidateLinks;
 
   const isActive = (path: string) => {
     const [pathname, search] = path.split('?');
