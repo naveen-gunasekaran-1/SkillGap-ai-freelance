@@ -70,10 +70,19 @@ export default function LoginScreen(): React.JSX.Element {
 
   const startOAuthLogin = async (provider: 'google' | 'linkedin') => {
     const url = `${getApiUrl()}/auth/oauth/${provider}/start?client=mobile&returnTo=${encodeURIComponent('/dashboard')}`;
-    const canOpen = await Linking.canOpenURL(url);
-    if (!canOpen) {
-      Alert.alert('Sign in unavailable', 'Could not open the secure browser sign in flow.');
-      return;
+    try {
+      const availability = await fetch(url, { redirect: 'manual' });
+      const contentType = availability.headers.get('content-type') ?? '';
+      if (availability.status >= 400 && contentType.includes('application/json')) {
+        const body = (await availability.json()) as { message?: string };
+        Alert.alert(
+          'Social sign in unavailable',
+          body.message ?? 'This provider is not ready yet.',
+        );
+        return;
+      }
+    } catch {
+      // If the preflight cannot complete, still try the browser flow below.
     }
     await Linking.openURL(url);
   };
@@ -223,47 +232,19 @@ export default function LoginScreen(): React.JSX.Element {
             </View>
 
             <View style={{ alignItems: 'flex-end', marginBottom: t.spacing.sm }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: t.spacing.md }}>
-                <Link href="/network" asChild>
-                  <Pressable hitSlop={8}>
-                    <Text
-                      style={{
-                        ...t.typography.caption,
-                        fontWeight: '700',
-                        color: t.colors.textSecondary,
-                      }}
-                    >
-                      Network check
-                    </Text>
-                  </Pressable>
-                </Link>
-                <Link href="/contact" asChild>
-                  <Pressable hitSlop={8}>
-                    <Text
-                      style={{
-                        ...t.typography.caption,
-                        fontWeight: '700',
-                        color: t.colors.textSecondary,
-                      }}
-                    >
-                      Contact
-                    </Text>
-                  </Pressable>
-                </Link>
-                <Link href="/(auth)/forgot-password" asChild>
-                  <Pressable hitSlop={8}>
-                    <Text
-                      style={{
-                        ...t.typography.caption,
-                        fontWeight: '700',
-                        color: t.colors.primary,
-                      }}
-                    >
-                      Forgot password?
-                    </Text>
-                  </Pressable>
-                </Link>
-              </View>
+              <Link href="/(auth)/forgot-password" asChild>
+                <Pressable hitSlop={8}>
+                  <Text
+                    style={{
+                      ...t.typography.caption,
+                      fontWeight: '700',
+                      color: t.colors.primary,
+                    }}
+                  >
+                    Forgot password?
+                  </Text>
+                </Pressable>
+              </Link>
             </View>
 
             <Pressable

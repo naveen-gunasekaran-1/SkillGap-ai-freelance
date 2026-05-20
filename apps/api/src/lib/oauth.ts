@@ -125,7 +125,14 @@ export async function exchangeOAuthCode(
   });
 
   if (!tokenRes.ok) {
-    throw new HttpError(400, 'OAuth code exchange failed');
+    const body = await tokenRes.text().catch(() => '');
+    console.error({
+      provider,
+      status: tokenRes.status,
+      body,
+      message: 'OAuth token exchange failed',
+    });
+    throw new HttpError(400, 'OAuth code exchange failed', 'OAUTH_CODE_EXCHANGE_FAILED');
   }
   const tokenBody = (await tokenRes.json()) as { access_token?: string };
   if (!tokenBody.access_token) {

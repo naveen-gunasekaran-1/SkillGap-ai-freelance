@@ -345,26 +345,35 @@ router.get(
       return;
     }
 
-    const profile = await exchangeOAuthCode(provider, query.code);
-    const user = await findOrCreateOAuthUser(profile, state.role ?? ROLE.CANDIDATE);
-    await recordSuccessfulLogin(user.id);
-    const loginCode = await createAccountToken({
-      userId: user.id,
-      type: ACCOUNT_TOKEN_TYPE.OAUTH_LOGIN,
-    });
-    await writeAuditLog({
-      req,
-      actorId: user.id,
-      actorRole: user.role,
-      action: AUDIT_ACTION.AUTH_OAUTH_LOGIN_SUCCESS,
-      entityType: 'User',
-      entityId: user.id,
-      metadata: { provider },
-    });
-    const redirect = oauthCallbackUrl(state.client);
-    redirect.searchParams.set('code', loginCode);
-    redirect.searchParams.set('returnTo', safeReturnTo(state.returnTo));
-    res.redirect(redirect.toString());
+    try {
+      const profile = await exchangeOAuthCode(provider, query.code);
+      const user = await findOrCreateOAuthUser(profile, state.role ?? ROLE.CANDIDATE);
+      await recordSuccessfulLogin(user.id);
+      const loginCode = await createAccountToken({
+        userId: user.id,
+        type: ACCOUNT_TOKEN_TYPE.OAUTH_LOGIN,
+      });
+      await writeAuditLog({
+        req,
+        actorId: user.id,
+        actorRole: user.role,
+        action: AUDIT_ACTION.AUTH_OAUTH_LOGIN_SUCCESS,
+        entityType: 'User',
+        entityId: user.id,
+        metadata: { provider },
+      });
+      const redirect = oauthCallbackUrl(state.client);
+      redirect.searchParams.set('code', loginCode);
+      redirect.searchParams.set('returnTo', safeReturnTo(state.returnTo));
+      res.redirect(redirect.toString());
+    } catch (error) {
+      const redirect = oauthCallbackUrl(state.client);
+      redirect.searchParams.set(
+        'error',
+        error instanceof HttpError ? (error.code ?? 'oauth_failed') : 'oauth_failed',
+      );
+      res.redirect(redirect.toString());
+    }
   }),
 );
 

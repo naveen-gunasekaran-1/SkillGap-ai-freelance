@@ -3,15 +3,16 @@ import axios, { type AxiosError, type InternalAxiosRequestConfig } from 'axios';
 const ACCESS_KEY = 'skillgap.accessToken';
 const REFRESH_KEY = 'skillgap.refreshToken';
 const PERSISTENCE_KEY = 'skillgap.authPersistence';
+const RENDER_API_URL = 'https://skillgap-ai-freelance.onrender.com/api';
 type AuthPersistence = 'local' | 'session';
 
 export const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api',
+  baseURL: import.meta.env.VITE_API_URL ?? RENDER_API_URL,
   withCredentials: true,
 });
 
 export function getApiBaseUrl(): string {
-  return String(api.defaults.baseURL ?? 'http://localhost:3001/api').replace(/\/$/, '');
+  return String(api.defaults.baseURL ?? RENDER_API_URL).replace(/\/$/, '');
 }
 
 function getAccessToken(): string | null {

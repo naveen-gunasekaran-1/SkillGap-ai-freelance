@@ -9,6 +9,16 @@ import { theme } from '../../src/theme';
 
 const t = theme;
 
+function oauthErrorMessage(error: string): string {
+  if (error === 'OAUTH_CODE_EXCHANGE_FAILED') {
+    return 'The provider rejected the login code. Check the OAuth client secret and callback URL in Render and the provider console.';
+  }
+  if (error === 'access_denied') {
+    return 'Sign in was cancelled or denied.';
+  }
+  return 'OAuth sign in could not be completed.';
+}
+
 export default function OAuthCallbackScreen(): React.JSX.Element {
   const params = useLocalSearchParams<{ code?: string; error?: string }>();
   const router = useRouter();
@@ -22,7 +32,7 @@ export default function OAuthCallbackScreen(): React.JSX.Element {
     async function completeOAuthLogin() {
       if (params.error) {
         setFailed(true);
-        setMessage('OAuth sign in was cancelled or denied.');
+        setMessage(oauthErrorMessage(params.error));
         return;
       }
       if (!params.code) {
