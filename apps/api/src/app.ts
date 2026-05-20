@@ -53,7 +53,7 @@ app.get('/ready', async (_req, res, next) => {
     await prisma.$queryRaw`SELECT 1`;
     const authTables = await prisma.$queryRaw<
       Array<{ table_name: string }>
-    >`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('User', 'RefreshToken', 'account_tokens', 'oauth_accounts', 'AuditLog')`;
+    >`SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('User', 'RefreshToken', 'account_tokens', 'oauth_accounts', 'audit_logs')`;
     const userColumns = await prisma.$queryRaw<
       Array<{ column_name: string }>
     >`SELECT column_name FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'User' AND column_name IN ('failedLoginCount', 'lockedUntil', 'lastLoginAt', 'avatar')`;
@@ -64,7 +64,7 @@ app.get('/ready', async (_req, res, next) => {
       'RefreshToken',
       'account_tokens',
       'oauth_accounts',
-      'AuditLog',
+      'audit_logs',
     ].filter((table) => !tableNames.includes(table));
     const missingUserColumns = ['failedLoginCount', 'lockedUntil', 'lastLoginAt', 'avatar'].filter(
       (column) => !columnNames.includes(column),

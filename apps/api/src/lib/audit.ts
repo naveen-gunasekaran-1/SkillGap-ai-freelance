@@ -25,7 +25,15 @@ export async function writeAuditLog(params: {
     ...(userAgent ? { userAgent } : {}),
     ...(params.metadata ? { metadataJson: params.metadata } : {}),
   };
-  await prisma.auditLog.create({
-    data,
-  });
+  try {
+    await prisma.auditLog.create({
+      data,
+    });
+  } catch (error) {
+    console.error({
+      requestId: params.req?.requestId,
+      err: error,
+      message: 'Audit log write failed',
+    });
+  }
 }
