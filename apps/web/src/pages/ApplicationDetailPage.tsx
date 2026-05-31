@@ -1,6 +1,6 @@
 import { Link, useParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Button, Badge, Card, ProgressBar, MatchScore, Avatar } from '@skillgap/ui';
+import { Button, Badge, Card, MatchScore, Avatar } from '@skillgap/ui';
 import type { Application } from '@skillgap/types';
 import {
   ArrowLeft,

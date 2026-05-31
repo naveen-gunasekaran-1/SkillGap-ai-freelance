@@ -26,6 +26,7 @@ import { AppShell } from '../components/AppShell';
 import { useAuthStore } from '../stores/authStore';
 import { api } from '../lib/api';
 import { parseUser } from '../lib/normalize';
+import type { EducationEntry, ExperienceEntry, ProfileLink } from '@skillgap/types';
 
 interface ProfileFormData {
   name: string;
@@ -34,6 +35,28 @@ interface ProfileFormData {
   phone: string;
   summary: string;
 }
+
+const emptyExperienceForm = {
+  company: '',
+  role: '',
+  startDate: '',
+  endDate: '',
+  summary: '',
+};
+
+const emptyEducationForm = {
+  school: '',
+  degree: '',
+  field: '',
+  startYear: '',
+  endYear: '',
+  gpa: '',
+};
+
+const emptyLinkForm = {
+  label: '',
+  url: '',
+};
 
 /**
  * Candidate profile page with editable sections for personal info, skills, experience, education, and resume.
@@ -46,6 +69,9 @@ export function ProfilePage(): React.JSX.Element {
   const [editingSection, setEditingSection] = useState<string | null>(null);
   const [newSkill, setNewSkill] = useState('');
   const [skills, setSkills] = useState<string[]>(user?.skills ?? []);
+  const [experienceForm, setExperienceForm] = useState({ ...emptyExperienceForm });
+  const [educationForm, setEducationForm] = useState({ ...emptyEducationForm });
+  const [linkForm, setLinkForm] = useState({ ...emptyLinkForm });
   const resumeInputRef = useRef<HTMLInputElement | null>(null);
 
   const {
@@ -63,12 +89,22 @@ export function ProfilePage(): React.JSX.Element {
   });
 
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: Partial<ProfileFormData & { skills: string[] }>) => {
+    mutationFn: async (
+      data: Partial<
+        ProfileFormData & {
+          skills: string[];
+          experience: ExperienceEntry[];
+          education: EducationEntry[];
+          links: ProfileLink[];
+        }
+      >,
+    ) => {
       const res = await api.patch<{ user: unknown }>('/users/me', data);
       return parseUser(res.data.user);
     },
     onSuccess: (updatedUser) => {
       setUser(updatedUser);
+      setSkills(updatedUser.skills ?? []);
       queryClient.invalidateQueries({ queryKey: ['user'] });
       toast.success('Profile updated');
       setEditingSection(null);
@@ -135,6 +171,73 @@ export function ProfilePage(): React.JSX.Element {
     const file = event.target.files?.[0];
     if (!file) return;
     uploadResumeMutation.mutate(file);
+  };
+
+  const handleAddExperience = () => {
+    if (
+      !experienceForm.company.trim() ||
+      !experienceForm.role.trim() ||
+      !experienceForm.startDate.trim()
+    ) {
+      toast.error('Company, role, and start date are required');
+      return;
+    }
+    const experience = [
+      ...(user?.experience ?? []),
+      {
+        company: experienceForm.company.trim(),
+        role: experienceForm.role.trim(),
+        startDate: experienceForm.startDate.trim(),
+        ...(experienceForm.endDate.trim() ? { endDate: experienceForm.endDate.trim() } : {}),
+        ...(experienceForm.summary.trim() ? { summary: experienceForm.summary.trim() } : {}),
+      },
+    ];
+    updateProfileMutation.mutate({ experience });
+    setExperienceForm({ ...emptyExperienceForm });
+  };
+
+  const handleAddEducation = () => {
+    const startYear = Number(educationForm.startYear);
+    const endYear = educationForm.endYear.trim() ? Number(educationForm.endYear) : undefined;
+    if (
+      !educationForm.school.trim() ||
+      !educationForm.degree.trim() ||
+      !Number.isInteger(startYear)
+    ) {
+      toast.error('School, degree, and start year are required');
+      return;
+    }
+    const education = [
+      ...(user?.education ?? []),
+      {
+        school: educationForm.school.trim(),
+        degree: educationForm.degree.trim(),
+        ...(educationForm.field.trim() ? { field: educationForm.field.trim() } : {}),
+        startYear,
+        ...(endYear ? { endYear } : {}),
+        ...(educationForm.gpa.trim() ? { gpa: educationForm.gpa.trim() } : {}),
+      },
+    ];
+    updateProfileMutation.mutate({ education });
+    setEducationForm({ ...emptyEducationForm });
+  };
+
+  const handleAddLink = () => {
+    const url = linkForm.url.trim();
+    if (!linkForm.label.trim() || !url) {
+      toast.error('Link label and URL are required');
+      return;
+    }
+    const normalizedUrl = /^https?:\/\//i.test(url) ? url : `https://${url}`;
+    const links = [
+      ...(user?.links ?? []),
+      {
+        label: linkForm.label.trim(),
+        url: normalizedUrl,
+      },
+    ];
+    updateProfileMutation.mutate({ links });
+    setLinkForm({ ...emptyLinkForm });
   };
 
   const displayName = user?.name ?? 'User';
@@ -333,11 +436,79 @@ export function ProfilePage(): React.JSX.Element {
                   <Briefcase className="h-5 w-5 text-text-secondary" />
                   <h2 className="font-semibold text-text-primary">Experience</h2>
                 </div>
-                <Button variant="ghost" size="sm">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    setEditingSection(editingSection === 'experience' ? null : 'experience')
+                  }
+                >
                   <Plus className="h-4 w-4 mr-1" /> Add
                 </Button>
               </div>
               <div className="p-5">
+                {editingSection === 'experience' && (
+                  <div className="mb-5 space-y-3 rounded-card border border-border bg-background/50 p-4">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Input
+                        label="Company"
+                        value={experienceForm.company}
+                        onChange={(e) =>
+                          setExperienceForm((current) => ({
+                            ...current,
+                            company: e.target.value,
+                          }))
+                        }
+                      />
+                      <Input
+                        label="Role"
+                        value={experienceForm.role}
+                        onChange={(e) =>
+                          setExperienceForm((current) => ({ ...current, role: e.target.value }))
+                        }
+                      />
+                      <Input
+                        label="Start"
+                        placeholder="2024"
+                        value={experienceForm.startDate}
+                        onChange={(e) =>
+                          setExperienceForm((current) => ({
+                            ...current,
+                            startDate: e.target.value,
+                          }))
+                        }
+                      />
+                      <Input
+                        label="End"
+                        placeholder="Present"
+                        value={experienceForm.endDate}
+                        onChange={(e) =>
+                          setExperienceForm((current) => ({ ...current, endDate: e.target.value }))
+                        }
+                      />
+                    </div>
+                    <Textarea
+                      label="Summary"
+                      rows={3}
+                      value={experienceForm.summary}
+                      onChange={(e) =>
+                        setExperienceForm((current) => ({ ...current, summary: e.target.value }))
+                      }
+                    />
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" variant="ghost" onClick={() => setEditingSection(null)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        loading={updateProfileMutation.isPending}
+                        onClick={handleAddExperience}
+                      >
+                        Save Experience
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 {user?.experience?.length ? (
                   <div className="space-y-4">
                     {user.experience.map((exp, idx) => (
@@ -376,11 +547,82 @@ export function ProfilePage(): React.JSX.Element {
                   <GraduationCap className="h-5 w-5 text-text-secondary" />
                   <h2 className="font-semibold text-text-primary">Education</h2>
                 </div>
-                <Button variant="ghost" size="sm">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() =>
+                    setEditingSection(editingSection === 'education' ? null : 'education')
+                  }
+                >
                   <Plus className="h-4 w-4 mr-1" /> Add
                 </Button>
               </div>
               <div className="p-5">
+                {editingSection === 'education' && (
+                  <div className="mb-5 space-y-3 rounded-card border border-border bg-background/50 p-4">
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <Input
+                        label="School"
+                        value={educationForm.school}
+                        onChange={(e) =>
+                          setEducationForm((current) => ({ ...current, school: e.target.value }))
+                        }
+                      />
+                      <Input
+                        label="Degree"
+                        value={educationForm.degree}
+                        onChange={(e) =>
+                          setEducationForm((current) => ({ ...current, degree: e.target.value }))
+                        }
+                      />
+                      <Input
+                        label="Field"
+                        value={educationForm.field}
+                        onChange={(e) =>
+                          setEducationForm((current) => ({ ...current, field: e.target.value }))
+                        }
+                      />
+                      <Input
+                        label="GPA"
+                        value={educationForm.gpa}
+                        onChange={(e) =>
+                          setEducationForm((current) => ({ ...current, gpa: e.target.value }))
+                        }
+                      />
+                      <Input
+                        label="Start year"
+                        inputMode="numeric"
+                        value={educationForm.startYear}
+                        onChange={(e) =>
+                          setEducationForm((current) => ({
+                            ...current,
+                            startYear: e.target.value,
+                          }))
+                        }
+                      />
+                      <Input
+                        label="End year"
+                        inputMode="numeric"
+                        value={educationForm.endYear}
+                        onChange={(e) =>
+                          setEducationForm((current) => ({ ...current, endYear: e.target.value }))
+                        }
+                      />
+                    </div>
+                    <div className="flex justify-end gap-2">
+                      <Button type="button" variant="ghost" onClick={() => setEditingSection(null)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        type="button"
+                        loading={updateProfileMutation.isPending}
+                        onClick={handleAddEducation}
+                      >
+                        Save Education
+                      </Button>
+                    </div>
+                  </div>
+                )}
                 {user?.education?.length ? (
                   <div className="space-y-4">
                     {user.education.map((edu, idx) => (
@@ -501,7 +743,50 @@ export function ProfilePage(): React.JSX.Element {
                   Add links to your portfolio, GitHub, LinkedIn, etc.
                 </p>
               )}
-              <Button variant="ghost" size="sm" className="mt-3 w-full">
+              {editingSection === 'links' && (
+                <div className="mt-3 space-y-3 rounded-card border border-border bg-background/50 p-3">
+                  <Input
+                    label="Label"
+                    value={linkForm.label}
+                    onChange={(e) =>
+                      setLinkForm((current) => ({ ...current, label: e.target.value }))
+                    }
+                  />
+                  <Input
+                    label="URL"
+                    value={linkForm.url}
+                    onChange={(e) =>
+                      setLinkForm((current) => ({ ...current, url: e.target.value }))
+                    }
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="flex-1"
+                      onClick={() => setEditingSection(null)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="flex-1"
+                      loading={updateProfileMutation.isPending}
+                      onClick={handleAddLink}
+                    >
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              )}
+              <Button
+                variant="ghost"
+                size="sm"
+                className="mt-3 w-full"
+                onClick={() => setEditingSection(editingSection === 'links' ? null : 'links')}
+              >
                 <Plus className="h-4 w-4 mr-1" /> Add Link
               </Button>
             </Card>

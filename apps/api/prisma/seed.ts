@@ -1,9 +1,17 @@
 import 'dotenv/config';
-import { PrismaClient } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 import { buildGapReport, computeMatchScore } from '../src/lib/matching';
-import { APPLICATION_STATUS, JOB_TYPE, ROLE } from '../src/lib/constants';
-import { stringifyStringArray } from '../src/lib/jsonFields';
+import {
+  APPLICATION_STATUS,
+  AUDIT_ACTION,
+  COMPANY_VERIFICATION_STATUS,
+  JOB_TYPE,
+  ROLE,
+  VERIFICATION_DOCUMENT_TYPE,
+} from '../src/lib/constants';
+import { stringifyJson, stringifyStringArray } from '../src/lib/jsonFields';
+import { clearDatabase } from './clear-data';
 
 const prisma = new PrismaClient();
 
@@ -16,13 +24,7 @@ async function upsertSkill(name: string, category: string, marketDemandScore: nu
 }
 
 async function main(): Promise<void> {
-  await prisma.refreshToken.deleteMany();
-  await prisma.application.deleteMany();
-  await prisma.jobSkill.deleteMany();
-  await prisma.job.deleteMany();
-  await prisma.user.deleteMany();
-  await prisma.company.deleteMany();
-  await prisma.skill.deleteMany();
+  await clearDatabase({ skipConfirmation: true }, prisma);
 
   const skillRows = [
     ['React', 'Frontend', 92],
@@ -114,7 +116,7 @@ async function main(): Promise<void> {
   const demoPassword = await bcrypt.hash('SkillGapDemo1!', 12);
   const companyPassword = await bcrypt.hash('SkillGapCompany1!', 12);
 
-  await prisma.user.create({
+  const adminUser = await prisma.user.create({
     data: {
       email: 'admin@skillgap.ai',
       passwordHash: adminPassword,
@@ -130,6 +132,13 @@ async function main(): Promise<void> {
       passwordHash: demoPassword,
       name: 'Jordan Demo',
       role: ROLE.CANDIDATE,
+      title: 'Frontend Engineer',
+      location: 'Bengaluru, India',
+      summary:
+        'Frontend engineer focused on accessible React apps, TypeScript systems, and product-minded collaboration.',
+      phone: '+91 90000 11111',
+      avatar:
+        'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=256&q=80',
       skillsJson: stringifyStringArray([
         'React',
         'TypeScript',
@@ -138,10 +147,135 @@ async function main(): Promise<void> {
         'Git',
         'Node.js',
       ]),
+      skillLevelsJson: stringifyJson([
+        { name: 'React', level: 'ADVANCED' },
+        { name: 'TypeScript', level: 'ADVANCED' },
+        { name: 'Node.js', level: 'INTERMEDIATE' },
+        { name: 'CSS', level: 'ADVANCED' },
+      ]),
+      educationJson: stringifyJson([
+        {
+          school: 'Anna University',
+          degree: 'B.Tech',
+          field: 'Computer Science',
+          startYear: 2020,
+          endYear: 2024,
+          gpa: '8.7',
+        },
+      ]),
+      experienceJson: stringifyJson([
+        {
+          company: 'PixelWorks Studio',
+          role: 'Frontend Intern',
+          startDate: 'Jan 2024',
+          endDate: 'Jun 2024',
+          summary: 'Built reusable dashboard components with React, TypeScript, and Tailwind CSS.',
+        },
+      ]),
+      internshipsJson: stringifyJson([
+        {
+          company: 'SkillSprint Labs',
+          role: 'Web Developer Intern',
+          startDate: 'May 2023',
+          endDate: 'Aug 2023',
+          summary: 'Implemented responsive landing pages and API-backed forms.',
+        },
+      ]),
+      projectsJson: stringifyJson([
+        {
+          name: 'SkillGap Portfolio',
+          stack: ['React', 'TypeScript', 'Node.js'],
+          link: 'https://github.com/skillgap/demo-portfolio',
+          summary: 'A candidate profile and job match dashboard.',
+        },
+      ]),
+      linksJson: stringifyJson([
+        { label: 'GitHub', url: 'https://github.com/skillgap-demo' },
+        { label: 'LinkedIn', url: 'https://linkedin.com/in/skillgap-demo' },
+      ]),
+      resumeUrl: 'https://example.com/resumes/jordan-demo.pdf',
+      resumeStatus: 'VERIFIED',
+      resumeVerifiedAt: new Date(),
+      emailVerified: true,
+      skillsVerified: true,
     },
   });
 
-  await prisma.user.create({
+  const alexUser = await prisma.user.create({
+    data: {
+      email: 'alex.backend@example.com',
+      passwordHash: demoPassword,
+      name: 'Alex Backend',
+      role: ROLE.CANDIDATE,
+      title: 'Backend Engineer',
+      location: 'Hyderabad, India',
+      summary: 'Backend engineer with API, PostgreSQL, Docker, and cloud deployment experience.',
+      skillsJson: stringifyStringArray(['Node.js', 'PostgreSQL', 'Docker', 'AWS', 'Redis']),
+      skillLevelsJson: stringifyJson([
+        { name: 'Node.js', level: 'ADVANCED' },
+        { name: 'PostgreSQL', level: 'ADVANCED' },
+        { name: 'Docker', level: 'INTERMEDIATE' },
+        { name: 'AWS', level: 'INTERMEDIATE' },
+      ]),
+      educationJson: stringifyJson([
+        {
+          school: 'BITS Pilani',
+          degree: 'B.E.',
+          field: 'Information Systems',
+          startYear: 2019,
+          endYear: 2023,
+        },
+      ]),
+      experienceJson: stringifyJson([
+        {
+          company: 'APIWorks',
+          role: 'Junior Backend Engineer',
+          startDate: 'Jul 2023',
+          summary: 'Owned REST services, query optimization, and containerized deployments.',
+        },
+      ]),
+      linksJson: stringifyJson([{ label: 'Portfolio', url: 'https://alex.example.com' }]),
+      emailVerified: true,
+      skillsVerified: true,
+    },
+  });
+
+  const riyaUser = await prisma.user.create({
+    data: {
+      email: 'riya.mobile@example.com',
+      passwordHash: demoPassword,
+      name: 'Riya Mobile',
+      role: ROLE.CANDIDATE,
+      title: 'React Native Developer',
+      location: 'Chennai, India',
+      summary: 'Mobile developer building Expo and React Native apps with polished user flows.',
+      skillsJson: stringifyStringArray(['React Native', 'Expo', 'TypeScript', 'React']),
+      skillLevelsJson: stringifyJson([
+        { name: 'React Native', level: 'ADVANCED' },
+        { name: 'Expo', level: 'ADVANCED' },
+        { name: 'TypeScript', level: 'INTERMEDIATE' },
+      ]),
+      educationJson: stringifyJson([
+        {
+          school: 'VIT',
+          degree: 'B.Tech',
+          field: 'Software Engineering',
+          startYear: 2020,
+          endYear: 2024,
+        },
+      ]),
+      projectsJson: stringifyJson([
+        {
+          name: 'Campus Connect App',
+          stack: ['React Native', 'Expo', 'TypeScript'],
+          summary: 'A mobile app for student events, alerts, and club discovery.',
+        },
+      ]),
+      emailVerified: true,
+    },
+  });
+
+  const techCorpRecruiter = await prisma.user.create({
     data: {
       email: 'careers@techcorp.example',
       passwordHash: companyPassword,
@@ -149,6 +283,18 @@ async function main(): Promise<void> {
       role: ROLE.COMPANY,
       companyId: techCorp.id,
       skillsJson: stringifyStringArray([]),
+    },
+  });
+
+  await prisma.user.create({
+    data: {
+      email: 'hiring@startupxyz.example',
+      passwordHash: companyPassword,
+      name: 'StartupXYZ Hiring',
+      role: ROLE.COMPANY,
+      companyId: startupXyz.id,
+      skillsJson: stringifyStringArray([]),
+      emailVerified: true,
     },
   });
 
@@ -297,9 +443,8 @@ async function main(): Promise<void> {
     },
   });
 
-  const demoSkillNames = ['React', 'TypeScript', 'JavaScript', 'CSS', 'Git', 'Node.js'];
-
   async function seedApplication(
+    candidate: { id: string; name: string; skillsJson: string },
     jobId: string,
     jobTitle: string,
     jobSkillNames: string[],
@@ -307,21 +452,23 @@ async function main(): Promise<void> {
     status: string,
     rejectionReason?: string,
   ) {
-    const matchScore = computeMatchScore(demoSkillNames, jobSkillNames);
+    const candidateSkills = JSON.parse(candidate.skillsJson) as string[];
+    const matchScore = computeMatchScore(candidateSkills, jobSkillNames);
 
     const app = await prisma.application.create({
       data: {
-        candidateId: demoUser.id,
+        candidateId: candidate.id,
         jobId,
         status,
         matchScore,
         ...(rejectionReason ? { rejectionReason } : {}),
+        coverNote: `I am excited about ${jobTitle} and can contribute with ${candidateSkills.slice(0, 3).join(', ')}.`,
       },
     });
 
     const gapReport = buildGapReport({
       applicationId: app.id,
-      candidateSkills: demoSkillNames,
+      candidateSkills,
       jobTitle,
       jobSkillNames,
       requirements,
@@ -331,9 +478,29 @@ async function main(): Promise<void> {
       where: { id: app.id },
       data: { gapReportJson: JSON.stringify(gapReport) },
     });
+
+    await prisma.aiExplanation.create({
+      data: {
+        applicationId: app.id,
+        type: 'GAP_REPORT',
+        model: 'deterministic-skillgap-v1',
+        promptVersion: 'seed-gap-report-v1',
+        confidence: Math.max(30, Math.min(98, gapReport.overallMatchPercent)),
+        summary: `${candidate.name} has a ${gapReport.overallMatchPercent}% match for ${jobTitle}.`,
+        missingSkillsJson: gapReport.criticalGaps as unknown as Prisma.InputJsonValue,
+        weakEvidenceJson: gapReport.partialMatches as unknown as Prisma.InputJsonValue,
+        strengthsJson: gapReport.strengths as unknown as Prisma.InputJsonValue,
+        recommendationsJson: gapReport.recommendations as unknown as Prisma.InputJsonValue,
+        rawOutputJson: gapReport as unknown as Prisma.InputJsonValue,
+        generatedBy: 'seed',
+      },
+    });
+
+    return app;
   }
 
   await seedApplication(
+    demoUser,
     jobFe.id,
     'Senior Frontend Engineer',
     ['React', 'TypeScript', 'Next.js', 'CSS', 'GraphQL'],
@@ -342,6 +509,7 @@ async function main(): Promise<void> {
   );
 
   await seedApplication(
+    alexUser,
     jobFs.id,
     'Full Stack Developer',
     ['Node.js', 'React', 'PostgreSQL', 'Docker'],
@@ -349,7 +517,8 @@ async function main(): Promise<void> {
     APPLICATION_STATUS.INTERVIEW_SCHEDULED,
   );
 
-  await seedApplication(
+  const rejectedApp = await seedApplication(
+    demoUser,
     jobBe.id,
     'Backend Engineer',
     ['Go', 'Kubernetes', 'AWS', 'gRPC', 'Redis'],
@@ -359,6 +528,7 @@ async function main(): Promise<void> {
   );
 
   await seedApplication(
+    riyaUser,
     jobRn.id,
     'React Native Developer',
     ['React Native', 'TypeScript', 'Expo'],
@@ -366,11 +536,156 @@ async function main(): Promise<void> {
     APPLICATION_STATUS.OFFER_EXTENDED,
   );
 
+  await prisma.aiExplanation.create({
+    data: {
+      applicationId: rejectedApp.id,
+      type: 'REJECTION_REASON',
+      model: 'structured-rejection-v1',
+      promptVersion: 'seed-rejection-v1',
+      confidence: 82,
+      summary:
+        'Rejected due to missing evidence for production Kubernetes, gRPC, and distributed systems operation.',
+      missingSkillsJson: [] as unknown as Prisma.InputJsonValue,
+      weakEvidenceJson: [
+        {
+          skillName: 'Kubernetes',
+          required: 'Production Kubernetes ownership',
+          candidate: 'No production cluster evidence in profile',
+          severity: 'MODERATE',
+          explanation: 'The resume does not show hands-on production Kubernetes operations.',
+        },
+      ] as unknown as Prisma.InputJsonValue,
+      strengthsJson: [
+        'Strong frontend and TypeScript evidence',
+      ] as unknown as Prisma.InputJsonValue,
+      recommendationsJson: [] as unknown as Prisma.InputJsonValue,
+      rawOutputJson: { source: 'seed' } as Prisma.InputJsonValue,
+      generatedBy: 'recruiter',
+    },
+  });
+
+  const submittedVerification = await prisma.companyVerification.create({
+    data: {
+      companyId: bigTech.id,
+      status: COMPANY_VERIFICATION_STATUS.SUBMITTED,
+      region: 'GLOBAL',
+      countryCode: 'US',
+      submittedById: techCorpRecruiter.id,
+      fraudScore: 42,
+      submittedAt: new Date(),
+      metadataJson: { registrationNumber: 'BT-DEMO-1024' },
+    },
+  });
+
+  await prisma.verificationDocument.createMany({
+    data: [
+      {
+        companyId: bigTech.id,
+        verificationId: submittedVerification.id,
+        type: VERIFICATION_DOCUMENT_TYPE.BUSINESS_REGISTRATION,
+        originalName: 'business-registration-demo.pdf',
+        storageKey: 'seed/bigtech/business-registration-demo.pdf',
+        contentType: 'application/pdf',
+        sizeBytes: 482_000,
+        checksumSha256: 'seed-business-registration-checksum',
+        malwareScanStatus: 'CLEAN',
+        status: 'UPLOADED',
+        uploadedById: techCorpRecruiter.id,
+      },
+      {
+        companyId: bigTech.id,
+        verificationId: submittedVerification.id,
+        type: VERIFICATION_DOCUMENT_TYPE.TAX_DOCUMENT,
+        originalName: 'tax-document-demo.pdf',
+        storageKey: 'seed/bigtech/tax-document-demo.pdf',
+        contentType: 'application/pdf',
+        sizeBytes: 318_000,
+        checksumSha256: 'seed-tax-document-checksum',
+        malwareScanStatus: 'CLEAN',
+        status: 'UPLOADED',
+        uploadedById: techCorpRecruiter.id,
+      },
+    ],
+  });
+
+  await prisma.fraudFlag.create({
+    data: {
+      companyId: bigTech.id,
+      verificationId: submittedVerification.id,
+      severity: 'MEDIUM',
+      reason: 'Website domain and uploaded document issuer are from different regions.',
+      status: 'OPEN',
+      evidenceJson: { websiteCountry: 'US', documentIssuerCountry: 'SG' },
+    },
+  });
+
+  await prisma.adminReview.create({
+    data: {
+      entityType: 'CompanyVerification',
+      entityId: submittedVerification.id,
+      companyId: bigTech.id,
+      verificationId: submittedVerification.id,
+      createdById: adminUser.id,
+      status: 'OPEN',
+      notes: 'Review uploaded registration documents and resolve the regional mismatch flag.',
+    },
+  });
+
+  await prisma.auditLog.createMany({
+    data: [
+      {
+        actorId: adminUser.id,
+        actorRole: ROLE.ADMIN,
+        action: AUDIT_ACTION.COMPANY_VERIFICATION_CREATED,
+        entityType: 'CompanyVerification',
+        entityId: submittedVerification.id,
+        metadataJson: { source: 'seed' },
+      },
+      {
+        actorId: techCorpRecruiter.id,
+        actorRole: ROLE.COMPANY,
+        action: AUDIT_ACTION.JOB_CREATED,
+        entityType: 'Job',
+        entityId: jobFe.id,
+        metadataJson: { source: 'seed' },
+      },
+      {
+        actorId: demoUser.id,
+        actorRole: ROLE.CANDIDATE,
+        action: AUDIT_ACTION.AUTH_LOGIN_SUCCESS,
+        entityType: 'User',
+        entityId: demoUser.id,
+        metadataJson: { demo: true },
+      },
+    ],
+  });
+
+  await prisma.legalAcceptance.createMany({
+    data: [
+      { userId: demoUser.id, documentType: 'TERMS', version: '2026-05' },
+      { userId: techCorpRecruiter.id, documentType: 'TERMS', version: '2026-05' },
+    ],
+  });
+
+  await prisma.cookieConsent.create({
+    data: {
+      userId: demoUser.id,
+      essential: true,
+      analytics: true,
+      marketing: false,
+      preferences: true,
+      policyVersion: '2026-05',
+    },
+  });
+
   console.log('Seed complete.');
   console.log('Accounts:');
   console.log('- admin@skillgap.ai / SkillGapAdmin1!');
   console.log('- demo@skillgap.ai / SkillGapDemo1!');
+  console.log('- alex.backend@example.com / SkillGapDemo1!');
+  console.log('- riya.mobile@example.com / SkillGapDemo1!');
   console.log('- careers@techcorp.example / SkillGapCompany1!');
+  console.log('- hiring@startupxyz.example / SkillGapCompany1!');
 }
 
 main()

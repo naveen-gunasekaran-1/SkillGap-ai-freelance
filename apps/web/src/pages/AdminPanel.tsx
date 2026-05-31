@@ -189,7 +189,7 @@ export function AdminPanel(): React.JSX.Element {
     },
   });
 
-  const verifications = verificationsQuery.data ?? [];
+  const verifications = useMemo(() => verificationsQuery.data ?? [], [verificationsQuery.data]);
   const selectedVerification =
     selectedVerificationQuery.data ??
     verifications.find((item) => item.id === selectedId) ??

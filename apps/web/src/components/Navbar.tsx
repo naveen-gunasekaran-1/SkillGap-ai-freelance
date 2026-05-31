@@ -25,10 +25,10 @@ const adminLinks = [
 
 const publicLinks: { to: string; label: string }[] = [
   { to: '/', label: 'Home' },
-  { to: '/#features', label: 'Features' },
+  { to: '/features', label: 'Features' },
   { to: '/for-companies', label: 'For Companies' },
-  { to: '/#pricing', label: 'Pricing' },
-  { to: '/#security', label: 'Security' },
+  { to: '/pricing', label: 'Pricing' },
+  { to: '/security', label: 'Security' },
   { to: '/contact', label: 'Contact' },
 ];
 
@@ -103,14 +103,11 @@ export function Navbar(): React.JSX.Element {
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-6">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 group" aria-label="SkillGap AI Home">
-            <div className="relative h-9 w-9 rounded-xl bg-gradient-to-br from-primary via-ai-purple to-ai-cyan shadow-card transition-transform duration-200 group-hover:scale-105">
-              <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white">
-                S
-              </span>
-            </div>
-            <span className="text-lg font-semibold tracking-tight text-text-primary">
-              SkillGap <span className="text-ai-gradient">AI</span>
-            </span>
+            <img
+              src="/brand/logo-dark-text.png"
+              alt="SkillGap AI"
+              className="h-8 w-auto transition-transform duration-200 group-hover:scale-105"
+            />
           </Link>
 
           {/* Desktop nav links */}

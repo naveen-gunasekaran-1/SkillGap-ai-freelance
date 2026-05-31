@@ -116,12 +116,8 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
                 </svg>
               </button>
               <Link to="/" className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary via-ai-purple to-ai-cyan shadow-card flex items-center justify-center">
-                  <span className="text-xs font-bold text-white">S</span>
-                </div>
-                <span className="text-base font-semibold text-text-primary">
-                  SkillGap <span className="text-ai-gradient">AI</span>
-                </span>
+                <img src="/brand/icon-blue.png" alt="" className="h-8 w-8 rounded-lg shadow-card" />
+                <img src="/brand/logo-dark-text.png" alt="SkillGap AI" className="h-7 w-auto" />
               </Link>
             </div>
 
@@ -201,12 +197,8 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
                   className="flex items-center gap-2"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-primary via-ai-purple to-ai-cyan shadow-card flex items-center justify-center">
-                    <span className="text-sm font-bold text-white">S</span>
-                  </div>
-                  <span className="text-lg font-semibold text-text-primary">
-                    SkillGap <span className="text-ai-gradient">AI</span>
-                  </span>
+                  <img src="/brand/icon-blue.png" alt="" className="h-9 w-9 rounded-xl shadow-card" />
+                  <img src="/brand/logo-dark-text.png" alt="SkillGap AI" className="h-8 w-auto" />
                 </Link>
                 <button
                   onClick={() => setMobileMenuOpen(false)}

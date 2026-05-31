@@ -1,9 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link, useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import {
   Alert,
+  Image,
   KeyboardAvoidingView,
-  Linking,
   Platform,
   Pressable,
   ScrollView,
@@ -19,6 +20,9 @@ import { getApiUrl } from '../../src/lib/api';
 import { useMobileAuthStore } from '../../src/stores/authStore';
 
 const t = theme;
+const OAUTH_CALLBACK_URL = 'skillgapai://oauth/callback';
+
+WebBrowser.maybeCompleteAuthSession();
 
 /**
  * Mobile login screen with email/password wired to the SkillGap API.
@@ -28,6 +32,7 @@ export default function LoginScreen(): React.JSX.Element {
   const [password, setPassword] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [oauthProvider, setOauthProvider] = useState<'google' | 'linkedin' | null>(null);
   const [slowRequest, setSlowRequest] = useState(false);
   const router = useRouter();
   const setSession = useMobileAuthStore((s) => s.setSession);
@@ -70,6 +75,7 @@ export default function LoginScreen(): React.JSX.Element {
 
   const startOAuthLogin = async (provider: 'google' | 'linkedin') => {
     const url = `${getApiUrl()}/auth/oauth/${provider}/start?client=mobile&returnTo=${encodeURIComponent('/dashboard')}`;
+    setOauthProvider(provider);
     try {
       const availability = await fetch(url, { redirect: 'manual' });
       const contentType = availability.headers.get('content-type') ?? '';
@@ -84,7 +90,31 @@ export default function LoginScreen(): React.JSX.Element {
     } catch {
       // If the preflight cannot complete, still try the browser flow below.
     }
-    await Linking.openURL(url);
+
+    try {
+      const result = await WebBrowser.openAuthSessionAsync(url, OAUTH_CALLBACK_URL);
+      if (result.type !== 'success' || !result.url) return;
+
+      const callback = new URL(result.url);
+      const code = callback.searchParams.get('code');
+      const error = callback.searchParams.get('error');
+      const returnTo = callback.searchParams.get('returnTo');
+      router.replace({
+        pathname: '/oauth/callback',
+        params: {
+          ...(code ? { code } : {}),
+          ...(error ? { error } : {}),
+          ...(returnTo ? { returnTo } : {}),
+        },
+      });
+    } catch (error) {
+      Alert.alert(
+        'Social sign in failed',
+        error instanceof Error ? error.message : 'Could not open the sign in browser.',
+      );
+    } finally {
+      setOauthProvider(null);
+    }
   };
 
   return (
@@ -105,19 +135,16 @@ export default function LoginScreen(): React.JSX.Element {
         >
           <View style={{ width: '100%', maxWidth: 420, alignSelf: 'center' }}>
             <View style={{ marginBottom: t.spacing.xl, alignItems: 'center' }}>
-              <View
+              <Image
+                source={require('../../assets/brand/icon-blue.png')}
                 style={{
                   width: 64,
                   height: 64,
                   borderRadius: 20,
-                  backgroundColor: t.colors.primaryLight,
-                  alignItems: 'center',
-                  justifyContent: 'center',
                   marginBottom: t.spacing.md,
                 }}
-              >
-                <Ionicons name="log-in-outline" size={32} color={t.colors.primaryDark} />
-              </View>
+                resizeMode="contain"
+              />
               <Text
                 style={{ ...t.typography.h1, color: t.colors.textPrimary, textAlign: 'center' }}
               >
@@ -285,7 +312,7 @@ export default function LoginScreen(): React.JSX.Element {
             <View style={{ gap: t.spacing.sm }}>
               <Pressable
                 onPress={() => void startOAuthLogin('google')}
-                disabled={loading}
+                disabled={loading || oauthProvider !== null}
                 style={({ pressed }) => ({
                   minHeight: t.minTouchTarget,
                   borderRadius: t.borderRadius.pill,
@@ -296,19 +323,19 @@ export default function LoginScreen(): React.JSX.Element {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: t.spacing.sm,
-                  opacity: pressed ? 0.85 : 1,
+                  opacity: pressed && oauthProvider === null ? 0.85 : 1,
                 })}
               >
                 <Ionicons name="logo-google" size={20} color={t.colors.textPrimary} />
                 <Text
                   style={{ ...t.typography.body, color: t.colors.textPrimary, fontWeight: '700' }}
                 >
-                  Continue with Google
+                  {oauthProvider === 'google' ? 'Opening Google...' : 'Continue with Google'}
                 </Text>
               </Pressable>
               <Pressable
                 onPress={() => void startOAuthLogin('linkedin')}
-                disabled={loading}
+                disabled={loading || oauthProvider !== null}
                 style={({ pressed }) => ({
                   minHeight: t.minTouchTarget,
                   borderRadius: t.borderRadius.pill,
@@ -319,14 +346,16 @@ export default function LoginScreen(): React.JSX.Element {
                   alignItems: 'center',
                   justifyContent: 'center',
                   gap: t.spacing.sm,
-                  opacity: pressed ? 0.85 : 1,
+                  opacity: pressed && oauthProvider === null ? 0.85 : 1,
                 })}
               >
                 <Ionicons name="logo-linkedin" size={20} color="#0A66C2" />
                 <Text
                   style={{ ...t.typography.body, color: t.colors.textPrimary, fontWeight: '700' }}
                 >
-                  Continue with LinkedIn
+                  {oauthProvider === 'linkedin'
+                    ? 'Opening LinkedIn...'
+                    : 'Continue with LinkedIn'}
                 </Text>
               </Pressable>
             </View>

@@ -39,6 +39,8 @@ export function CompanyProfilePage(): React.JSX.Element {
   const queryClient = useQueryClient();
 
   const [isEditing, setIsEditing] = useState(false);
+  const [logoUrl, setLogoUrl] = useState('');
+  const [editingLogo, setEditingLogo] = useState(false);
 
   const companyQuery = useQuery({
     queryKey: ['company', 'me'],
@@ -79,6 +81,7 @@ export function CompanyProfilePage(): React.JSX.Element {
 
   useEffect(() => {
     if (!company) return;
+    setLogoUrl(company.logo ?? '');
     reset({
       name: company.name,
       industry: company.industry,
@@ -115,6 +118,19 @@ export function CompanyProfilePage(): React.JSX.Element {
   const onSubmit = (data: CompanyFormData) => {
     updateMutation.mutate(data);
   };
+
+  const updateLogoMutation = useMutation({
+    mutationFn: async (logo: string | null) => {
+      const res = await api.patch<{ company: Company }>('/companies/me', { logo });
+      return res.data.company;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['company', 'me'] });
+      toast.success('Company logo updated');
+      setEditingLogo(false);
+    },
+    onError: () => toast.error('Could not update company logo'),
+  });
 
   if (companyQuery.isLoading || !company) {
     return (
@@ -191,7 +207,7 @@ export function CompanyProfilePage(): React.JSX.Element {
                   <div className="space-y-6">
                     {/* Company Header */}
                     <div className="flex items-center gap-4">
-                      <Avatar name={company.name} size="lg" />
+                      <Avatar name={company.name} src={company.logo} size="lg" />
                       <div>
                         <div className="flex items-center gap-2">
                           <h3 className="text-xl font-semibold text-text-primary">
@@ -264,19 +280,52 @@ export function CompanyProfilePage(): React.JSX.Element {
                 <h2 className="font-semibold text-text-primary">Company Logo</h2>
               </div>
               <div className="flex items-center gap-4">
-                <Avatar name={company.name} size="lg" />
+                <Avatar name={company.name} src={company.logo} size="lg" />
                 <div className="flex-1">
                   <p className="text-sm text-text-secondary mb-3">
-                    Upload a logo to make your company more recognizable to candidates.
+                    Add a public logo URL to make your company more recognizable to candidates.
                   </p>
-                  <div className="flex gap-2">
-                    <Button variant="secondary" size="sm">
-                      <Upload className="h-4 w-4 mr-1" />
-                      Upload Logo
-                    </Button>
-                    <Button variant="ghost" size="sm">
-                      Remove
-                    </Button>
+                  {editingLogo && (
+                    <Input
+                      label="Logo URL"
+                      value={logoUrl}
+                      onChange={(e) => setLogoUrl(e.target.value)}
+                      placeholder="https://example.com/logo.png"
+                      className="mb-3"
+                    />
+                  )}
+                  <div className="flex flex-wrap gap-2">
+                    {editingLogo ? (
+                      <>
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          loading={updateLogoMutation.isPending}
+                          onClick={() => updateLogoMutation.mutate(logoUrl.trim())}
+                        >
+                          <Save className="h-4 w-4 mr-1" />
+                          Save Logo
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setEditingLogo(false)}>
+                          Cancel
+                        </Button>
+                      </>
+                    ) : (
+                      <Button variant="secondary" size="sm" onClick={() => setEditingLogo(true)}>
+                        <Upload className="h-4 w-4 mr-1" />
+                        {company.logo ? 'Change Logo' : 'Add Logo'}
+                      </Button>
+                    )}
+                    {company.logo && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        loading={updateLogoMutation.isPending}
+                        onClick={() => updateLogoMutation.mutate(null)}
+                      >
+                        Remove
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -340,17 +389,22 @@ export function CompanyProfilePage(): React.JSX.Element {
               </div>
             </Card>
 
-            {/* Social Links */}
+            {/* Company Web Presence */}
             <Card className="p-5 animate-fade-in-up delay-400">
               <div className="flex items-center gap-3 mb-4">
                 <LinkIcon className="h-5 w-5 text-text-secondary" />
-                <h2 className="font-semibold text-text-primary">Social Links</h2>
+                <h2 className="font-semibold text-text-primary">Web Presence</h2>
               </div>
               <p className="text-sm text-text-secondary mb-3">
-                Add your company social media profiles.
+                Keep your website updated so candidates can inspect your company before applying.
               </p>
-              <Button variant="ghost" size="sm" className="w-full">
-                Add Social Link
+              <Button
+                variant="ghost"
+                size="sm"
+                className="w-full"
+                onClick={() => setIsEditing(true)}
+              >
+                Edit Website
               </Button>
             </Card>
           </div>

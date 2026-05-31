@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState, type ChangeEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
@@ -15,14 +15,17 @@ import {
   Sparkles,
   X,
   FileText,
+  Upload,
 } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { api, hasAccessToken } from '../lib/api';
-import { parseGapReport, parseJob } from '../lib/normalize';
+import { parseGapReport, parseJob, parseUser } from '../lib/normalize';
 import { formatJobSalary, formatPosted, jobTypeLabel } from '../lib/format';
+import { useAuthStore } from '../stores/authStore';
 
 const tabs = ['Overview', 'Requirements', 'Company', 'Gap Analysis'] as const;
 type Tab = (typeof tabs)[number];
+const SAVED_JOBS_KEY = 'skillgap.savedJobs';
 
 /**
  * Job detail page with tabbed content, match score sidebar, and apply drawer.
@@ -31,9 +34,13 @@ export function JobDetailPage(): React.JSX.Element {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const user = useAuthStore((s) => s.user);
+  const setUser = useAuthStore((s) => s.setUser);
   const [activeTab, setActiveTab] = useState<Tab>('Overview');
   const [applyOpen, setApplyOpen] = useState(false);
   const [coverNote, setCoverNote] = useState('');
+  const [savedJobIds, setSavedJobIds] = useState<string[]>(() => readSavedJobs());
+  const resumeInputRef = useRef<HTMLInputElement | null>(null);
 
   const jobQuery = useQuery({
     queryKey: ['job', id],
@@ -79,7 +86,33 @@ export function JobDetailPage(): React.JSX.Element {
     },
   });
 
+  const uploadResumeMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const body = new FormData();
+      body.append('file', file);
+      const res = await api.post<{ user: unknown }>('/uploads/resume/profile', body, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+      return parseUser(res.data.user);
+    },
+    onSuccess: (updatedUser) => {
+      setUser(updatedUser);
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+      toast.success('Resume uploaded and profile updated');
+      if (resumeInputRef.current) {
+        resumeInputRef.current.value = '';
+      }
+    },
+    onError: () => {
+      toast.error('Resume upload failed. Try a PDF or DOCX resume.');
+      if (resumeInputRef.current) {
+        resumeInputRef.current.value = '';
+      }
+    },
+  });
+
   const job = jobQuery.data;
+  const isSaved = Boolean(job && savedJobIds.includes(job.id));
 
   const openApply = () => {
     if (!hasAccessToken()) {
@@ -87,6 +120,22 @@ export function JobDetailPage(): React.JSX.Element {
       return;
     }
     setApplyOpen(true);
+  };
+
+  const handleResumeSelect = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    uploadResumeMutation.mutate(file);
+  };
+
+  const toggleSavedJob = () => {
+    if (!job) return;
+    const next = isSaved
+      ? savedJobIds.filter((jobId) => jobId !== job.id)
+      : [...savedJobIds, job.id];
+    setSavedJobIds(next);
+    window.localStorage.setItem(SAVED_JOBS_KEY, JSON.stringify(next));
+    toast.success(isSaved ? 'Job removed from shortlist' : 'Job saved to your shortlist');
   };
 
   if (jobQuery.isError) {
@@ -350,9 +399,14 @@ export function JobDetailPage(): React.JSX.Element {
               <Button className="mt-6 w-full" type="button" onClick={openApply}>
                 Apply Now
               </Button>
-              <Button variant="secondary" className="mt-2 w-full" type="button">
+              <Button
+                variant="secondary"
+                className="mt-2 w-full"
+                type="button"
+                onClick={toggleSavedJob}
+              >
                 <Bookmark className="h-4 w-4 mr-1" />
-                Save Job
+                {isSaved ? 'Saved' : 'Save Job'}
               </Button>
             </Card>
             <Card className="p-6">
@@ -391,12 +445,48 @@ export function JobDetailPage(): React.JSX.Element {
                 </button>
               </div>
               <div className="flex-1 space-y-6">
-                <div className="rounded-card border-2 border-dashed border-border p-8 text-center">
-                  <FileText className="h-8 w-8 text-text-secondary mx-auto mb-2" />
-                  <p className="text-sm font-medium text-text-primary">Resume</p>
-                  <p className="mt-1 text-xs text-text-secondary">
-                    Resume upload is coming soon - your profile skills are used for matching today.
-                  </p>
+                <div className="rounded-card border border-border p-4">
+                  <input
+                    ref={resumeInputRef}
+                    type="file"
+                    accept=".pdf,.docx,.txt,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain"
+                    className="hidden"
+                    onChange={handleResumeSelect}
+                  />
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary-light">
+                      <FileText className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-text-primary">Resume</p>
+                      <p className="mt-1 text-xs text-text-secondary">
+                        {user?.resumeUrl
+                          ? 'Your profile resume will be attached to this application.'
+                          : 'Upload a resume before applying to strengthen your match profile.'}
+                      </p>
+                      {user?.resumeUrl && (
+                        <a
+                          href={user.resumeUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-2 inline-flex text-xs font-medium text-primary hover:text-primary-dark"
+                        >
+                          View current resume
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant={user?.resumeUrl ? 'secondary' : 'primary'}
+                    size="sm"
+                    className="mt-4 w-full"
+                    loading={uploadResumeMutation.isPending}
+                    onClick={() => resumeInputRef.current?.click()}
+                  >
+                    <Upload className="h-4 w-4 mr-1" />
+                    {user?.resumeUrl ? 'Replace Resume' : 'Upload Resume'}
+                  </Button>
                 </div>
                 <div>
                   <label
@@ -430,4 +520,16 @@ export function JobDetailPage(): React.JSX.Element {
       )}
     </AppShell>
   );
+}
+
+function readSavedJobs(): string[] {
+  try {
+    const value = window.localStorage.getItem(SAVED_JOBS_KEY);
+    const parsed = value ? (JSON.parse(value) as unknown) : [];
+    return Array.isArray(parsed)
+      ? parsed.filter((item): item is string => typeof item === 'string')
+      : [];
+  } catch {
+    return [];
+  }
 }

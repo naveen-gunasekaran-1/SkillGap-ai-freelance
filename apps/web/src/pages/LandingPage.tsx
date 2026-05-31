@@ -356,20 +356,19 @@ export function LandingPage(): React.JSX.Element {
       <footer className="border-t border-border bg-white/80 py-12">
         <div className="mx-auto flex max-w-7xl flex-col items-center gap-8 px-6 md:flex-row md:justify-between">
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-ai-cyan shadow-card" />
-            <span className="font-semibold text-text-primary">SkillGap AI</span>
+            <img src="/brand/logo-dark-text.png" alt="SkillGap AI" className="h-7 w-auto" />
           </div>
           <div className="flex flex-wrap justify-center gap-6 text-sm text-text-secondary">
-            <Link to="/#features" className="hover:text-text-primary transition-colors">
+            <Link to="/features" className="hover:text-text-primary transition-colors">
               Features
             </Link>
             <Link to="/for-companies" className="hover:text-text-primary transition-colors">
               For Companies
             </Link>
-            <Link to="/#pricing" className="hover:text-text-primary transition-colors">
+            <Link to="/pricing" className="hover:text-text-primary transition-colors">
               Pricing
             </Link>
-            <Link to="/#security" className="hover:text-text-primary transition-colors">
+            <Link to="/security" className="hover:text-text-primary transition-colors">
               Security
             </Link>
             <Link to="/contact" className="hover:text-text-primary transition-colors">

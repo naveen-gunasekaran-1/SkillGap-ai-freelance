@@ -83,15 +83,13 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps): 
         className={`flex items-center h-16 border-b border-border px-4 ${collapsed ? 'justify-center' : 'gap-3'}`}
       >
         <Link to="/" className="flex items-center gap-2.5 group" aria-label="SkillGap AI Home">
-          <div className="relative h-9 w-9 rounded-xl bg-gradient-to-br from-primary via-ai-purple to-ai-cyan shadow-card transition-transform duration-200 group-hover:scale-105 flex-shrink-0">
-            <span className="absolute inset-0 flex items-center justify-center text-sm font-bold text-white">
-              S
-            </span>
-          </div>
+          <img
+            src="/brand/icon-blue.png"
+            alt=""
+            className="h-9 w-9 flex-shrink-0 rounded-xl shadow-card transition-transform duration-200 group-hover:scale-105"
+          />
           {!collapsed && (
-            <span className="text-lg font-semibold tracking-tight text-text-primary">
-              SkillGap <span className="text-ai-gradient">AI</span>
-            </span>
+            <img src="/brand/logo-dark-text.png" alt="SkillGap AI" className="h-8 w-auto" />
           )}
         </Link>
       </div>

@@ -32,7 +32,16 @@ export default function NetworkDiagnosticsScreen(): React.JSX.Element {
 
   return (
     <>
-      <Stack.Screen options={{ title: 'Network check' }} />
+      <Stack.Screen
+        options={{
+          headerShown: true,
+          title: 'Network Check',
+          headerTintColor: t.colors.primary,
+          headerStyle: { backgroundColor: t.colors.surface },
+          headerTitleStyle: { fontWeight: '700', color: t.colors.textPrimary },
+          headerShadowVisible: false,
+        }}
+      />
       <ScrollView
         style={{ flex: 1, backgroundColor: t.colors.background }}
         contentContainerStyle={{ padding: t.spacing.lg, paddingBottom: t.spacing.xxxl }}

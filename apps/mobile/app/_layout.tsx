@@ -1,7 +1,7 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar as ExpoStatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { Platform, StatusBar as NativeStatusBar, View } from 'react-native';
+import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { clearMobileAuthTokens, hasMobileAccessToken, mobileApi } from '../src/lib/http';
 import { useMobileAuthStore } from '../src/stores/authStore';
@@ -10,6 +10,11 @@ import { useMobileAuthStore } from '../src/stores/authStore';
  * Root layout - Simple stack that allows all routes to be accessible
  * Groups (auth) and (tabs) are automatically discovered from folder structure
  * No forced auth redirects - users navigate naturally from home page
+ *
+ * Status-bar strategy:
+ *   Android release builds draw below a translucent status bar on some
+ *   devices, so the root status bar is opaque and each screen owns its safe
+ *   area through SafeAreaView.
  */
 export default function RootLayout(): React.JSX.Element {
   const router = useRouter();
@@ -59,13 +64,7 @@ export default function RootLayout(): React.JSX.Element {
   return (
     <SafeAreaProvider>
       <ExpoStatusBar style="dark" backgroundColor="#F9FAFB" translucent={false} />
-      <View
-        style={{
-          flex: 1,
-          backgroundColor: '#F9FAFB',
-          paddingTop: Platform.OS === 'android' ? (NativeStatusBar.currentHeight ?? 0) : 0,
-        }}
-      >
+      <View style={{ flex: 1, backgroundColor: '#F9FAFB' }}>
         <Stack
           screenOptions={{
             headerShown: false,

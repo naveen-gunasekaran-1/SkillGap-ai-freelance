@@ -5,7 +5,7 @@ export default {
     scheme: 'skillgapai',
     version: '0.1.0',
     orientation: 'portrait',
-    // icon: './assets/icon.png', // Add this when you create app icon assets
+    icon: './assets/brand/icon-blue.png',
     platforms: ['ios', 'android', 'web'],
     plugins: [
       'expo-router',
@@ -22,10 +22,10 @@ export default {
     android: {
       package: 'com.anonymous.skillgapai',
       usesCleartextTraffic: true,
-      // adaptiveIcon: {
-      //   foregroundImage: './assets/icon.png', // Add this when you create app icon assets
-      //   backgroundColor: '#FFFFFF',
-      // },
+      adaptiveIcon: {
+        foregroundImage: './assets/brand/icon-blue.png',
+        backgroundColor: '#FFFFFF',
+      },
       permissions: [
         'android.permission.INTERNET',
         'android.permission.CAMERA',
@@ -44,9 +44,9 @@ export default {
         NSPhotoLibraryAddUsageDescription: 'Allow SkillGap AI to save photos to your library',
       },
     },
-    // web: {
-    //   favicon: './assets/favicon.png', // Add this when you create favicon asset
-    // },
+    web: {
+      favicon: './assets/brand/icon-blue.png',
+    },
     extra: {
       apiUrl: process.env.EXPO_PUBLIC_API_URL ?? 'https://skillgap-ai-freelance.onrender.com/api',
     },

@@ -1,17 +1,33 @@
 import { Link } from 'expo-router';
-import { Pressable, ScrollView, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { theme } from '../src/theme';
 
-console.log('[HomeScreen] Mounting home screen');
-
 const t = theme;
 
 const features = [
-  { icon: 'analytics', title: 'AI Gap Analysis', desc: 'Know exactly what skills you need' },
-  { icon: 'briefcase', title: 'Verified Jobs', desc: 'Only real, verified employers' },
-  { icon: 'flash', title: 'Smart Matching', desc: 'Match % for every job posting' },
+  {
+    icon: 'analytics' as const,
+    title: 'AI Gap Analysis',
+    desc: 'Know exactly what skills you need',
+    accent: '#7C3AED',
+    bg: '#F3E8FF',
+  },
+  {
+    icon: 'briefcase' as const,
+    title: 'Verified Jobs',
+    desc: 'Only real, verified employers',
+    accent: '#2563EB',
+    bg: '#DBEAFE',
+  },
+  {
+    icon: 'flash' as const,
+    title: 'Smart Matching',
+    desc: 'Match % for every job posting',
+    accent: '#059669',
+    bg: '#D1FAE5',
+  },
 ];
 
 /**
@@ -35,37 +51,46 @@ export default function HomeScreen(): React.JSX.Element {
           <View
             style={{ alignItems: 'center', marginBottom: t.spacing.xl, marginTop: t.spacing.md }}
           >
+            {/* Outer glow ring */}
             <View
               style={{
-                width: 80,
-                height: 80,
-                borderRadius: 24,
-                backgroundColor: t.colors.primary,
+                width: 104,
+                height: 104,
+                borderRadius: 32,
+                backgroundColor: t.colors.primaryLight,
                 alignItems: 'center',
                 justifyContent: 'center',
                 marginBottom: t.spacing.lg,
                 ...t.shadows.elevated,
               }}
             >
-              <Ionicons name="sparkles" size={40} color="#FFFFFF" />
+              <Image
+                source={require('../assets/brand/icon-blue.png')}
+                style={{
+                  width: 80,
+                  height: 80,
+                  borderRadius: 24,
+                }}
+                resizeMode="contain"
+              />
             </View>
 
-            <Text
+            <Image
+              source={require('../assets/brand/logo-dark-text.png')}
               style={{
-                ...t.typography.h1,
-                color: t.colors.textPrimary,
-                textAlign: 'center',
+                width: 240,
+                height: 60,
                 marginBottom: t.spacing.xs,
               }}
-            >
-              SkillGap AI
-            </Text>
+              resizeMode="contain"
+            />
             <Text
               style={{
                 ...t.typography.body,
                 color: t.colors.textSecondary,
                 textAlign: 'center',
                 paddingHorizontal: t.spacing.sm,
+                lineHeight: 24,
               }}
             >
               AI-powered gap analysis, job matching, and learning paths to accelerate your career.
@@ -74,7 +99,7 @@ export default function HomeScreen(): React.JSX.Element {
 
           {/* Feature cards */}
           <View style={{ width: '100%', gap: t.spacing.md, marginBottom: t.spacing.xl }}>
-            {features.map((f, index) => (
+            {features.map((f) => (
               <View
                 key={f.title}
                 style={{
@@ -86,7 +111,9 @@ export default function HomeScreen(): React.JSX.Element {
                   padding: t.spacing.md,
                   borderWidth: 1,
                   borderColor: t.colors.border,
-                  ...t.shadows.sm,
+                  borderLeftWidth: 4,
+                  borderLeftColor: f.accent,
+                  ...t.shadows.card,
                 }}
               >
                 <View
@@ -94,18 +121,18 @@ export default function HomeScreen(): React.JSX.Element {
                     width: 48,
                     height: 48,
                     borderRadius: 14,
-                    backgroundColor: t.colors.primaryLight,
+                    backgroundColor: f.bg,
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Ionicons name={f.icon as any} size={24} color={t.colors.primaryDark} />
+                  <Ionicons name={f.icon} size={24} color={f.accent} />
                 </View>
                 <View style={{ flex: 1 }}>
                   <Text
                     style={{
                       ...t.typography.body,
-                      fontWeight: '600',
+                      fontWeight: '700',
                       color: t.colors.textPrimary,
                       marginBottom: 2,
                     }}
@@ -116,6 +143,7 @@ export default function HomeScreen(): React.JSX.Element {
                     {f.desc}
                   </Text>
                 </View>
+                <Ionicons name="chevron-forward" size={18} color={t.colors.border} />
               </View>
             ))}
           </View>
@@ -136,7 +164,7 @@ export default function HomeScreen(): React.JSX.Element {
                   minHeight: t.minTouchTarget,
                   opacity: pressed ? 0.9 : 1,
                   transform: [{ scale: pressed ? 0.98 : 1 }],
-                  ...t.shadows.card,
+                  ...t.shadows.cardHover,
                 })}
               >
                 <Text style={{ color: '#FFFFFF', ...t.typography.body, fontWeight: '700' }}>
@@ -154,9 +182,12 @@ export default function HomeScreen(): React.JSX.Element {
                   justifyContent: 'center',
                   borderRadius: t.borderRadius.pill,
                   backgroundColor: t.colors.surface,
+                  borderWidth: 1,
+                  borderColor: t.colors.border,
                   paddingVertical: 18,
                   minHeight: t.minTouchTarget,
-                  opacity: pressed ? 0.7 : 1,
+                  opacity: pressed ? 0.85 : 1,
+                  transform: [{ scale: pressed ? 0.98 : 1 }],
                 })}
               >
                 <Text
@@ -175,6 +206,7 @@ export default function HomeScreen(): React.JSX.Element {
                   justifyContent: 'center',
                   flexDirection: 'row',
                   gap: t.spacing.xs,
+                  paddingVertical: t.spacing.sm,
                   opacity: pressed ? 0.5 : 1,
                 })}
               >

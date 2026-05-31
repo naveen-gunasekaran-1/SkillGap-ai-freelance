@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Button, Card, Badge, Avatar } from '@skillgap/ui';
 import {
   BarChart3,

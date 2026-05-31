@@ -7,10 +7,11 @@ export default function ApplicationLayout(): React.JSX.Element {
   return (
     <Stack
       screenOptions={{
+        headerShown: true,
+        headerTintColor: t.colors.primary,
         headerStyle: { backgroundColor: t.colors.surface },
-        headerTintColor: t.colors.textPrimary,
-        headerTitleStyle: { fontWeight: '700' },
-        contentStyle: { backgroundColor: t.colors.background },
+        headerTitleStyle: { fontWeight: '700', color: t.colors.textPrimary },
+        headerShadowVisible: false,
       }}
     />
   );

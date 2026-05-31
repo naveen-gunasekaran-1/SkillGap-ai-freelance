@@ -31,7 +31,7 @@ const updateCompanySchema = z.object({
   size: z.string().min(1).max(60).optional(),
   website: z.string().url().max(200).optional(),
   description: z.string().max(1200).optional(),
-  logo: z.string().url().max(500).optional(),
+  logo: z.string().url().max(500).nullable().optional(),
 });
 
 const verificationSchema = z.object({
@@ -116,7 +116,7 @@ router.patch(
         ...(body.size ? { size: body.size } : {}),
         ...(body.website ? { website: body.website } : {}),
         ...(body.description != null ? { description: body.description } : {}),
-        ...(body.logo ? { logo: body.logo } : {}),
+        ...(body.logo !== undefined ? { logo: body.logo } : {}),
       },
     });
     res.json({ company: toCompanyDto(company) });

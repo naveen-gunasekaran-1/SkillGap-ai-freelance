@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Badge, Card, MatchScore, Avatar, Button } from '@skillgap/ui';
 import type { Application, ApplicationStatus } from '@skillgap/types';
-import { Filter, ArrowUpDown, ClipboardList, ArrowRight } from 'lucide-react';
+import { ArrowUpDown, ClipboardList, ArrowRight } from 'lucide-react';
 import { AppShell } from '../components/AppShell';
 import { api } from '../lib/api';
 import { parseApplication } from '../lib/normalize';
@@ -44,7 +44,7 @@ export function ApplicationsPage(): React.JSX.Element {
     },
   });
 
-  const apps = appsQuery.data ?? [];
+  const apps = useMemo(() => appsQuery.data ?? [], [appsQuery.data]);
 
   const filtered = useMemo(() => {
     const list = apps.filter((a) => statusGroup(a.status, filter));

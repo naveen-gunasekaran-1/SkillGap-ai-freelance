@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { LandingPage } from './pages/LandingPage';
 import { ForCompaniesPage } from './pages/ForCompaniesPage';
 import { ContactPage } from './pages/ContactPage';
+import { FeaturesPage, PricingPage, SecurityPage } from './pages/MarketingPages';
 import { LoginPage } from './pages/LoginPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { ForgotPasswordPage } from './pages/ForgotPasswordPage';
@@ -14,6 +15,7 @@ import { JobDetailPage } from './pages/JobDetailPage';
 import { ApplicationsPage } from './pages/ApplicationsPage';
 import { ApplicationDetailPage } from './pages/ApplicationDetailPage';
 import { ProfilePage } from './pages/ProfilePage';
+import { NotificationsPage } from './pages/NotificationsPage';
 import { CompanyDashboardPage } from './pages/company/CompanyDashboardPage';
 import { CompanyJobsPage } from './pages/company/CompanyJobsPage';
 import { CompanyProfilePage } from './pages/company/CompanyProfilePage';
@@ -28,7 +30,10 @@ export default function App(): React.JSX.Element {
   return (
     <Routes>
       <Route path="/" element={<LandingPage />} />
+      <Route path="/features" element={<FeaturesPage />} />
       <Route path="/for-companies" element={<ForCompaniesPage />} />
+      <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/security" element={<SecurityPage />} />
       <Route path="/contact" element={<ContactPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
@@ -59,6 +64,14 @@ export default function App(): React.JSX.Element {
         element={
           <ProtectedRoute roles={['CANDIDATE']}>
             <ApplicationDetailPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/notifications"
+        element={
+          <ProtectedRoute roles={['CANDIDATE', 'COMPANY', 'ADMIN']}>
+            <NotificationsPage />
           </ProtectedRoute>
         }
       />
@@ -103,7 +116,23 @@ export default function App(): React.JSX.Element {
         }
       />
       <Route
+        path="/company/jobs/:jobId/applicants"
+        element={
+          <ProtectedRoute roles={['COMPANY']}>
+            <CandidateReviewPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
         path="/company/candidates"
+        element={
+          <ProtectedRoute roles={['COMPANY']}>
+            <CandidateReviewPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/company/candidates/:applicationId"
         element={
           <ProtectedRoute roles={['COMPANY']}>
             <CandidateReviewPage />

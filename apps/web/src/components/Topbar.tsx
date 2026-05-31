@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Search, Bell, Menu, X, ChevronDown, LogOut, Settings, User } from 'lucide-react';
+import { Search, Bell, Menu, ChevronDown, LogOut, Settings, User } from 'lucide-react';
 import { Avatar, Button } from '@skillgap/ui';
 import { useAuthStore } from '../stores/authStore';
 import { hasAccessToken, revokeRefreshToken } from '../lib/api';
@@ -17,6 +17,7 @@ export function Topbar({
   const [scrolled, setScrolled] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [search, setSearch] = useState('');
   const navigate = useNavigate();
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
@@ -29,6 +30,17 @@ export function Topbar({
       logout();
       navigate('/');
     });
+  };
+
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const q = search.trim();
+    if (!q) return;
+    if (activeRole === 'company') {
+      navigate(`/company/candidates?search=${encodeURIComponent(q)}`);
+      return;
+    }
+    navigate(`/jobs?search=${encodeURIComponent(q)}`);
   };
 
   useEffect(() => {
@@ -74,19 +86,21 @@ export function Topbar({
           </button>
 
           {/* Search bar */}
-          <div className="hidden sm:flex items-center">
+          <form className="hidden sm:flex items-center" onSubmit={handleSearchSubmit}>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
               <input
                 type="text"
                 placeholder="Search jobs, candidates..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
                 className="w-64 lg:w-80 h-10 pl-10 pr-4 rounded-xl border border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
               />
               <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden lg:inline-flex items-center gap-1 rounded bg-border/50 px-1.5 py-0.5 text-[10px] font-medium text-text-secondary">
                 <span className="text-xs">⌘</span>K
               </kbd>
             </div>
-          </div>
+          </form>
         </div>
 
         {/* Right side - notifications + user menu */}
@@ -108,7 +122,11 @@ export function Topbar({
                   <div className="absolute right-0 top-full mt-2 w-80 rounded-2xl border border-border bg-white shadow-elevated animate-scale-in origin-top-right">
                     <div className="flex items-center justify-between p-4 border-b border-border">
                       <h3 className="font-semibold text-text-primary">Notifications</h3>
-                      <button className="text-xs text-primary hover:text-primary-dark font-medium">
+                      <button
+                        type="button"
+                        className="text-xs text-primary hover:text-primary-dark font-medium"
+                        onClick={() => setShowNotifications(false)}
+                      >
                         Mark all read
                       </button>
                     </div>
@@ -171,14 +189,26 @@ export function Topbar({
                     </div>
                     <div className="p-2">
                       <Link
-                        to="/profile"
+                        to={
+                          activeRole === 'admin'
+                            ? '/admin'
+                            : activeRole === 'company'
+                              ? '/company/profile'
+                              : '/profile'
+                        }
                         className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-text-secondary hover:bg-background hover:text-text-primary transition-colors"
                       >
                         <User className="h-4 w-4" />
                         Your Profile
                       </Link>
                       <Link
-                        to="/settings"
+                        to={
+                          activeRole === 'admin'
+                            ? '/admin'
+                            : activeRole === 'company'
+                              ? '/company/profile'
+                              : '/profile'
+                        }
                         className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm text-text-secondary hover:bg-background hover:text-text-primary transition-colors"
                       >
                         <Settings className="h-4 w-4" />
@@ -219,14 +249,16 @@ export function Topbar({
 
       {/* Mobile search */}
       <div className="sm:hidden px-4 pb-4">
-        <div className="relative">
+        <form className="relative" onSubmit={handleSearchSubmit}>
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-secondary" />
           <input
             type="text"
             placeholder="Search..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="w-full h-10 pl-10 pr-4 rounded-xl border border-border bg-background text-sm text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-primary transition-all"
           />
-        </div>
+        </form>
       </div>
     </header>
   );

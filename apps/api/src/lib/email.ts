@@ -13,7 +13,6 @@ type EmailInput = {
  */
 export async function sendEmail(input: EmailInput): Promise<void> {
   if (!env.RESEND_API_KEY) {
-    // eslint-disable-next-line no-console
     console.info('[email:dev]', {
       to: input.to,
       subject: input.subject,

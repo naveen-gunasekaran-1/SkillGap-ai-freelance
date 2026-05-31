@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
-import { Card, Badge, Button, Avatar } from '@skillgap/ui';
+import { Card, Badge, Button } from '@skillgap/ui';
 import {
   Briefcase,
   Plus,

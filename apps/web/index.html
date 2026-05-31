@@ -5,12 +5,28 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="description" content="SkillGap AI — AI-powered job matching, gap analysis, and learning recommendations. Close your skills gap with clear, actionable guidance." />
     <meta name="theme-color" content="#2563EB" />
+    <link rel="icon" type="image/png" href="/brand/icon-blue.png" />
+    <link rel="apple-touch-icon" href="/brand/icon-blue.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet" />
     <title>SkillGap AI — Close Your Skills Gap</title>
   </head>
   <body>
+    <form name="contact" netlify netlify-honeypot="bot-field" hidden>
+      <input type="text" name="bot-field" />
+      <input type="text" name="name" />
+      <input type="email" name="email" />
+      <input type="text" name="company" />
+      <select name="reason">
+        <option value="Company verification and onboarding">Company verification and onboarding</option>
+        <option value="Hiring workflow setup">Hiring workflow setup</option>
+        <option value="Campus placement or final-year project demo">Campus placement or final-year project demo</option>
+        <option value="Admin, security, or storage configuration">Admin, security, or storage configuration</option>
+        <option value="General inquiry">General inquiry</option>
+      </select>
+      <textarea name="message"></textarea>
+    </form>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

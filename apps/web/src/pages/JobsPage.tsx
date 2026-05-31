@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { MatchScore, Badge, Button, Input, Skeleton, Avatar, Card } from '@skillgap/ui';
 import type { Job } from '@skillgap/types';
@@ -36,7 +36,8 @@ const jobTypes = ['FULL_TIME', 'PART_TIME', 'INTERNSHIP', 'CONTRACT'];
  * Job discovery page with filter sidebar, job cards, and featured companies (API-backed).
  */
 export function JobsPage(): React.JSX.Element {
-  const [search, setSearch] = useState('');
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('search') ?? '');
   const [debouncedSearch, setDebouncedSearch] = useState('');
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
   const [verifiedOnly, setVerifiedOnly] = useState(false);
@@ -46,6 +47,10 @@ export function JobsPage(): React.JSX.Element {
     const t = window.setTimeout(() => setDebouncedSearch(search.trim()), 300);
     return () => window.clearTimeout(t);
   }, [search]);
+
+  useEffect(() => {
+    setSearch(searchParams.get('search') ?? '');
+  }, [searchParams]);
 
   const jobsQuery = useQuery({
     queryKey: ['jobs', debouncedSearch, selectedTypes, verifiedOnly],

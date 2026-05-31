@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
 import { Avatar, Badge, Button, Card, MatchScore, Textarea } from '@skillgap/ui';
@@ -34,7 +35,8 @@ const rejectionCategories: RejectionCategory[] = [
 ];
 
 export function CandidateReviewPage(): React.JSX.Element {
-  const [search, setSearch] = useState('');
+  const [searchParams] = useSearchParams();
+  const [search, setSearch] = useState(searchParams.get('search') ?? '');
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<RejectionCategory[]>([]);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
