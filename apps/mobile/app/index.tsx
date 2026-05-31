@@ -51,30 +51,6 @@ export default function HomeScreen(): React.JSX.Element {
           <View
             style={{ alignItems: 'center', marginBottom: t.spacing.xl, marginTop: t.spacing.md }}
           >
-            {/* Outer glow ring */}
-            <View
-              style={{
-                width: 104,
-                height: 104,
-                borderRadius: 32,
-                backgroundColor: t.colors.primaryLight,
-                alignItems: 'center',
-                justifyContent: 'center',
-                marginBottom: t.spacing.lg,
-                ...t.shadows.elevated,
-              }}
-            >
-              <Image
-                source={require('../assets/brand/icon-blue.png')}
-                style={{
-                  width: 80,
-                  height: 80,
-                  borderRadius: 24,
-                }}
-                resizeMode="contain"
-              />
-            </View>
-
             <Image
               source={require('../assets/brand/logo-dark-text.png')}
               style={{

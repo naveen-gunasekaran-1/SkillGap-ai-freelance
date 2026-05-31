@@ -84,13 +84,14 @@ export function Sidebar({ collapsed = false, onToggleCollapse }: SidebarProps): 
       >
         <Link to="/" className="flex items-center gap-2.5 group" aria-label="SkillGap AI Home">
           <img
-            src="/brand/icon-blue.png"
-            alt=""
-            className="h-9 w-9 flex-shrink-0 rounded-xl shadow-card transition-transform duration-200 group-hover:scale-105"
+            src={collapsed ? '/brand/icon-blue.png' : '/brand/logo-dark-text.png'}
+            alt="SkillGap AI"
+            className={
+              collapsed
+                ? 'h-9 w-9 flex-shrink-0 rounded-xl shadow-card transition-transform duration-200 group-hover:scale-105'
+                : 'h-8 w-auto transition-transform duration-200 group-hover:scale-105'
+            }
           />
-          {!collapsed && (
-            <img src="/brand/logo-dark-text.png" alt="SkillGap AI" className="h-8 w-auto" />
-          )}
         </Link>
       </div>
 

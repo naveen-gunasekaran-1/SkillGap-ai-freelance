@@ -116,7 +116,6 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
                 </svg>
               </button>
               <Link to="/" className="flex items-center gap-2">
-                <img src="/brand/icon-blue.png" alt="" className="h-8 w-8 rounded-lg shadow-card" />
                 <img src="/brand/logo-dark-text.png" alt="SkillGap AI" className="h-7 w-auto" />
               </Link>
             </div>
@@ -192,14 +191,7 @@ export function AppShell({ children }: AppShellProps): React.JSX.Element {
             <div className="flex flex-col h-full">
               {/* Header */}
               <div className="flex items-center justify-between p-4 border-b border-border">
-                <Link
-                  to="/"
-                  className="flex items-center gap-2"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <img src="/brand/icon-blue.png" alt="" className="h-9 w-9 rounded-xl shadow-card" />
-                  <img src="/brand/logo-dark-text.png" alt="SkillGap AI" className="h-8 w-auto" />
-                </Link>
+                <p className="text-sm font-semibold text-text-primary">Menu</p>
                 <button
                   onClick={() => setMobileMenuOpen(false)}
                   className="flex items-center justify-center h-10 w-10 rounded-lg text-text-secondary hover:bg-background hover:text-text-primary transition-colors"

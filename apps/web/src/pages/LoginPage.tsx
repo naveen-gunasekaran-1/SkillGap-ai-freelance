@@ -71,10 +71,6 @@ export function LoginPage(): React.JSX.Element {
           {/* Left panel — branding */}
           <div className="hidden flex-col justify-center lg:flex animate-fade-in-up">
             <div className="rounded-3xl bg-gradient-to-br from-primary-light via-white to-ai-cyan/10 p-10">
-              <div className="flex items-center gap-3 mb-8">
-                <img src="/brand/icon-blue.png" alt="" className="h-12 w-12 rounded-2xl shadow-card" />
-                <img src="/brand/logo-dark-text.png" alt="SkillGap AI" className="h-10 w-auto" />
-              </div>
               <h2 className="text-3xl font-bold text-text-primary leading-tight">
                 Welcome back.
                 <br />

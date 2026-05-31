@@ -11,13 +11,11 @@ const envSchema = z.object({
   CORS_ORIGINS: z
     .string()
     .optional()
-    .default(
-      'http://localhost:5173,http://127.0.0.1:5173,http://localhost:8081,http://127.0.0.1:8081',
-    ),
+    .default('https://skillgap-ai-career.netlify.app,http://localhost:5173,http://127.0.0.1:5173'),
   OPENAI_API_KEY: z.string().optional(),
   OPENAI_MODEL: z.string().optional().default('gpt-4o-mini'),
-  APP_URL: z.string().url().optional().default('http://localhost:5173'),
-  API_URL: z.string().url().optional().default('http://localhost:3001'),
+  APP_URL: z.string().url().optional().default('https://skillgap-ai-career.netlify.app'),
+  API_URL: z.string().url().optional().default('https://skillgap-ai-freelance.onrender.com'),
   MOBILE_APP_URL: z.string().url().optional().default('skillgapai://oauth/callback'),
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().optional().default('SkillGap AI <no-reply@skillgap.ai>'),
